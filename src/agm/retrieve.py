@@ -11,7 +11,7 @@ import numpy as np
 from .events import utc_now
 from .models import Ctx, Node, RetrieveResult, RetrieveRoute
 from .store import _read_vector, _iso_key, canonical_entity, sanitize_fts_query
-from .trust import effective_confidence, rank_score, recency_score, tier_weight
+from .trust import effective_confidence, is_probationary, rank_score, recency_score, tier_weight
 
 _LOG = logging.getLogger(__name__)
 ABSTAIN_THRESHOLD = 0.25
@@ -48,6 +48,7 @@ def _eligible_rows(
     entity: str | None,
     as_of: str | None,
     include_superseded: bool,
+    high_stakes: bool = False,
 ) -> list[sqlite3.Row]:
     statuses = ["active", "contested"]
     if include_superseded or as_of is not None:
@@ -73,6 +74,8 @@ def _eligible_rows(
             if _iso_key(str(row["valid_from"])) <= at
             and (row["valid_to"] is None or _iso_key(str(row["valid_to"])) > at)
         ]
+    if high_stakes:
+        rows = [row for row in rows if not is_probationary(store.conn, row)]
     return rows
 
 
@@ -221,6 +224,7 @@ def graph_retrieve(
     as_of: str | None = None,
     k: int = 8,
     include_superseded: bool = False,
+    high_stakes: bool = False,
     _hops: int = DEFAULT_HOPS,
 ) -> RetrieveResult:
     if k < 0:
@@ -230,7 +234,10 @@ def graph_retrieve(
     if k == 0:
         return RetrieveResult(items=[], route=RetrieveRoute(seed_n=0, expanded_n=0, widened=False, expand_used=True))
 
-    rows = _eligible_rows(store, ctx, entity=entity, as_of=as_of, include_superseded=include_superseded)
+    rows = _eligible_rows(
+        store, ctx, entity=entity, as_of=as_of,
+        include_superseded=include_superseded, high_stakes=high_stakes,
+    )
     if not rows:
         return RetrieveResult(
             items=[], route=RetrieveRoute(seed_n=0, expanded_n=0, widened=False, expand_used=True),

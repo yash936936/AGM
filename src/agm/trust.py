@@ -41,12 +41,9 @@ def recency_score(valid_from: str, *, now: datetime | None = None) -> float:
 
 
 def independent_corroborations(conn: sqlite3.Connection, row: sqlite3.Row) -> int:
-    """Count distinct other writers affirming this entity/attribute/value or node."""
-    if row["entity_id"] is None or row["value"] is None:
-        return 0
-    writers = {
-        str(result["writer_id"])
-        for result in conn.execute(
+    """Count distinct other writers affirming the same fact or exact item text."""
+    if row["entity_id"] is not None and row["value"] is not None:
+        matching_rows = conn.execute(
             """SELECT DISTINCT writer_id FROM nodes
                WHERE tenant = ? AND project = ? AND entity_id = ? AND attribute IS ? AND value = ?
                  AND writer_id <> ? AND status = 'active'""",
@@ -55,13 +52,40 @@ def independent_corroborations(conn: sqlite3.Connection, row: sqlite3.Row) -> in
                 row["value"], row["writer_id"],
             ),
         ).fetchall()
-    }
-    # A same-value no-op from another writer is represented as a content-free event,
-    # so the confirmation increases confidence without creating a duplicate memory node.
-    for event in conn.execute(
-        "SELECT writer_id, payload FROM events WHERE tenant = ? AND type = 'corroborate'",
+    else:
+        # Episodes and procedures may not have an entity/value pair. An independent
+        # writer can corroborate such an item by recording the exact same statement.
+        matching_rows = conn.execute(
+            """SELECT DISTINCT writer_id FROM nodes
+               WHERE tenant = ? AND project = ? AND kind = ? AND text = ?
+                 AND writer_id <> ? AND status = 'active'""",
+            (row["tenant"], row["project"], row["kind"], row["text"], row["writer_id"]),
+        ).fetchall()
+    writers = {str(result["writer_id"]) for result in matching_rows}
+    # Revocation events keep event history but withdraw corroboration contributed by
+    # a revoked writer. The event log remains the audit trail; this set is a view rule.
+    revoked_corroboration_ids: set[int] = set()
+    for revoke in conn.execute(
+        "SELECT payload FROM events WHERE tenant = ? AND type = 'revoke_writer'",
         (row["tenant"],),
     ).fetchall():
+        try:
+            payload = json.loads(revoke["payload"])
+        except (TypeError, json.JSONDecodeError):
+            continue
+        revoked_corroboration_ids.update(
+            int(value) for value in payload.get("corroboration_event_ids", [])
+            if isinstance(value, int) or (isinstance(value, str) and value.isdigit())
+        )
+
+    # A same-value no-op from another writer is a content-free event. It confirms
+    # a fact without making a second memory node, unless that writer was revoked.
+    for event in conn.execute(
+        "SELECT id, writer_id, payload FROM events WHERE tenant = ? AND type = 'corroborate'",
+        (row["tenant"],),
+    ).fetchall():
+        if int(event["id"]) in revoked_corroboration_ids:
+            continue
         if str(event["writer_id"]) == str(row["writer_id"]):
             continue
         try:
@@ -71,6 +95,17 @@ def independent_corroborations(conn: sqlite3.Connection, row: sqlite3.Row) -> in
         if payload.get("node_id") == str(row["id"]):
             writers.add(str(event["writer_id"]))
     return len(writers)
+
+
+def is_probationary(conn: sqlite3.Connection, row: sqlite3.Row) -> bool:
+    """Return true for low-trust items not yet corroborated by an independent writer.
+
+    Phase 4 treats trusted-agent and untrusted items as probationary for high-stakes
+    queries. One independent active duplicate or corroboration event lifts probation.
+    """
+    if str(row["tier"]) not in {"trusted_agent", "untrusted"}:
+        return False
+    return independent_corroborations(conn, row) < 1
 
 
 def effective_confidence(

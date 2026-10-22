@@ -2,6 +2,31 @@
 
 > Append-only log. Newest entries at top. Never edit or delete past entries — if a decision is reversed, log a new entry that supersedes it and reference the old ID.
 
+## D-018 — Corroborate non-fact items by exact independent text — 2026-10-23
+**Decision:** For items without an entity/attribute/value fact key (episodes and some procedures), high-stakes probation can be lifted when a different writer independently stores the exact same text in the same tenant and project. Fact items continue to corroborate by the canonical entity/attribute/value tuple or a matching corroboration event.
+**Why:** Episodes and procedures do not always have a fact tuple, so otherwise low-trust entries could never leave probation. Exact text is intentionally conservative and does not try to infer semantic equivalence.
+**Affects:** `trust.py`, Phase 4 probation tests, contract addendum.
+
+## D-017 — Make handoff and revocation replayable — 2026-10-23
+**Decision:** `handoff_save` appends a `handoff_save` event before materializing the packet. `revoke_writer` appends a rollback marker containing the affected node IDs and corroboration event IDs, then removes those items and dependent `derived_from` descendants from views. Original write payloads remain in the event log for audit; unlike `delete`, revocation is not a content-scrubbing operation.
+**Why:** replay must reconstruct packet state and keep revoked content out of searchable views. Retaining source events preserves the audit trail, but means a revoke is not equivalent to hard deletion.
+**Affects:** `events.py`, `store.py`, `trust.py`, `handoff.py`, replay and trust tests.
+
+## D-016 — Add an explicit high-stakes gate and usable handoff result — 2026-10-23
+**Decision:** Add the optional `high_stakes=False` argument to `MemoryStore.retrieve`, and pass it through REST and MCP. In high-stakes mode, `trusted_agent` and `untrusted` memories are probationary until at least one different writer independently confirms the same active fact. Extend `ResumeResult` with `context`, `readback_prompt`, `target_model`, `token_budget`, and `estimated_tokens`. Estimate context tokens as `ceil(characters / 4)` and cap the returned context at four characters per budget token.
+**Why:** the previous retrieval contract had no way to request the Phase 4 probation rule, and `ResumeResult(goal, packet_id)` could not return the assembled context needed to continue work. Existing default retrieval and the flat-baseline toggle remain unchanged.
+**Affects:** the frozen contract addendum, `models.py`, `store.py`, `retrieve.py`, `trust.py`, `api.py`, `mcp_server.py`, handoff tests.
+
+## D-015 — Pin Phase 3 to the official FastMCP 1.x API — 2026-10-23
+**Decision:** Phase 3 declares `mcp>=1.26,<2` and uses `mcp.server.fastmcp.FastMCP` for the nine contract-defined tools.
+**Why:** The frozen Phase 3 brief explicitly names FastMCP. The official SDK's 2.x line renamed that server API, so pinning the maintained 1.x line avoids an unreviewed breaking API shift while preserving a standards-based MCP server/client interface.
+**Affects:** `pyproject.toml`, `src/agm/mcp_server.py`, MCP integration tests.
+
+## D-014 — Guard inputs at the REST/MCP boundary — 2026-10-23
+**Decision:** REST and MCP writes pass through the same guard before the event append. Recognized secret patterns are replaced with `[REDACTED]`; instruction-like writes are recorded with `status="quarantined"` and are excluded from default retrieval and history responses. Services bind to loopback only.
+**Why:** Redaction after persistence is too late because the raw value would remain in the event log or embedding input. Local-only exposure is the safe prototype default until a separate review approves remote deployment.
+**Affects:** `config.py`, `guard.py`, `api.py`, `mcp_server.py`, `store.py`, interface tests.
+
 ## D-013 — Provisional 10-year age-factor scale — 2026-10-23
 **Decision:** Until calibration data exists, `age_factor = 1 / (1 + age_days / 3650)`; ranking recency uses the same scale.
 **Why:** D-008 names `age_factor` but does not define its function. This transparent, monotonic scale lets the Phase 2 pipeline run without claiming calibrated confidence.

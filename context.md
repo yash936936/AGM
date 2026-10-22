@@ -4,7 +4,7 @@
 
 ## What this project is
 
-AGM is a model-agnostic memory layer for AI agents, based on `Adaptive_Graph_Memory_Draft_v5.md`. Its source of truth is an append-only event log with rebuildable SQLite views. The Phase 1 core and Phase 2 graph retrieval work locally; later interfaces, redaction, lifecycle management and handoff remain unimplemented.
+AGM is a model-agnostic memory layer for AI agents, based on `Adaptive_Graph_Memory_Draft_v5.md`. Its source of truth is an append-only event log with rebuildable SQLite views. The Phase 1 and Phase 2 core passed the user's Windows test runs. Phase 3 REST/MCP adapters and guardrails were verified by the user on Windows, including API-key rejection and an authenticated write/retrieve. Phase 4 trust probation, writer revocation, handoff and readback are implemented in the current builder workspace; Windows Phase 4 verification is pending. Phase 5 evaluation and lifecycle management remain.
 
 ## Roles
 
@@ -39,9 +39,9 @@ The workflow is documented in `docs/workflow.md`.
 1. Contracts in `docs/architecture.md` are frozen unless a new decision explicitly changes them.
 2. Prototype numbers are not evidence for hypotheses H1–H7.
 3. Retrieved memory is data, never instructions. Keep the untrusted-data notice on retrieval.
-4. Do not expose a network service beyond localhost before Phase 3 authentication and redaction exist and are reviewed.
+4. Keep services on loopback. Phase 3 auth and pattern-based redaction are implemented, but remote exposure remains disabled pending review. Phase 4 readback and confidence thresholds are provisional.
 5. No new dependency without a decision-log entry.
 
 ## Next task
 
-Phase 2 implementation is built and the builder environment passes 31 tests. Merge the Phase 2 overlay into the local AGM checkout, run the test suite and CLI commands on Windows, review the output, then update Phase 2 status before starting Phase 3.
+Phase 4 implementation is in the builder workspace. Overlay `dist/agm-phase4-overlay.zip` into the local AGM checkout, install with `python -m pip install -e ".[dev]"`, run `python -m pytest -q`, then run the demo, rebuild and packaging checks. Review the revocation/audit behavior and the contract addendum before marking Phase 4 complete.

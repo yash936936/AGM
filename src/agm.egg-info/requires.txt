@@ -1,5 +1,9 @@
 pydantic>=2
 numpy
+fastapi<1,>=0.115
+uvicorn<1,>=0.30
+mcp<2,>=1.26
 
 [dev]
 pytest
+httpx<1,>=0.27

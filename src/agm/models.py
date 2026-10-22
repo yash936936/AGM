@@ -128,6 +128,12 @@ class Packet(ContractModel):
 class ResumeResult(ContractModel):
     packet_id: str
     goal: str
+    # Phase 4 decision D-016: expose assembled context without overloading goal.
+    context: str = ""
+    readback_prompt: str = ""
+    target_model: str = ""
+    token_budget: int = 0
+    estimated_tokens: int = 0
 
 
 class ReadbackReport(ContractModel):

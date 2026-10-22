@@ -1,0 +1,20 @@
+{
+  "keys": [
+    {
+      "api_key": "replace-with-a-long-random-local-key",
+      "tenant_id": "local-dev",
+      "writer_id": "local-agent",
+      "trust_tier": "trusted_agent",
+      "project": "default",
+      "agent": "local-agent",
+      "scopes": ["memory:read", "memory:write", "memory:delete"]
+    },
+    {
+      "api_key": "replace-with-a-different-admin-key",
+      "tenant_id": "local-dev",
+      "writer_id": "local-admin",
+      "trust_tier": "human_verified",
+      "scopes": ["memory:read", "memory:write", "memory:delete", "admin"]
+    }
+  ]
+}

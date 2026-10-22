@@ -4,14 +4,20 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agm"
-version = "0.2.0"
-description = "Adaptive Graph Memory prototype, Phase 2 graph-aware retrieval"
+version = "0.4.0"
+description = "Adaptive Graph Memory prototype with trust probation, rollback, REST, MCP and handoff"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = ["pydantic>=2", "numpy"]
+dependencies = [
+  "pydantic>=2",
+  "numpy",
+  "fastapi>=0.115,<1",
+  "uvicorn>=0.30,<1",
+  "mcp>=1.26,<2",
+]
 
 [project.optional-dependencies]
-dev = ["pytest"]
+dev = ["pytest", "httpx>=0.27,<1"]
 
 [project.scripts]
 agm = "agm.cli:main"
