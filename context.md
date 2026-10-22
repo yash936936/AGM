@@ -44,6 +44,7 @@ Full loop and the paste-ready builder prompt: `docs/workflow.md`.
 ├── src/agm/             code (built by the builder)
 ├── tests/
 ├── eval/
+├── prompts/             paste-ready builder prompts, one per phase
 └── examples/
 ```
 

@@ -4,6 +4,16 @@
 > if a decision is reversed, log a new entry that supersedes it and reference
 > the old ID.
 
+## D-010 — Hard delete scrubs the original event payload — 2026-10-22
+**Decision:** `delete` removes the node and all derived data, replaces the originating event's payload with `{"scrubbed": true}`, and appends a content-free delete event. Replay skips scrubbed events.
+**Why:** v5 says the log is append-only but also that hard deletion removes content everywhere (P13). Content left in the log would defeat deletion. Cost: the log is no longer strictly immutable for deleted items; rollback cannot restore them.
+**Affects:** events.py, store.py, tests/test_replay.py.
+
+## D-009 — Phase 1 includes packaging and a minimal CLI entry point — 2026-10-22
+**Decision:** Phase 1 adds `pyproject.toml`, `__main__.py`, `cli.py` (`agm demo`, `agm rebuild`) and `scripts/pack.py`. Phase 3 extends `cli.py` with `serve-api` and `serve-mcp`.
+**Why:** The builder must hand back a runnable, zippable project and the user needs a one-command smoke test. Dependencies stay pydantic and numpy only until Phase 3.
+**Affects:** phases.md Phase 1, architecture.md file tree.
+
 ## D-008 — Confidence and ranking weights are uncalibrated placeholders — 2026-10-22
 **Decision:** confidence = extraction_conf × tier_weight × (1 + 0.15 × min(independent_corroborations, 3)) × age_factor, clipped to [0,1]. Rank = 0.55 sim + 0.15 conf + 0.10 trust + 0.10 recency + 0.10 decay_weight. Abstain below score 0.25 after one widening. All proposed, none calibrated.
 **Why:** v5 D3 and D7 are open and need labelled data. Placeholders let the pipeline run. Never report these scores as calibrated.

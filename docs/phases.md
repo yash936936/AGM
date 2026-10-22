@@ -13,7 +13,9 @@
 - `src/agm/events.py` — HLC, append with idempotency, replay
 - `src/agm/embed.py` — `Embedder`, `HashEmbedder`
 - `src/agm/store.py` — write, supersede, delete, history, rebuild_views, retrieve with `expand=False` only
+- `pyproject.toml`, `src/agm/__main__.py`, `src/agm/cli.py` (`agm demo`, `agm rebuild`), `scripts/pack.py` (D-009)
 - `tests/test_store.py`, `tests/test_replay.py`
+**Builder prompt:** `prompts/phase1_builder.md` (paste whole file into ChatGPT)
 **Done when:** pytest green; replay test drops all views, replays events and gets identical
 nodes; same idempotency key twice yields one item; supersede hides the old value from
 current retrieve and shows it with `include_superseded=True`; delete removes node, FTS row,
