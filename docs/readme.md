@@ -1,18 +1,26 @@
 # AGM — Adaptive Graph Memory (prototype)
 
-A model-agnostic memory layer for AI agents: append-only event log, typed temporal graph,
-supersession of changed facts, confidence and provenance, and a handoff packet for
-switching models. Design: Draft v5.
+AGM is a model-agnostic memory layer for AI agents. Phase 1 adds an append-only SQLite event log, a temporal fact store, corrections, hard deletion, and flat retrieval. Phase 2 adds entity-aware graph expansion, alias resolution, provisional confidence/trust ranking, contested writes, and query abstention.
 
 ## Status
-Docs scaffolded; no code yet. Phase 1 (core store) is next. Nothing here works today.
+
+Phase 1 passed 10 tests on the user's Windows environment. Phase 2 currently passes 31 tests in the builder environment (Python 3.13.5); Windows validation and supervisor approval remain pending. D-008 confidence and ranking coefficients remain uncalibrated placeholders.
 
 ## Setup
-(open — filled in when Phase 1 lands.) Planned: Python 3.11+, `pip install -e .`, `agm serve-api` or `agm serve-mcp`.
+
+Python 3.11+, SQLite with FTS5, `pydantic>=2`, `numpy`, and `pytest` for tests:
+
+```bash
+python -m pip install -e ".[dev]"
+python -m pytest -q
+python -m agm demo
+```
+
+`retrieve(expand=False)` preserves the flat baseline. The default graph-enabled path performs bounded expansion, trust-aware ranking, one widening attempt and abstention when evidence remains weak. REST/MCP interfaces, redaction, quarantine, and handoff are not implemented yet.
 
 ## Structure
-See `docs/architecture.md` for full details.
+
+See `docs/architecture.md` for frozen contracts and `docs/phases.md` for scope and status.
 
 ---
-**Next:** Return to [`context.md`](../context.md) before starting a new task —
-it routes you to the right file for what you are about to do.
+**Next:** Return to [`context.md`](../context.md) before starting a new task — it routes you to the right file for what you are about to do.

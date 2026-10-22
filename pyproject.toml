@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agm"
-version = "0.1.0"
-description = "Adaptive Graph Memory prototype, Phase 1"
+version = "0.2.0"
+description = "Adaptive Graph Memory prototype, Phase 2 graph-aware retrieval"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = ["pydantic>=2", "numpy"]

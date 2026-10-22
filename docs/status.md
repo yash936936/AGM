@@ -2,18 +2,21 @@
 
 > Updated every run. Newest entry at top.
 
-## 2026-10-22 — Phase 1 builder prompt ready
-**Current phase:** Phase 1 — Core store and event log (prompt issued, not yet built)
-**Last debug:** DBG-001
-**Last decisions:** D-009 (packaging and CLI in Phase 1), D-010 (delete scrubs event payload)
-**Next up:** paste `prompts/phase1_builder.md` into ChatGPT, bring back the zip or files plus real test output for Claude's review.
+## 2026-10-23 — Phase 2 implementation built; awaiting local verification
+**Current phase:** Phase 2 — graph layer, ranking, abstention.
+**Last debug:** DBG-002, Phase 2 graph retrieval, conflict handling, alias replay and ranking tests.
+**Last decisions:** D-011 to D-013 (event-stable entity identity, evidence-based abstention gate, provisional age factor).
+**Validation:** `PYTHONPATH=src python -m pytest -q` passed 31 tests in 0.57s on Python 3.13.5 in the builder environment. `compileall`, the demo, and the rebuild CLI also exited successfully. The user has not yet rerun the Phase 2 suite on Windows.
+**Next up:** extract `dist/agm-phase2-overlay.zip` over the local AGM checkout, run `python -m pytest -q`, `python -m agm demo`, `python -m agm rebuild --db ./demo.db`, and `python scripts/pack.py`; review the output before marking Phase 2 done.
+
+## 2026-10-22 — Phase 1 implementation verified by user
+**Validation:** the user reported `10 passed in 5.06s` on Windows Python 3.14.7, and the demo and rebuild commands exited successfully. The first package listing exposed `.git` content, so the packer excludes `.git` and other generated directories.
 
 ## 2026-10-22 — Docs scaffolded from Draft v5
-**Current phase:** Not started (next: Phase 1 — Core store and event log)
-**Last debug:** DBG-001, docs consistency check
-**Last decisions:** D-001 to D-008 logged
-**Next up:** (1) user confirms root path and whether the ChatGPT builder can execute code; (2) paste builder prompt plus Phase 1 section and architecture.md into ChatGPT; (3) bring code and test output back to Claude for review.
+**Current phase:** Phase 1 — Core store and event log.
+**Last debug:** DBG-001, docs consistency check.
+**Last decisions:** D-001 to D-008 logged.
+**Next up:** code, test, and review one phase at a time.
 
 ---
-**Next:** Return to [`context.md`](../context.md) before starting a new task —
-it routes you to the right file for what you are about to do.
+**Next:** Return to [`context.md`](../context.md) before starting a new task — it routes you to the right file for what you are about to do.

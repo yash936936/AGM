@@ -1,7 +1,7 @@
 Metadata-Version: 2.4
 Name: agm
-Version: 0.1.0
-Summary: Adaptive Graph Memory prototype, Phase 1
+Version: 0.2.0
+Summary: Adaptive Graph Memory prototype, Phase 2 graph-aware retrieval
 Requires-Python: >=3.11
 Description-Content-Type: text/markdown
 Requires-Dist: pydantic>=2
@@ -9,32 +9,36 @@ Requires-Dist: numpy
 Provides-Extra: dev
 Requires-Dist: pytest; extra == "dev"
 
-# AGM Phase 1
+# AGM Phase 2
 
-A small SQLite-backed adaptive graph memory prototype. Phase 1 supports episodes, facts, procedures, fact correction/supersession, hard deletion, and flat retrieval.
+Adaptive Graph Memory (AGM) is a model-agnostic memory store for AI agents. Phase 1 provides an event-sourced SQLite core; Phase 2 adds entity-aware graph retrieval, alias resolution, provisional confidence/trust ranking, bounded expansion, contested writes, and abstention.
+
+## Requirements
+
+Python 3.11 or newer, SQLite with FTS5, `pydantic>=2`, and `numpy`. Tests use `pytest`.
 
 ## Install
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -e ".[dev]"
+source .venv/bin/activate        # Windows Git Bash: source .venv/Scripts/activate
+python -m pip install -e ".[dev]"
 ```
-
-SQLite must include FTS5, which AGM checks when opening a store.
 
 ## Test
 
 ```bash
-pytest -q
+python -m pytest -q
 ```
 
-## Demo and rebuild
+## Demo, rebuild, and package
 
 ```bash
 python -m agm demo
-agm rebuild --db ./demo.db
+python -m agm rebuild --db ./demo.db
 python scripts/pack.py
 ```
 
-The append-only event log is the source of truth. Derived tables can be rebuilt using `rebuild_views()`. Phase 1 deliberately does not implement graph expansion, trust rules, aliases, or handoff flows.
+`retrieve(..., expand=False)` keeps the flat Phase 1 baseline available. The default `expand=True` path uses bounded graph expansion, confidence/trust/recency ranking and a one-time sufficiency widening before abstention. Retrieved memory is always labeled as untrusted data, not instructions.
+
+**Scoring status:** Confidence and rank coefficients from decision D-008 are provisional placeholders, not calibrated probabilities or evidence that graph retrieval improves accuracy. Phase 2 does not add REST/MCP interfaces, authentication, redaction, quarantine, lifecycle decay, or handoff. Those remain later-phase work.

@@ -19,8 +19,8 @@ def _demo() -> int:
                 text="AGM is in draft phase", valid_from="2026-01-01T00:00:00Z",
             ))
             corrected = store.write(ctx, WriteItem(
-                kind="fact", entity="AGM", attribute="phase", value="Phase 1",
-                text="AGM is in Phase 1", valid_from="2026-02-01T00:00:00Z",
+                kind="fact", entity="AGM", attribute="phase", value="Phase 2",
+                text="AGM is in Phase 2", valid_from="2026-02-01T00:00:00Z",
             ))
             store.write(ctx, WriteItem(
                 kind="episode", text="The design uses an append-only event log.",
@@ -37,7 +37,7 @@ def _demo() -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="agm", description="Adaptive Graph Memory, Phase 1")
+    parser = argparse.ArgumentParser(prog="agm", description="Adaptive Graph Memory, Phase 2")
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("demo", help="run a temporary write/retrieve/correction/delete demo")
     rebuild = subparsers.add_parser("rebuild", help="rebuild all views from the event log")
