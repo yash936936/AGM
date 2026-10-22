@@ -1,6 +1,17 @@
 # Decisions — AGM prototype
 
-> Append-only log. Newest entries at top. Never edit or delete past entries — if a decision is reversed, log a new entry that supersedes it and reference the old ID.
+> Append-only. Newest entries at top. Never edit or delete past entries — if a decision is reversed, log a new entry that supersedes it and reference the old ID.
+
+## D-020 — Phase 5 evaluation is a synthetic smoke test — 2026-10-23
+**Decision:** `eval/stale_facts.py` runs hand-authored corrected-fact, entity-owner, related-database, and unanswerable scenarios against `retrieve(expand=False)` and `retrieve(expand=True)`. Accuracy means an expected answer appears in returned items; stale-fact error means the old value appears for the corrected-fact scenario; abstention rate is abstained scenarios divided by all scenarios.
+**Why:** A small offline evaluation makes the main paths and reporting executable before a labelled, preregistered benchmark exists. D-007 remains in force: these results are not evidence for or against H1–H7.
+**Affects:** `eval/stale_facts.py`, Phase 5, README.
+
+## D-019 — Lazy decay weight and dry-run lifecycle threshold — 2026-10-23
+**Decision:** Compute graph-rank decay lazily from idle time, retrieval count, incoming `derived_from` citations and independent corroborations. Idle weight is `1 / (1 + idle_days / 365)`; bounded bonuses are added for usage, citations and up to two independent corroborations, and the result is clipped to `[0,1]`. Pinned items receive `1.0`. `agm lifecycle --dry-run` lists active, unpinned items below default threshold `0.30` but never changes state.
+**Why:** This introduces an inspectable lifecycle signal without silently archiving user memory. All coefficients and the threshold are provisional and must not be treated as calibrated.
+**Affects:** `src/agm/trust.py`, `src/agm/retrieve.py`, `src/agm/cli.py`, lifecycle tests.
+
 
 ## D-018 — Corroborate non-fact items by exact independent text — 2026-10-23
 **Decision:** For items without an entity/attribute/value fact key (episodes and some procedures), high-stakes probation can be lifted when a different writer independently stores the exact same text in the same tenant and project. Fact items continue to corroborate by the canonical entity/attribute/value tuple or a matching corroboration event.

@@ -14,7 +14,7 @@ EXCLUDED_SUFFIXES = {".pyc", ".pyo", ".db", ".sqlite", ".sqlite3"}
 EXCLUDED_ENDINGS = {".egg-info"}
 OVERLAY_FILES = [
     ".gitignore", "README.md", "context.md", "pyproject.toml", "scripts/pack.py",
-    "PHASE1_REPORT.md", "PHASE2_REPORT.md", "PHASE3_REPORT.md", "PHASE4_REPORT.md",
+    "PHASE1_REPORT.md", "PHASE2_REPORT.md", "PHASE3_REPORT.md", "PHASE4_REPORT.md", "PHASE5_REPORT.md",
     "docs/decisions.md", "docs/debug.md", "docs/phases.md", "docs/readme.md", "docs/status.md",
     "docs/phase4_contract_addendum.md",
     "src/agm/__init__.py", "src/agm/__main__.py", "src/agm/api.py", "src/agm/cli.py",
@@ -24,6 +24,7 @@ OVERLAY_FILES = [
     "tests/test_store.py", "tests/test_replay.py", "tests/test_retrieve.py", "tests/test_contested.py",
     "tests/test_trust_phase2.py", "tests/test_trust.py", "tests/test_handoff.py",
     "tests/test_guard.py", "tests/test_e2e_rest.py", "tests/test_mcp_stdio.py",
+    "tests/test_lifecycle.py", "tests/test_eval.py", "tests/test_cli.py", "eval/stale_facts.py",
     "examples/agm.keys.example.json", "examples/python_client.py", "examples/curl.md",
     "examples/claude_code_mcp.md", "examples/chatgpt_actions.md",
 ]

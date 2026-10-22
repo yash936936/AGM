@@ -11,7 +11,7 @@ import numpy as np
 from .events import utc_now
 from .models import Ctx, Node, RetrieveResult, RetrieveRoute
 from .store import _read_vector, _iso_key, canonical_entity, sanitize_fts_query
-from .trust import effective_confidence, is_probationary, rank_score, recency_score, tier_weight
+from .trust import compute_decay_weight, effective_confidence, independent_corroborations, is_probationary, rank_score, recency_score, tier_weight
 
 _LOG = logging.getLogger(__name__)
 ABSTAIN_THRESHOLD = 0.25
@@ -315,7 +315,18 @@ def graph_retrieve(
         conf = effective_confidence(store.conn, row)
         trust = tier_weight(str(row["tier"]))
         recency = recency_score(str(row["valid_from"]))
-        decay = float(row["decay_weight"])
+        citation_count = int(store.conn.execute(
+            "SELECT COUNT(*) FROM edges WHERE dst = ? AND type = 'derived_from'",
+            (row["id"],),
+        ).fetchone()[0])
+        decay = compute_decay_weight(
+            str(row["valid_from"]),
+            last_used=str(row["last_used"]) if row["last_used"] else None,
+            usage_count=int(row["usage_count"]),
+            citation_count=citation_count,
+            corroboration_count=independent_corroborations(store.conn, row),
+            pinned=bool(row["pinned"]),
+        )
         final_score = rank_score(
             similarity=similarity, confidence=conf, trust=trust,
             recency=recency, decay_weight=decay,

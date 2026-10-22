@@ -21,10 +21,13 @@ src/agm.egg-info/dependency_links.txt
 src/agm.egg-info/entry_points.txt
 src/agm.egg-info/requires.txt
 src/agm.egg-info/top_level.txt
+tests/test_cli.py
 tests/test_contested.py
 tests/test_e2e_rest.py
+tests/test_eval.py
 tests/test_guard.py
 tests/test_handoff.py
+tests/test_lifecycle.py
 tests/test_mcp_stdio.py
 tests/test_replay.py
 tests/test_retrieve.py

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import math
 import sqlite3
 from datetime import datetime, timezone
 
@@ -143,3 +144,106 @@ def rank_score(
         + 0.10 * decay_weight
     )
     return min(1.0, max(0.0, score))
+
+
+DEFAULT_ARCHIVE_THRESHOLD = 0.30
+
+
+def compute_decay_weight(
+    valid_from: str,
+    *,
+    last_used: str | None = None,
+    usage_count: int = 0,
+    citation_count: int = 0,
+    corroboration_count: int = 0,
+    pinned: bool = False,
+    now: datetime | None = None,
+) -> float:
+    """Compute a provisional decay weight without persisting it.
+
+    The last activity timestamp is ``last_used`` when available, otherwise
+    ``valid_from``. The idle factor halves roughly each idle year; retrievals,
+    incoming derived-from citations and independent corroborations add small
+    bounded bonuses, and pinned memories stay at 1.0. This is a provisional,
+    uncalibrated forgetting model.
+    """
+    if pinned:
+        return 1.0
+    current = now or datetime.now(timezone.utc)
+    if current.tzinfo is None:
+        current = current.replace(tzinfo=timezone.utc)
+    activity_time = _parse_time(last_used or valid_from)
+    idle_days = max(0.0, (current.astimezone(timezone.utc) - activity_time).total_seconds() / 86400.0)
+    idle_factor = 1.0 / (1.0 + idle_days / 365.0)
+    use_bonus = min(0.12, 0.03 * math.log1p(max(0, int(usage_count))))
+    citation_bonus = min(0.08, 0.04 * math.log1p(max(0, int(citation_count))))
+    corroboration_bonus = min(0.10, 0.05 * max(0, min(int(corroboration_count), 2)))
+    return min(1.0, max(0.0, idle_factor + use_bonus + citation_bonus + corroboration_bonus))
+
+
+def lifecycle_candidates(
+    conn: sqlite3.Connection,
+    *,
+    threshold: float = DEFAULT_ARCHIVE_THRESHOLD,
+    tenant: str | None = None,
+    project: str | None = None,
+    now: datetime | None = None,
+) -> list[dict[str, object]]:
+    """Return active, unpinned nodes below the decay threshold without mutation.
+
+    This helper is deliberately read-only. Phase 5 only reports candidates; it
+    does not archive nodes or append lifecycle events.
+    """
+    if not 0.0 <= threshold <= 1.0:
+        raise ValueError("threshold must be between 0.0 and 1.0")
+    where = ["n.status = 'active'", "n.pinned = 0"]
+    params: list[object] = []
+    if tenant is not None:
+        where.append("n.tenant = ?")
+        params.append(tenant)
+    if project is not None:
+        where.append("n.project = ?")
+        params.append(project)
+    rows = conn.execute(
+        "SELECT n.*, e.canonical AS entity FROM nodes n "
+        "LEFT JOIN entities e ON e.id = n.entity_id WHERE " + " AND ".join(where) +
+        " ORDER BY n.event_id ASC, n.id ASC",
+        tuple(params),
+    ).fetchall()
+    candidates: list[dict[str, object]] = []
+    current = now or datetime.now(timezone.utc)
+    if current.tzinfo is None:
+        current = current.replace(tzinfo=timezone.utc)
+    for row in rows:
+        citation_count = int(conn.execute(
+            "SELECT COUNT(*) FROM edges WHERE dst = ? AND type = 'derived_from'",
+            (row["id"],),
+        ).fetchone()[0])
+        corroboration_count = independent_corroborations(conn, row)
+        weight = compute_decay_weight(
+            str(row["valid_from"]),
+            last_used=str(row["last_used"]) if row["last_used"] else None,
+            usage_count=int(row["usage_count"]),
+            citation_count=citation_count,
+            corroboration_count=corroboration_count,
+            pinned=bool(row["pinned"]),
+            now=current,
+        )
+        if weight >= threshold:
+            continue
+        activity = _parse_time(str(row["last_used"] or row["valid_from"]))
+        idle_days = max(0.0, (current.astimezone(timezone.utc) - activity).total_seconds() / 86400.0)
+        candidates.append({
+            "id": str(row["id"]),
+            "tenant": str(row["tenant"]),
+            "project": str(row["project"]),
+            "kind": str(row["kind"]),
+            "entity": str(row["entity"]) if row["entity"] is not None else None,
+            "usage_count": int(row["usage_count"]),
+            "citation_count": citation_count,
+            "corroboration_count": corroboration_count,
+            "idle_days": round(idle_days, 1),
+            "decay_weight": round(weight, 4),
+            "threshold": float(threshold),
+        })
+    return candidates

@@ -2,6 +2,24 @@
 
 > Updated every run. Newest entry at top.
 
+## 2026-10-23 — Phase 5 verified on Windows; final demo-label cleanup
+**Current phase:** All five planned prototype phases implemented; final review and next-iteration scoping remain.
+**Last debug:** DBG-007, Phase 5 Windows verification and demo label fix.
+**Last decisions:** D-019 (lazy decay and dry-run threshold), D-020 (synthetic evaluation metric definitions); D-007 caveat remains active.
+**Validation:** User ran `python -m pip install -e ".[dev]"`, `python -m pytest -q` — `61 passed` in 20.24s with one Starlette/httpx deprecation warning; `python eval/stale_facts.py` reported flat/graph accuracy 100%, stale-fact error 0%, abstention 0% flat / 25% graph, 3 graph-expanded items; demo handoff readback passed; lifecycle dry run reported zero candidates and explicitly no mutation; rebuild of separate empty `demo.db` reported zero nodes; packer created both Phase 5 ZIPs. A follow-up patch changes the demo fact from the stale “Phase 3” label to “Phase 5” and adds a regression test; the updated builder suite reports 61 passed, 1 skipped in 2.71s. Rerun on Windows to include the added test with the MCP test enabled.
+**Next up:** apply the final demo-label patch/overlay, rerun tests and pack, inspect the ZIP, and keep services loopback-only pending security review.
+
+## 2026-10-23 — Phase 5 evaluation and lifecycle implemented; Windows verification pending
+**Current phase:** Phase 5 — Mini eval, shadow lifecycle, demo.
+**Last debug:** DBG-006, synthetic evaluation, lazy decay and lifecycle dry run.
+**Last decisions:** D-019 (lazy decay and dry-run threshold), D-020 (synthetic evaluation metric definitions); D-007 caveat remains active.
+**Validation:** Builder environment: `PYTHONPATH=src python -m pytest -q` — 60 passed, 1 skipped in 2.10s. The MCP stdio test was skipped because the official SDK was unavailable in that builder runtime. Evaluation command ran and reported flat/graph accuracy 100%, stale-fact error 0%, abstention 0% flat / 25% graph, with 3 graph-expanded items. Demo printed a successful handoff readback. Lifecycle dry run and compileall succeeded. These synthetic results are smoke-test outputs only.
+**Next up:** User applies Phase 5 overlay on Windows, runs the full tests, `python eval/stale_facts.py`, demo, lifecycle dry run against a populated database, rebuild, and pack. Do not close Phase 5 before review.
+
+## 2026-10-23 — Phase 4 trust, rollback and handoff verified on Windows
+**Current phase:** Phase 5 — Mini eval, shadow lifecycle, demo.
+**Validation:** User reported `56 passed` in 11.93s after installing `agm 0.4.0`; the MCP integration ran, demo completed, rebuild reported zero nodes for the empty `demo.db`, and packaging created Phase 4 archives. Starlette/httpx emitted one deprecation warning only.
+
 ## 2026-10-23 — Phase 4 trust, rollback and handoff implemented; Windows verification pending
 **Current phase:** Phase 4 — Trust, handoff, rollback.
 **Last debug:** DBG-005, Phase 4 trust and handoff tests.

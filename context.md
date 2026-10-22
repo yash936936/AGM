@@ -4,7 +4,7 @@
 
 ## What this project is
 
-AGM is a model-agnostic memory layer for AI agents, based on `Adaptive_Graph_Memory_Draft_v5.md`. Its source of truth is an append-only event log with rebuildable SQLite views. The Phase 1 and Phase 2 core passed the user's Windows test runs. Phase 3 REST/MCP adapters and guardrails were verified by the user on Windows, including API-key rejection and an authenticated write/retrieve. Phase 4 trust probation, writer revocation, handoff and readback are implemented in the current builder workspace; Windows Phase 4 verification is pending. Phase 5 evaluation and lifecycle management remain.
+AGM is a model-agnostic memory layer for AI agents, based on `Adaptive_Graph_Memory_Draft_v5.md`. Its source of truth is an append-only event log with rebuildable SQLite views. The user has verified all five implementation phases on Windows. The latest integrated Phase 5 test run reports 61 passed in 20.24 seconds. REST/MCP adapters, API-key authentication, guardrails, trust probation, revocation, handoff/readback, synthetic flat-vs-graph evaluation, lazy decay and read-only lifecycle dry run are implemented. Confidence and evaluation metrics remain provisional; the synthetic evaluation is not evidence for or against H1–H7.
 
 ## Roles
 
@@ -44,4 +44,4 @@ The workflow is documented in `docs/workflow.md`.
 
 ## Next task
 
-Phase 4 implementation is in the builder workspace. Overlay `dist/agm-phase4-overlay.zip` into the local AGM checkout, install with `python -m pip install -e ".[dev]"`, run `python -m pytest -q`, then run the demo, rebuild and packaging checks. Review the revocation/audit behavior and the contract addendum before marking Phase 4 complete.
+All five planned prototype phases are implemented and the integrated test suite has been verified on Windows. Remaining work is final review, archive inspection, and deciding whether to begin a separately scoped next iteration. Keep services on loopback until a separate security review is completed.

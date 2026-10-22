@@ -38,13 +38,13 @@
 **Goal:** switch models mid-task and contain a bad writer.
 **Files touched:** `src/agm/trust.py`, new `src/agm/handoff.py`, `src/agm/store.py`, `src/agm/retrieve.py`, `src/agm/models.py`, REST/MCP retrieval options, and trust/handoff tests.
 **Done when:** high-stakes retrieval excludes low-trust items until independently corroborated; handoff assembly respects the rough token budget; readback mismatches identify missing goals, decisions and open items; writer revocation removes its items and `derived_from` descendants; replay restores packets and keeps revoked views removed.
-**Status:** Implemented in the builder workspace. Builder test run: 55 passed, 1 skipped because the optional official MCP SDK is absent from that runtime. Windows Phase 4 verification is pending.
+**Status:** Windows-verified on 2026-10-23 by the user: `56 passed` in 11.93s. The full test count includes the MCP stdio integration test; only a Starlette/httpx deprecation warning was reported.
 
 ## Phase 5 — Mini eval, shadow lifecycle, demo
 **Goal:** an honest first look at flat vs graph, plus a runnable demo.
-**Planned files:** `eval/stale_facts.py`, `src/agm/trust.py`, `src/agm/cli.py`, and the public README.
-**Done when:** evaluation compares flat and graph modes and carries the D-007 caveat; demo runs end to end offline; dry-run lifecycle lists candidates without mutating state.
-**Status:** Not started.
+**Files implemented:** `eval/stale_facts.py`, lazy decay in `src/agm/trust.py` and graph ranking, `src/agm/cli.py` lifecycle command and handoff demo, `tests/test_eval.py`, `tests/test_lifecycle.py`, and updated README/docs.
+**Done when:** evaluation compares flat and graph modes and carries the D-007 caveat; demo runs end to end offline through handoff/readback; dry-run lifecycle lists candidates without mutating events or memory views.
+**Status:** Windows-verified by the user on 2026-10-23: `61 passed` in 20.24 seconds. Evaluation reported flat/graph accuracy 100%, stale-fact error 0%, abstention 0% flat / 25% graph, and 3 expanded items. Demo handoff readback passed; lifecycle dry run reported zero candidates and no mutations; packaging created the workspace and overlay ZIPs. Evaluation is a smoke test only; no H1–H7 conclusions are supported. The demo label was corrected to Phase 5 in a final polish patch; the updated builder suite reports 61 passed, 1 skipped in 2.71s. Rerun the final patch on Windows to include the new demo-label regression test alongside MCP.
 
 ---
 **Next:** Return to [`context.md`](../context.md) before starting a new task — it routes you to the right file for what you are about to do.

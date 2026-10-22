@@ -1,7 +1,7 @@
 Metadata-Version: 2.4
 Name: agm
-Version: 0.4.0
-Summary: Adaptive Graph Memory prototype with trust probation, rollback, REST, MCP and handoff
+Version: 0.5.0
+Summary: Adaptive Graph Memory prototype with graph retrieval, trust, handoff, REST, MCP and lifecycle evaluation
 Requires-Python: >=3.11
 Description-Content-Type: text/markdown
 Requires-Dist: pydantic>=2
@@ -13,9 +13,9 @@ Provides-Extra: dev
 Requires-Dist: pytest; extra == "dev"
 Requires-Dist: httpx<1,>=0.27; extra == "dev"
 
-# AGM Phase 4
+# AGM Phase 5
 
-Adaptive Graph Memory (AGM) is a local-first, model-agnostic memory layer for AI agents. Phase 1 added the event-sourced SQLite core; Phase 2 added aliases, bounded graph retrieval, contested writes, provisional trust ranking and abstention. Phase 3 added authenticated REST endpoints, nine MCP tools, API-key scopes, pre-storage secret redaction, and quarantine of instruction-like memory writes. Phase 4 adds probation checks for high-stakes retrieval, writer revocation and rollback, and replayable cross-model handoff with readback verification.
+Adaptive Graph Memory (AGM) is a local-first, model-agnostic memory layer for AI agents. Phase 1 added the event-sourced SQLite core; Phase 2 added aliases, bounded graph retrieval, contested writes, provisional trust ranking and abstention. Phase 3 added authenticated REST endpoints, nine MCP tools, API-key scopes, pre-storage secret redaction, and quarantine of instruction-like memory writes. Phase 4 adds probation checks for high-stakes retrieval, writer revocation and rollback, and replayable cross-model handoff with readback verification. Phase 5 adds a synthetic flat-versus-graph smoke evaluation, lazy decay scoring, and a read-only lifecycle dry run.
 
 **Prototype warning:** confidence and ranking values are not calibrated. Services bind to loopback only. Do not expose the API or streamable MCP endpoint to another machine or the public internet without a separate security review.
 
@@ -77,15 +77,32 @@ REST and MCP writes pass through the same guard. Recognized API-key, token, pass
 
 This prototype guard is a narrow pattern-based filter, not a complete prompt-injection detector or secret scanner. Use local loopback only and review the code before connecting real agents or sensitive data.
 
+## Phase 5 evaluation and lifecycle
+
+Run the synthetic flat-vs-graph comparison:
+
+```bash
+python eval/stale_facts.py
+```
+
+Inspect items that would be archived without changing the database:
+
+```bash
+python -m agm lifecycle --db ./agm.db --dry-run
+```
+
+The dry run lists active, unpinned items below a provisional decay threshold. Phase 5 does not archive or delete those items.
+
 ## Tests and smoke check
 
 ```bash
 python -m pytest -q
 python -m agm demo
 python -m agm rebuild --db ./demo.db
+python -m agm lifecycle --db ./agm.db --dry-run
 python scripts/pack.py
 ```
 
-The MCP stdio integration test runs when the official `mcp` dependency is installed. Phase 4 readback similarity, confidence and ranking remain provisional and are not calibrated.
+The MCP stdio integration test runs when the official `mcp` dependency is installed. Phase 4 readback similarity and the Phase 2 confidence/ranking coefficients are provisional and are not calibrated. The Phase 5 synthetic evaluation is not evidence for or against H1–H7 (D-007).
 
 `retrieve(expand=False)` retains the flat Phase 1 baseline. `high_stakes=True` gates `trusted_agent` and `untrusted` items until independently corroborated. Revocation removes searchable views and derived descendants, but preserves source event payloads for audit; it is not a hard-delete operation. Confidence, trust and rank coefficients from D-008 are placeholders, not calibrated probabilities or evidence that graph retrieval is better.
