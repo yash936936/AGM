@@ -13,9 +13,9 @@ Provides-Extra: dev
 Requires-Dist: pytest; extra == "dev"
 Requires-Dist: httpx<1,>=0.27; extra == "dev"
 
-# AGM Phase 5
+# AGM Phase 6
 
-Adaptive Graph Memory (AGM) is a local-first, model-agnostic memory layer for AI agents. Phase 1 added the event-sourced SQLite core; Phase 2 added aliases, bounded graph retrieval, contested writes, provisional trust ranking and abstention. Phase 3 added authenticated REST endpoints, nine MCP tools, API-key scopes, pre-storage secret redaction, and quarantine of instruction-like memory writes. Phase 4 adds probation checks for high-stakes retrieval, writer revocation and rollback, and replayable cross-model handoff with readback verification. Phase 5 adds a synthetic flat-versus-graph smoke evaluation, lazy decay scoring, and a read-only lifecycle dry run.
+Adaptive Graph Memory (AGM) is a local-first, model-agnostic memory layer for AI agents. Phase 1 added the event-sourced SQLite core; Phase 2 added aliases, bounded graph retrieval, contested writes, provisional trust ranking and abstention. Phase 3 added authenticated REST endpoints, nine MCP tools, API-key scopes, pre-storage secret redaction, and quarantine of instruction-like memory writes. Phase 4 adds probation checks for high-stakes retrieval, writer revocation and rollback, and replayable cross-model handoff with readback verification. Phase 5 adds a synthetic flat-versus-graph smoke evaluation, lazy decay scoring, and a read-only lifecycle dry run. Phase 6 adds a richer deterministic synthetic evaluation to compare flat, filtered-flat, and graph retrieval without replacing the original smoke test.
 
 **Prototype warning:** confidence and ranking values are not calibrated. Services bind to loopback only. Do not expose the API or streamable MCP endpoint to another machine or the public internet without a separate security review.
 
@@ -73,13 +73,13 @@ python -m agm serve-mcp --transport stdio
 
 ## Guardrails
 
-REST and MCP writes pass through the same guard. Recognized API-key, token, password and credential patterns are redacted before the event is persisted or text is embedded. Instruction-like text such as “ignore all previous instructions” is stored with `status="quarantined"` and is omitted from default retrieval and history responses. Retrieval responses preserve the notice that memory is untrusted data, not instructions.
+Secret redaction and instruction-like-text quarantine run inside `MemoryStore.write` and `MemoryStore.supersede` (D-021), so direct library calls receive the same protection as REST and MCP. `supersede` also sanitizes its reason and `handoff_save` sanitizes task-state strings and the session ID. The adapter guard remains a thin wrapper. `delete` and `revoke_writer` checkpoint the write-ahead log after commit and each SQLite connection enables `secure_delete` (D-022). Revocation retains event payloads for audit; hard delete scrubs the source event.
 
 This prototype guard is a narrow pattern-based filter, not a complete prompt-injection detector or secret scanner. Use local loopback only and review the code before connecting real agents or sensitive data.
 
 ## Phase 5 evaluation and lifecycle
 
-Run the synthetic flat-vs-graph comparison:
+The original 4-scenario smoke test remains available:
 
 ```bash
 python eval/stale_facts.py
@@ -93,19 +93,28 @@ python -m agm lifecycle --db ./agm.db --dry-run
 
 The dry run lists active, unpinned items below a provisional decay threshold. Phase 5 does not archive or delete those items.
 
+## Phase 6 evaluation v2
+
+The stronger seeded evaluation compares three modes over the same generated store: `flat` (`expand=False`, no entity filter), `flat_filter` (`expand=False`, metadata entity filter), and `graph` (`expand=True`, no entity filter). It generates six families: direct facts, corrected/stale facts, entity-centric sets, 1- and 2-hop queries, temporal queries, and unanswerable near-misses. It reports accuracy@k, stale-error rate, abstention correctness, store abstentions and harness abstentions separately, p50/p95 latency, mean result count and mean graph expansion. Seed-level means receive a deterministic 1,000-resample bootstrap 95% CI. Full results are saved under `eval/results/<timestamp>.json`.
+
+```bash
+python eval/synthetic_v2.py --entities 200 --episodes 2000 --seeds 5 --k 8 --embedder hash
+```
+
+`--seed` changes the first seed; `--seeds N` runs N consecutive seeds starting there. `--embedder st` lazily imports the optional `sentence-transformers` package and may need a model download; it is not a hard dependency. `docs/decisions.md` records the pre-declared rule before Phase 6 results. Flat wins and non-improvements must be reported; do not tune the generator after inspecting the output. The synthetic evaluation is not evidence for or against H1–H7 (D-007).
+
 ## Tests and smoke check
 
 ```bash
 python -m pytest -q
-python -m agm demo
-python -m agm rebuild --db ./demo.db
-python -m agm lifecycle --db ./agm.db --dry-run
+python examples/mcp_smoke_client.py
+python examples/rest_smoke_client.py
+python eval/stale_facts.py
+python eval/synthetic_v2.py --entities 200 --episodes 2000 --seeds 5
 python scripts/pack.py
 ```
 
-The MCP stdio integration test runs when the official `mcp` dependency is installed. Phase 4 readback similarity and the Phase 2 confidence/ranking coefficients are provisional and are not calibrated. The Phase 5 synthetic evaluation is not evidence for or against H1–H7 (D-007).
-
-`retrieve(expand=False)` retains the flat Phase 1 baseline. `high_stakes=True` gates `trusted_agent` and `untrusted` items until independently corroborated. Revocation removes searchable views and derived descendants, but preserves source event payloads for audit; it is not a hard-delete operation. Confidence, trust and rank coefficients from D-008 are placeholders, not calibrated probabilities or evidence that graph retrieval is better.
+The MCP stdio integration test runs when the official `mcp` dependency is installed. Phase 4 readback similarity, Phase 2 confidence/ranking coefficients and lifecycle thresholds are provisional. `retrieve(expand=False)` retains the flat Phase 1 baseline. `high_stakes=True` gates `trusted_agent` and `untrusted` items until independently corroborated. Synthetic evaluation scores are not calibrated probabilities or evidence that graph retrieval is better.
 
 ## Connection smoke tests
 
@@ -114,6 +123,4 @@ python examples/mcp_smoke_client.py    # acts as an MCP host over stdio, 12 chec
 python examples/rest_smoke_client.py   # real HTTP against a live loopback server, 11 checks
 ```
 
-These were written by the supervisor to confirm the two integration paths work end to end. They do not replace testing with the real host (Claude Code, Claude Desktop, ChatGPT) you intend to use.
-
-Safety guard: secret redaction and instruction-like-text quarantine run inside `MemoryStore.write` and `MemoryStore.supersede` (D-021), so direct library calls get the same protection as REST and MCP. `delete` flushes the write-ahead log (D-022) so deleted content does not linger on disk.
+These confirm the two local integration paths. They do not replace testing with the real host (Claude Code, Claude Desktop or another agent) you intend to use.

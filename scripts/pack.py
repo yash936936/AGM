@@ -12,6 +12,18 @@ EXCLUDED_DIRS = {
 }
 EXCLUDED_SUFFIXES = {".pyc", ".pyo", ".db", ".sqlite", ".sqlite3", ".db-wal", ".db-shm", ".db-journal"}
 EXCLUDED_ENDINGS = {".egg-info"}
+
+# Phase 6 is evaluation-only and is layered onto a supervisor-hardened v0.5.1 tree.
+# Keep this overlay intentionally selective so src/agm, the core guard, delete
+# durability and repo-hygiene fixes are not overwritten by an older build snapshot.
+PHASE6_OVERLAY_FILES = [
+    "README.md", "scripts/pack.py", "PHASE6_REPORT.md",
+    "docs/decisions.md", "docs/debug.md", "docs/status.md",
+    "eval/synthetic_v2.py", "tests/test_eval_v2.py",
+]
+
+# Kept complete for packaging older phases and for the full project ZIP on a checkout
+# containing the current source tree.
 OVERLAY_FILES = [
     ".gitignore", "README.md", "context.md", "pyproject.toml", "scripts/pack.py",
     "PHASE1_REPORT.md", "PHASE2_REPORT.md", "PHASE3_REPORT.md", "PHASE4_REPORT.md", "PHASE5_REPORT.md",
@@ -35,7 +47,7 @@ OVERLAY_FILES = [
 
 
 def latest_phase() -> int:
-    for phase in (5, 4, 3, 2, 1):
+    for phase in (6, 5, 4, 3, 2, 1):
         if (ROOT / f"PHASE{phase}_REPORT.md").is_file():
             return phase
     raise SystemExit("A PHASEN_REPORT.md must exist before packaging")
@@ -72,11 +84,21 @@ def main() -> int:
             if included(path):
                 archive.write(path, (Path("agm") / path.relative_to(ROOT)).as_posix())
 
-    missing = [rel for rel in OVERLAY_FILES if not (ROOT / rel).is_file()]
+    if phase == 6:
+        overlay_files = list(PHASE6_OVERLAY_FILES)
+        results_dir = ROOT / "eval" / "results"
+        if results_dir.exists():
+            overlay_files.extend(
+                path.relative_to(ROOT).as_posix()
+                for path in sorted(results_dir.glob("*.json")) if path.is_file()
+            )
+    else:
+        overlay_files = OVERLAY_FILES
+    missing = [rel for rel in overlay_files if not (ROOT / rel).is_file()]
     if missing:
         raise SystemExit("Missing Phase overlay files: " + ", ".join(missing))
     with zipfile.ZipFile(overlay_zip, "w", compression=zipfile.ZIP_DEFLATED) as archive:
-        for rel in OVERLAY_FILES:
+        for rel in overlay_files:
             path = ROOT / rel
             if included(path):
                 archive.write(path, rel)

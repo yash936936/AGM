@@ -2,12 +2,14 @@
 
 > Updated every run. Newest entry at top.
 
-## 2026-10-23 — Supervisor review and hardening (v0.5.1)
-**Current phase:** Phase 5 complete; hardening patch 0.5.1 applied by the supervisor.
-**Last debug:** DBG-008, review findings and fixes.
-**Last decisions:** D-021 (guard in core), D-022 (WAL checkpoint and secure_delete), D-023 (standing builder guidelines).
-**Validation:** supervisor environment `97 passed` (Linux, Python 3.12); both smoke clients pass. Windows rerun pending.
-**Next up:** (1) user applies the patch, runs `python -m pytest -q` and both smoke clients on Windows; (2) connect the real host (Claude Code over stdio) using `examples/claude_code_mcp.md`; (3) Phase 6 builder prompt, package B only (evaluation v2 with the pre-declared decision rule).
+## 2026-10-23 — Phase 6 evaluation v2 implemented
+**Current phase:** Phase 6 evaluation v2 implementation ready for integration onto the v0.5.1 checkout; the default synthetic run does not show graph retrieval helping under D-024.
+**Last debug:** DBG-009, seeded evaluation v2.
+**Last decisions:** D-024 (pre-declared evaluation definitions and decision rule). D-021 to D-023 were preserved unchanged.
+**Validation in available builder snapshot:** `tests/test_eval_v2.py` — 5 passed in 6.20s; legacy plus new eval tests — 6 passed in 9.76s; full snapshot suite — 66 passed, 1 skipped in 10.93s; compileall passed. The skipped test requires the MCP SDK, unavailable because network/DNS access failed during install.
+**Default result:** 5 seeds, 200 entities, 2,000 episodes per seed, `k=8`, `hash-256-v1`; 120 queries. Overall accuracy: flat 67.6%, flat_filter 80.0%, graph 74.0%. The verdict summary is exactly `graph not shown to help in this smoke test`; full table, bootstrap confidence intervals and query trace are in `PHASE6_REPORT.md` and `eval/results/20261023T155826.716282Z.json`.
+**Next up:** apply the selective Phase 6 overlay to the actual v0.5.1 checkout and rerun the full 0.5.1 suite. The available builder filesystem only contained the earlier Phase 5 snapshot, and both smoke-client scripts were absent there. The user's supplied Windows baseline includes an existing REST smoke-client teardown error (`PermissionError: [WinError 32]`) after its functional checks; that issue remains out of this evaluation-only package. Do not change D-021 to D-023 or present this snapshot suite as full v0.5.1 validation.
+
 
 ## 2026-10-23 — Phase 5 verified on Windows; final demo-label cleanup
 **Current phase:** All five planned prototype phases implemented; final review and next-iteration scoping remain.

@@ -26,6 +26,7 @@ tests/test_contested.py
 tests/test_delete_ondisk.py
 tests/test_e2e_rest.py
 tests/test_eval.py
+tests/test_eval_v2.py
 tests/test_guard.py
 tests/test_guard_core.py
 tests/test_handoff.py
