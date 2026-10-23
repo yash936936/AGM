@@ -29,4 +29,16 @@ A Claude Code-style configuration can be adapted to this shape (replace the Pyth
 }
 ```
 
-The server registers nine stable tools. Handoff and writer-revocation tools return a Phase 4 not-implemented response until that phase lands. Streamable HTTP is restricted to loopback and uses one environment-configured identity; stdio is the recommended local integration.
+The server registers nine stable tools (memory read/write/supersede/history/delete, handoff save/resume/readback, and admin writer revocation). Streamable HTTP is restricted to loopback and uses one environment-configured identity; stdio is the recommended local integration.
+
+## Alternative: add it from the Claude Code CLI
+
+Claude Code can register a stdio server from the command line. The flag syntax below is from memory of the CLI and has not been verified against your installed version; run `claude mcp add --help` first and adjust:
+
+```
+claude mcp add agm -e AGM_TENANT=local-dev -e AGM_WRITER=claude-code -e AGM_TIER=trusted_agent -e AGM_DB_PATH=/abs/path/agm.db -- /abs/path/.venv/bin/python -m agm serve-mcp --transport stdio
+```
+
+## Check the server before blaming the client
+
+`python examples/mcp_smoke_client.py` launches the server the same way a host would and runs 12 checks (tools listed, write, correction, secret redaction, quarantine, fresh-session retrieval, handoff, readback). If it passes but your host cannot connect, the problem is the host configuration (absolute paths, environment variables), not AGM. For a plain Python agent over HTTP, `python examples/rest_smoke_client.py` does the same with 11 checks.

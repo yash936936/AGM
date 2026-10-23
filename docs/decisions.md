@@ -2,6 +2,21 @@
 
 > Append-only. Newest entries at top. Never edit or delete past entries — if a decision is reversed, log a new entry that supersedes it and reference the old ID.
 
+## D-023 — Standing builder guidelines and an expanded review checklist — 2026-10-23
+**Decision:** `AGENTS.md` (root) holds the standing rules for any builder agent (ChatGPT, Codex, Claude Code); `prompts/builder_system_prompt.md` is the general prompt to paste once into a ChatGPT project or custom GPT; `prompts/phase_brief_template.md` is the template for each phase brief. The supervisor review checklist in `docs/workflow.md` now includes direct-library parity, surface parity, on-disk delete checks and a mandatory run of both smoke clients.
+**Why:** The guard drifted into the adapters unnoticed for three phases because no checklist item compared the library surface with REST/MCP. Standing rules in the repo mean each new builder session starts from the same invariants instead of relying on a pasted prompt.
+**Affects:** `AGENTS.md`, `prompts/`, `docs/workflow.md`, `context.md`.
+
+## D-022 — Flush the WAL after delete and revoke; enable secure_delete — 2026-10-23
+**Decision:** `delete` and `revoke_writer` run `PRAGMA wal_checkpoint(TRUNCATE)` after committing, and every connection sets `PRAGMA secure_delete = ON`. Revocation still preserves source event payloads for audit (README, D-017); only `delete` purges content.
+**Why:** A mutation test showed deleted text stayed readable in the `-wal` file until a checkpoint, so a long-running server could keep it on disk indefinitely. `secure_delete` is defence in depth: the test suite does not prove it is required, the checkpoint is what the tests depend on.
+**Affects:** `db.py`, `store.py`, `tests/test_delete_ondisk.py`.
+
+## D-021 — The guard runs inside MemoryStore, not only at the adapters — 2026-10-23
+**Decision:** `MemoryStore.write` and `MemoryStore.supersede` always call `inspect_write_item` (redact, then quarantine if instruction-like) before any event is appended or text embedded. `supersede` also redacts its `reason`, and `handoff_save` redacts every string in `TaskState` and the `session_id`. `guarded_write` remains as a thin wrapper that calls `store.write`. `write_quarantined` re-sanitizes its input. REST and MCP no longer contain safety logic. This supersedes the placement chosen in D-014 (boundary guard); the behaviour of D-014 is unchanged for REST and MCP callers.
+**Why:** Direct library calls bypassed the guard. A key-shaped string written through the library was stored unredacted in `events` and `nodes`. The architecture's write path places redaction in the core. The supersede `reason` and handoff task state were unguarded on every surface.
+**Affects:** `guard.py`, `store.py`, `api.py`, `mcp_server.py`, `tests/test_guard_core.py`.
+
 ## D-020 — Phase 5 evaluation is a synthetic smoke test — 2026-10-23
 **Decision:** `eval/stale_facts.py` runs hand-authored corrected-fact, entity-owner, related-database, and unanswerable scenarios against `retrieve(expand=False)` and `retrieve(expand=True)`. Accuracy means an expected answer appears in returned items; stale-fact error means the old value appears for the corrected-fact scenario; abstention rate is abstained scenarios divided by all scenarios.
 **Why:** A small offline evaluation makes the main paths and reporting executable before a labelled, preregistered benchmark exists. D-007 remains in force: these results are not evidence for or against H1–H7.

@@ -105,6 +105,7 @@ def connect(db_path: str) -> sqlite3.Connection:
     conn.execute("PRAGMA foreign_keys = ON")
     conn.execute("PRAGMA journal_mode = WAL")
     conn.execute("PRAGMA busy_timeout = 30000")
+    conn.execute("PRAGMA secure_delete = ON")
     conn.executescript(SCHEMA_SQL)
     conn.commit()
     return conn

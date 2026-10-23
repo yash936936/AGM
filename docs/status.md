@@ -2,6 +2,13 @@
 
 > Updated every run. Newest entry at top.
 
+## 2026-10-23 — Supervisor review and hardening (v0.5.1)
+**Current phase:** Phase 5 complete; hardening patch 0.5.1 applied by the supervisor.
+**Last debug:** DBG-008, review findings and fixes.
+**Last decisions:** D-021 (guard in core), D-022 (WAL checkpoint and secure_delete), D-023 (standing builder guidelines).
+**Validation:** supervisor environment `97 passed` (Linux, Python 3.12); both smoke clients pass. Windows rerun pending.
+**Next up:** (1) user applies the patch, runs `python -m pytest -q` and both smoke clients on Windows; (2) connect the real host (Claude Code over stdio) using `examples/claude_code_mcp.md`; (3) Phase 6 builder prompt, package B only (evaluation v2 with the pre-declared decision rule).
+
 ## 2026-10-23 — Phase 5 verified on Windows; final demo-label cleanup
 **Current phase:** All five planned prototype phases implemented; final review and next-iteration scoping remain.
 **Last debug:** DBG-007, Phase 5 Windows verification and demo label fix.

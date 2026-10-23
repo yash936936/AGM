@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: agm
-Version: 0.5.0
+Version: 0.5.1
 Summary: Adaptive Graph Memory prototype with graph retrieval, trust, handoff, REST, MCP and lifecycle evaluation
 Requires-Python: >=3.11
 Description-Content-Type: text/markdown
@@ -106,3 +106,14 @@ python scripts/pack.py
 The MCP stdio integration test runs when the official `mcp` dependency is installed. Phase 4 readback similarity and the Phase 2 confidence/ranking coefficients are provisional and are not calibrated. The Phase 5 synthetic evaluation is not evidence for or against H1–H7 (D-007).
 
 `retrieve(expand=False)` retains the flat Phase 1 baseline. `high_stakes=True` gates `trusted_agent` and `untrusted` items until independently corroborated. Revocation removes searchable views and derived descendants, but preserves source event payloads for audit; it is not a hard-delete operation. Confidence, trust and rank coefficients from D-008 are placeholders, not calibrated probabilities or evidence that graph retrieval is better.
+
+## Connection smoke tests
+
+```bash
+python examples/mcp_smoke_client.py    # acts as an MCP host over stdio, 12 checks
+python examples/rest_smoke_client.py   # real HTTP against a live loopback server, 11 checks
+```
+
+These were written by the supervisor to confirm the two integration paths work end to end. They do not replace testing with the real host (Claude Code, Claude Desktop, ChatGPT) you intend to use.
+
+Safety guard: secret redaction and instruction-like-text quarantine run inside `MemoryStore.write` and `MemoryStore.supersede` (D-021), so direct library calls get the same protection as REST and MCP. `delete` flushes the write-ahead log (D-022) so deleted content does not linger on disk.

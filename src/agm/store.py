@@ -14,6 +14,7 @@ import numpy as np
 from .db import connect
 from .embed import Embedder, HashEmbedder
 from .events import HybridLogicalClock, append_event, decode_payload, utc_now
+from .guard import inspect_write_item, sanitize_task_state, sanitize_value
 from .trust import is_probationary
 from .models import (
     Ctx, DeleteResult, Node, Readback, ReadbackReport, RevokeResult, TaskState,
@@ -433,7 +434,33 @@ class MemoryStore:
             elif not referenced:
                 self.conn.execute("DELETE FROM entities WHERE id = ?", (entity_id,))
 
+    def _checkpoint(self) -> None:
+        """Flush the WAL so deleted or revoked content does not linger on disk."""
+        self.conn.commit()
+        try:
+            self.conn.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchall()
+        except sqlite3.Error:  # pragma: no cover - best effort, e.g. in-memory databases
+            _LOG.warning("WAL checkpoint failed", exc_info=True)
+
     def write(self, ctx: Ctx, item: WriteItem) -> WriteResult:
+        """Guarded write: redact secrets and quarantine instruction-like text for every caller (D-021)."""
+        guarded = inspect_write_item(item)
+        warnings: list[str] = []
+        if guarded.redactions:
+            warnings.append("Secrets were redacted before the event was stored and embedded.")
+        warnings.extend(guarded.quarantine_reasons)
+        if guarded.quarantine_reasons:
+            warnings.insert(0, "Candidate was quarantined and excluded from default retrieval.")
+            return self.write_quarantined(
+                ctx, guarded.item, redactions=guarded.redactions, warnings=warnings,
+            )
+        result = self._write_unguarded(ctx, guarded.item)
+        return result.model_copy(update={
+            "redactions": guarded.redactions, "warnings": warnings + result.warnings,
+        })
+
+    def _write_unguarded(self, ctx: Ctx, item: WriteItem) -> WriteResult:
+        """Internal: item MUST already be sanitized by inspect_write_item."""
         if item.kind in ("fact", "procedure") and not item.entity:
             raise ValueError(f"entity is required for kind={item.kind!r}")
         if item.kind == "fact" and not item.attribute:
@@ -512,9 +539,11 @@ class MemoryStore:
     ) -> WriteResult:
         """Persist guarded input as a quarantined event that default retrieval excludes.
 
-        Callers must sanitize the item before invoking this method; the public
-        REST/MCP adapters use agm.guard.guarded_write to enforce that sequence.
+        The item is re-sanitized here, so calling this directly is also safe.
         """
+        guarded_item = inspect_write_item(item)
+        item = guarded_item.item
+        redactions = int(redactions) + guarded_item.redactions
         if item.kind in ("fact", "procedure") and not item.entity:
             raise ValueError(f"entity is required for kind={item.kind!r}")
         if item.kind == "fact" and not item.attribute:
@@ -700,6 +729,25 @@ class MemoryStore:
         return WriteResult(status="superseded", item_id=node_id, superseded_id=old_id)
 
     def supersede(self, ctx: Ctx, fact_id: str, item: WriteItem, reason: str) -> WriteResult:
+        """Guarded supersede: item and reason are sanitized for every caller (D-021)."""
+        guarded = inspect_write_item(item)
+        clean_reason, reason_redactions = sanitize_value(reason)
+        redactions = guarded.redactions + reason_redactions
+        warnings: list[str] = []
+        if redactions:
+            warnings.append("Secrets were redacted before the event was stored and embedded.")
+        if guarded.quarantine_reasons:
+            warnings.insert(0, "Candidate was quarantined and did not supersede the active fact.")
+            return self.write_quarantined(
+                ctx, guarded.item, redactions=redactions,
+                warnings=warnings + list(guarded.quarantine_reasons),
+            )
+        result = self._supersede_unguarded(ctx, fact_id, guarded.item, clean_reason)
+        return result.model_copy(update={
+            "redactions": redactions, "warnings": warnings + result.warnings,
+        })
+
+    def _supersede_unguarded(self, ctx: Ctx, fact_id: str, item: WriteItem, reason: str) -> WriteResult:
         old = self.conn.execute(
             "SELECT * FROM nodes WHERE id = ? AND tenant = ? AND status = 'active'",
             (fact_id, ctx.tenant_id),
@@ -931,7 +979,7 @@ class MemoryStore:
             counts["entities"] -= int(self.conn.execute(
                 "SELECT COUNT(*) FROM entities WHERE id = ?", (entity_id,)
             ).fetchone()[0])
-        self.conn.commit()
+        self._checkpoint()
         return DeleteResult(deleted=True, removed=counts)
 
     def rebuild_views(self) -> None:
@@ -1028,12 +1076,14 @@ class MemoryStore:
         if inserted:
             event_row = self.conn.execute("SELECT * FROM events WHERE id = ?", (event_id,)).fetchone()
             self._apply_event(event_row)
-            self.conn.commit()
+            self._checkpoint()
         return RevokeResult(revoked=bool(inserted), removed=len(selected))
 
     def handoff_save(self, ctx: Ctx, session_id: str, task_state: TaskState) -> Packet:
         if not session_id.strip():
             raise ValueError("session_id must be non-empty")
+        task_state, _ = sanitize_task_state(task_state)
+        session_id, _ = sanitize_value(session_id)
         snapshot_row = self.conn.execute("SELECT COALESCE(MAX(id), 0) FROM events").fetchone()
         snapshot_event_id = int(snapshot_row[0]) if snapshot_row else 0
         key_episodes = [str(row["id"]) for row in self.conn.execute(

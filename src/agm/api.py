@@ -15,7 +15,6 @@ from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, ConfigDict, Field
 
 from .config import KeyIdentity, KeyRegistry, database_path, ensure_loopback_host, load_key_registry
-from .guard import guarded_write
 from .models import Ctx, Readback, RetrieveResult, TaskState, WriteItem, WriteResult
 from .store import MemoryStore
 
@@ -156,7 +155,7 @@ def create_app(
         identity: KeyIdentity = Depends(require_scope("memory:write")),
     ) -> WriteResult:
         try:
-            return guarded_write(request_store(request), identity.ctx, item)
+            return request_store(request).write(identity.ctx, item)
         except (ValueError, KeyError, NotImplementedError) as exc:
             raise api_error(exc) from exc
 
@@ -183,21 +182,7 @@ def create_app(
         identity: KeyIdentity = Depends(require_scope("memory:write")),
     ) -> WriteResult:
         try:
-            store_obj = request_store(request)
-            # Guard the proposed replacement before it can affect the active fact.
-            from .guard import inspect_write_item
-            guarded = inspect_write_item(payload.item)
-            warnings = []
-            if guarded.redactions:
-                warnings.append("Secrets were redacted before the event was stored and embedded.")
-            if guarded.quarantine_reasons:
-                warnings.insert(0, "Candidate was quarantined and did not supersede the active fact.")
-                return store_obj.write_quarantined(
-                    identity.ctx, guarded.item, redactions=guarded.redactions,
-                    warnings=warnings + list(guarded.quarantine_reasons),
-                )
-            result = store_obj.supersede(identity.ctx, item_id, guarded.item, payload.reason)
-            return result.model_copy(update={"redactions": guarded.redactions, "warnings": warnings + result.warnings})
+            return request_store(request).supersede(identity.ctx, item_id, payload.item, payload.reason)
         except (ValueError, KeyError, NotImplementedError) as exc:
             raise api_error(exc) from exc
 

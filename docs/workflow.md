@@ -25,6 +25,18 @@ Claude's review list: matches frozen contracts exactly; tests cover each "done w
 ## After each coding task
 Append `docs/debug.md`, update `docs/status.md`. On finishing a phase: update `docs/phases.md` and `docs/readme.md`.
 
+## Supervisor review checklist (updated 2026-10-23, D-023)
+Run these yourself; never accept a builder's claim as verified.
+1. Install clean, run `python -m pytest -q`, and note skipped tests. A skipped MCP test means the MCP path is unverified.
+2. **Surface parity:** every behaviour that protects data (redaction, quarantine, tenant scoping, scopes) must hold for the library, REST and MCP. Probe the library directly with a key-shaped string and an instruction-like string.
+3. **Persistence:** a new mutation must append an event first, replay identically (`rebuild_views`), and have a replay test. Hard delete must leave nothing readable in the `.db` or `-wal` file.
+4. Contracts in `docs/architecture.md` unchanged unless a decision says so; no new dependency without a decision.
+5. Run `python examples/mcp_smoke_client.py` and `python examples/rest_smoke_client.py`.
+6. `git status` clean of `*.db`, `*.db-wal`, `*.db-shm`, `__pycache__`, `*.egg-info`, `dist/`.
+7. Evals: the decision rule was written before the run; results include cases where flat wins.
+8. Docs updated (`debug.md`, `decisions.md`, `status.md`) and accurate to what was actually run.
+Standing builder rules: `AGENTS.md`. Prompt for ChatGPT: `prompts/builder_system_prompt.md`. Brief template: `prompts/phase_brief_template.md`.
+
 ---
 **Next:** Return to [`context.md`](../context.md) before starting a new task —
 it routes you to the right file for what you are about to do.

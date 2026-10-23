@@ -4,7 +4,7 @@
 
 ## What this project is
 
-AGM is a model-agnostic memory layer for AI agents, based on `Adaptive_Graph_Memory_Draft_v5.md`. Its source of truth is an append-only event log with rebuildable SQLite views. The user has verified all five implementation phases on Windows. The latest integrated Phase 5 test run reports 61 passed in 20.24 seconds. REST/MCP adapters, API-key authentication, guardrails, trust probation, revocation, handoff/readback, synthetic flat-vs-graph evaluation, lazy decay and read-only lifecycle dry run are implemented. Confidence and evaluation metrics remain provisional; the synthetic evaluation is not evidence for or against H1–H7.
+AGM is a model-agnostic memory layer for AI agents, based on `Adaptive_Graph_Memory_Draft_v5.md`. Its source of truth is an append-only event log with rebuildable SQLite views. The user has verified all five implementation phases on Windows. Version 0.5.1 adds supervisor hardening: the guard now lives in the core (D-021). The user's last Windows run was 61 passed at 0.5.0; the supervisor's run of 0.5.1 is 97 passed on Linux, Windows rerun pending. REST/MCP adapters, API-key authentication, guardrails, trust probation, revocation, handoff/readback, synthetic flat-vs-graph evaluation, lazy decay and read-only lifecycle dry run are implemented. Confidence and evaluation metrics remain provisional; the synthetic evaluation is not evidence for or against H1–H7.
 
 ## Roles
 
@@ -26,6 +26,9 @@ The workflow is documented in `docs/workflow.md`.
 | Agent use flow | `docs/appflow.md` |
 | Design decisions | `docs/decisions.md` |
 | Bugs and test record | `docs/debug.md` |
+| Standing rules for builder agents | `AGENTS.md` |
+| Builder prompt and phase brief template | `prompts/builder_system_prompt.md`, `prompts/phase_brief_template.md` |
+| Check a connection works | `examples/mcp_smoke_client.py`, `examples/rest_smoke_client.py` |
 
 ## Logging rules
 
@@ -44,4 +47,4 @@ The workflow is documented in `docs/workflow.md`.
 
 ## Next task
 
-All five planned prototype phases are implemented and the integrated test suite has been verified on Windows. Remaining work is final review, archive inspection, and deciding whether to begin a separately scoped next iteration. Keep services on loopback until a separate security review is completed.
+First, apply patch 0.5.1 and connect a real host (`examples/claude_code_mcp.md`). Then scope Phase 6 (evaluation v2). All five planned prototype phases are implemented and the integrated test suite has been verified on Windows. Remaining work is final review, archive inspection, and deciding whether to begin a separately scoped next iteration. Keep services on loopback until a separate security review is completed.

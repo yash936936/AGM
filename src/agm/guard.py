@@ -5,7 +5,7 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
-from .models import Ctx, WriteItem, WriteResult
+from .models import Ctx, TaskState, WriteItem, WriteResult
 
 # The labelled rule handles common developer mistakes such as api_key=... and
 # password: .... Dedicated token patterns cover formats commonly copied into logs.
@@ -62,6 +62,31 @@ def _redact_text(value: str) -> tuple[str, int]:
     return result, count
 
 
+def sanitize_value(value: Any) -> tuple[Any, int]:
+    """Recursively redact secrets in any str/list/dict structure; return (clean, redaction_count)."""
+    total = 0
+
+    def walk(node: Any) -> Any:
+        nonlocal total
+        if isinstance(node, str):
+            clean, count = _redact_text(node)
+            total += count
+            return clean
+        if isinstance(node, list):
+            return [walk(child) for child in node]
+        if isinstance(node, dict):
+            return {key: walk(child) for key, child in node.items()}
+        return node
+
+    return walk(value), total
+
+
+def sanitize_task_state(state: TaskState) -> tuple[TaskState, int]:
+    """Redact secrets in every string of a handoff TaskState before it is persisted."""
+    clean, count = sanitize_value(state.model_dump(mode="json"))
+    return TaskState.model_validate(clean), count
+
+
 def inspect_write_item(item: WriteItem) -> GuardedWrite:
     """Return a sanitized copy. All string fields are sanitized before event append and embedding."""
     redactions = 0
@@ -99,17 +124,5 @@ def inspect_write_item(item: WriteItem) -> GuardedWrite:
 
 
 def guarded_write(store: Any, ctx: Ctx, item: WriteItem) -> WriteResult:
-    """Guard a write shared by the REST and MCP adapters."""
-    guarded = inspect_write_item(item)
-    warnings: list[str] = []
-    if guarded.redactions:
-        warnings.append("Secrets were redacted before the event was stored and embedded.")
-    warnings.extend(guarded.quarantine_reasons)
-    if guarded.quarantine_reasons:
-        warnings.insert(0, "Candidate was quarantined and excluded from default retrieval.")
-        result = store.write_quarantined(
-            ctx, guarded.item, redactions=guarded.redactions, warnings=warnings,
-        )
-        return result
-    result = store.write(ctx, guarded.item)
-    return result.model_copy(update={"redactions": guarded.redactions, "warnings": warnings + result.warnings})
+    """Backwards-compatible wrapper. The guard now runs inside MemoryStore.write (D-021)."""
+    return store.write(ctx, item)

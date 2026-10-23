@@ -10,7 +10,7 @@ EXCLUDED_DIRS = {
     ".git", ".venv", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", "dist",
     "build", "site-packages",
 }
-EXCLUDED_SUFFIXES = {".pyc", ".pyo", ".db", ".sqlite", ".sqlite3"}
+EXCLUDED_SUFFIXES = {".pyc", ".pyo", ".db", ".sqlite", ".sqlite3", ".db-wal", ".db-shm", ".db-journal"}
 EXCLUDED_ENDINGS = {".egg-info"}
 OVERLAY_FILES = [
     ".gitignore", "README.md", "context.md", "pyproject.toml", "scripts/pack.py",
@@ -27,6 +27,10 @@ OVERLAY_FILES = [
     "tests/test_lifecycle.py", "tests/test_eval.py", "tests/test_cli.py", "eval/stale_facts.py",
     "examples/agm.keys.example.json", "examples/python_client.py", "examples/curl.md",
     "examples/claude_code_mcp.md", "examples/chatgpt_actions.md",
+    "examples/mcp_smoke_client.py", "examples/rest_smoke_client.py",
+    "tests/test_guard_core.py", "tests/test_delete_ondisk.py", "tests/test_smoke_clients.py",
+    "AGENTS.md", "prompts/builder_system_prompt.md", "prompts/phase_brief_template.md",
+    "docs/workflow.md",
 ]
 
 

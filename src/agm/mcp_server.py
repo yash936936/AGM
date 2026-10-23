@@ -11,7 +11,6 @@ import os
 from typing import Any, Literal
 
 from .config import database_path, ensure_loopback_host, runtime_identity_from_env
-from .guard import guarded_write, inspect_write_item
 from .models import Ctx, Readback, TaskState, WriteItem
 from .store import MemoryStore
 
@@ -44,7 +43,7 @@ def create_mcp_server(
         """Store a structured episode, fact, or procedure. Secrets are redacted and instruction-like content is quarantined."""
         require("memory:write")
         parsed = WriteItem.model_validate(item)
-        return guarded_write(store, ctx, parsed).model_dump(mode="json")
+        return store.write(ctx, parsed).model_dump(mode="json")
 
     @server.tool()
     def memory_retrieve(
@@ -69,21 +68,7 @@ def create_mcp_server(
         """Correct an active fact explicitly, retaining the old fact as history."""
         require("memory:write")
         parsed = WriteItem.model_validate(item)
-        guarded = inspect_write_item(parsed)
-        warnings: list[str] = []
-        if guarded.redactions:
-            warnings.append("Secrets were redacted before the event was stored and embedded.")
-        if guarded.quarantine_reasons:
-            warnings.insert(0, "Candidate was quarantined and did not supersede the active fact.")
-            return store.write_quarantined(
-                ctx, guarded.item, redactions=guarded.redactions,
-                warnings=warnings + list(guarded.quarantine_reasons),
-            ).model_dump(mode="json")
-        result = store.supersede(ctx, item_id, guarded.item, reason)
-        return result.model_copy(update={
-            "redactions": guarded.redactions,
-            "warnings": warnings + result.warnings,
-        }).model_dump(mode="json")
+        return store.supersede(ctx, item_id, parsed, reason).model_dump(mode="json")
 
     @server.tool()
     def memory_history(entity: str, attribute: str | None = None) -> list[dict[str, Any]]:
