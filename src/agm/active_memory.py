@@ -291,7 +291,9 @@ def _render_node(node: Node) -> str:
         fields.append(f"value={node.value}")
     if node.contested_with:
         fields.append(f"contested_with={node.contested_with}")
-    return f"- {node.text} [{' ; '.join(fields)}]"
+    # Put provenance first so a token-budget truncation never removes the source ID,
+    # trust tier, confidence, or validity window before the memory text is shortened.
+    return f"- [{' ; '.join(fields)}] {node.text}"
 
 
 def _context_item(node: Node) -> MemoryContextItem:
