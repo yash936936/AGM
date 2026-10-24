@@ -143,6 +143,29 @@ The committed diagnostic matrix uses sizes 12, 25, and 50 entities; sparse/balan
 
 The sample benchmark and full-scale five-seed result are saved in `eval/results/phase8-benchmark-20261024T110135.355459Z.json` and `eval/results/phase8-synthetic-200x2000-5seeds-20261024T110557.327133Z.json`. The corpus and all figures are synthetic; D-007 remains in force.
 
+## Phase 9 active-memory turn controller
+
+The core active-memory helpers prepare a bounded context before a model call and evaluate proposed memory operations after the response. Current-query, profile/preference, and goal retrieval are labeled separately; retrieved records remain untrusted evidence, and conflicting open-ended fact values are explicitly surfaced rather than silently resolved. The policy requires user-message evidence for writes, explicit correction language for corrections, explicit recall intent for history, and explicit forget/delete intent plus a target for deletion. The controller never executes a mutation automatically and does not change the existing nine MCP tools.
+
+Example core integration:
+
+```python
+from agm import Ctx, MemoryStore, ModelTurnResponse, run_active_turn
+
+ctx = Ctx(tenant_id="local-dev", project="default", writer_id="agent", tier="trusted_agent")
+with MemoryStore("./agm.db") as store:
+    result = run_active_turn(
+        store, ctx, "What should I work on next?",
+        lambda query, memory_context: ModelTurnResponse(answer="Your model answer here."),
+        profile_queries=("user preferences",),
+        goal_queries=("active goals and current priorities",),
+    )
+    print(result.answer)
+    # Review result.decisions and execute eligible actions only through existing authenticated tools.
+```
+
+See docs/active_memory.md. Tests and smoke clients are intentionally deferred during implementation; do not treat this section as a validation claim.
+
 ## Tests and smoke check
 
 ```bash
