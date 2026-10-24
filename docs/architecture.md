@@ -9,9 +9,9 @@ vector similarity with filters, the flat baseline) then **expand** (bounded 1-ho
 then rank, check sufficiency, and either return or abstain.
 
 ## Components
-### Core store
-- **Responsibility:** write, supersede, delete, retrieve, history, rebuild.
-- **Location:** `src/agm/store.py`, `events.py`, `db.py`, `models.py`
+### Core store and active memory
+- **Responsibility:** write, supersede, delete, retrieve, history, rebuild, context-pack assembly, source-checked post-turn decisions, and a provider-neutral retrieve/generate/apply controller.
+- **Location:** `src/agm/store.py`, `src/agm/active_memory.py`, `events.py`, `db.py`, `models.py`
 - **Depends on:** embed, guard, trust
 ### Retrieval
 - **Responsibility:** seed, expand, rank, sufficiency/abstain, route report.
@@ -25,7 +25,7 @@ then rank, check sufficiency, and either return or abstain.
 - **Responsibility:** task state, packet build, context assembly under a token budget, readback comparison.
 - **Location:** `src/agm/handoff.py`
 ### Adapters
-- **Location:** `src/agm/api.py` (FastAPI), `src/agm/mcp_server.py` (FastMCP), `src/agm/cli.py`, `src/agm/config.py`
+- **Location:** `src/agm/api.py` (FastAPI), `src/agm/mcp_server.py` (FastMCP), `src/agm/cli.py`, `src/agm/config.py`. The active-memory surfaces add context, remember, correct, forget, and health operations while keeping legacy names available.
 
 ## Core contracts (FROZEN — change only via a decisions.md entry)
 ```python
@@ -88,16 +88,22 @@ class Readback:   goal: str; decisions: list[str]; open_items: list[str]
 ## Tool / endpoint parity (REST path ↔ MCP tool name)
 | MCP tool | REST | Maps to |
 |---|---|---|
-| `memory_write` | POST /v1/memory | `write` |
+| `memory_context` | POST /v1/memory/context | `MemoryStore.memory_context` (bounded before-answer context) |
+| `memory_remember` | POST /v1/memory/remember | `apply_memory_decision(action="remember")` |
+| `memory_correct` | POST /v1/memory/correct | `supersede` through the active-memory policy |
+| `memory_forget` | POST /v1/memory/forget | hard-delete target plus connected supersede history |
+| `memory_health` | GET /v1/memory/health | read-only scoped health checks |
+| `memory_write` | POST /v1/memory | `write` (legacy low-level operation) |
 | `memory_retrieve` | POST /v1/memory/retrieve | `retrieve` |
-| `memory_supersede` | POST /v1/memory/{id}/supersede | `supersede` |
+| `memory_supersede` | POST /v1/memory/{id}/supersede | `supersede` (legacy low-level operation) |
 | `memory_history` | GET /v1/memory/history?entity= | `history` |
-| `memory_delete` | DELETE /v1/memory/{id} | `delete` |
+| `memory_delete` | DELETE /v1/memory/{id} | `delete` one version |
 | `handoff_save` | POST /v1/handoff | `handoff_save` |
 | `handoff_resume` | POST /v1/handoff/{id}/resume | `handoff_resume` |
 | `handoff_readback` | POST /v1/handoff/{id}/readback | `handoff_readback` |
 | `memory_revoke_writer` | POST /v1/admin/revoke | `revoke_writer` (admin scope) |
-MCP tool descriptions must say plainly what each tool is for, so an agent picks the right one.
+
+`MemoryContextPack.context` is the bounded text intended for model context. The structured sections retain source IDs, validity, confidence, and trust metadata but are not themselves covered by the context-string token estimate. Remember/correct/forget apply a source-quote policy; in the controlled turn loop the host provides the actual current message. In native MCP, message text is model-supplied and should be treated as a best-effort policy guard, not an authorization boundary. Memory tool calls never promote retrieved text to instructions.
 
 ## SQLite schema (views marked V are rebuildable from `events`)
 - `events`(id INTEGER PK, tenant, writer_id, tier, hlc TEXT, idem_key, base_version, type, payload JSON, created_at; UNIQUE(tenant, writer_id, idem_key))  — **source of truth**
@@ -127,6 +133,7 @@ src/agm/
 ├── trust.py         — tiers, confidence, probation, revoke/rollback
 ├── guard.py         — secret redaction, instruction-like text screen
 ├── handoff.py       — task state, packet, assembly, readback
+├── active_memory.py — bounded context, post-turn policy, controlled turn loop
 ├── config.py        — keys file, env identity
 ├── api.py           — FastAPI adapter
 ├── mcp_server.py    — FastMCP adapter (stdio and streamable HTTP)
