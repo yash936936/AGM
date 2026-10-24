@@ -724,3 +724,31 @@ def test_batch_forget_deduplicates_overlapping_supersede_chains(tmp_path):
         assert result["forgotten"] is True
         assert result["deleted_count"] == 2
         assert set(result["item_ids"]) == {old.item_id, new.item_id}
+
+
+def test_batch_forget_does_not_partially_delete_when_quote_misses_one_target(tmp_path):
+    with MemoryStore(str(tmp_path / "forget-batch-mismatch.db")) as store:
+        ctx = _ctx()
+        database = store.write(ctx, WriteItem(
+            kind="fact", entity="deployment", attribute="database", value="SQLite",
+            text="The deployment uses SQLite.",
+        ))
+        theme = store.write(ctx, WriteItem(
+            kind="fact", entity="AGM", attribute="theme", value="turquoise",
+            text="AGM theme is turquoise.",
+        ))
+        assert database.item_id and theme.item_id
+        result = apply_memory_decision(
+            store, ctx,
+            MemoryDecision(
+                action="forget",
+                target_item_ids=[database.item_id, theme.item_id],
+                evidence_quote="forget that the deployment uses SQLite",
+            ),
+            user_message="Please forget that the deployment uses SQLite.",
+        )
+        assert result.status == "confirmation_required"
+        assert store.conn.execute(
+            "SELECT COUNT(*) FROM nodes WHERE id IN (?, ?)",
+            (database.item_id, theme.item_id),
+        ).fetchone()[0] == 2
