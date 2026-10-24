@@ -1280,44 +1280,78 @@ class MemoryStore:
 
 
     def forget(self, ctx: Ctx, item_id: str) -> dict[str, object]:
-        """Atomically hard-delete a memory and its connected supersede history.
+        """Hard-delete one memory and its connected supersede history."""
+        return self.forget_many(ctx, [item_id])
 
-        This is the user-facing forget operation. Low-level delete remains
-        available for callers that intentionally remove one version only.
-        Source event payloads are scrubbed and one delete event is appended for
-        every removed version; a single transaction prevents partial chains.
+    def forget_many(self, ctx: Ctx, item_ids: list[str]) -> dict[str, object]:
+        """Atomically hard-delete selected memories and their supersede histories.
+
+        Every requested root must exist in this tenant/project; if any target is
+        missing or out of scope, the operation performs no deletion. Source
+        events are scrubbed and delete events appended in one transaction.
         """
+        if not item_ids:
+            raise ValueError("at least one item ID is required")
+        if len(item_ids) > 100:
+            raise ValueError("at most 100 item IDs may be forgotten in one operation")
+        roots = list(dict.fromkeys(value.strip() for value in item_ids))
+        if any(not value or len(value) > 200 for value in roots):
+            raise ValueError("item IDs must contain 1..200 characters")
         if self.conn.in_transaction:
             self.conn.commit()
         self.conn.execute("BEGIN IMMEDIATE")
         deleted_ids: list[str] = []
         try:
-            rows = self.conn.execute(
-                """WITH RECURSIVE versions(id) AS (
-                       SELECT n.id FROM nodes n
-                        WHERE n.id = ? AND n.tenant = ? AND n.project = ?
-                       UNION
-                       SELECT e.src FROM edges e JOIN versions v ON e.dst = v.id
-                         JOIN nodes neighbor ON neighbor.id = e.src
-                          AND neighbor.tenant = ? AND neighbor.project = ?
-                        WHERE e.type = 'supersedes'
-                       UNION
-                       SELECT e.dst FROM edges e JOIN versions v ON e.src = v.id
-                         JOIN nodes neighbor ON neighbor.id = e.dst
-                          AND neighbor.tenant = ? AND neighbor.project = ?
-                        WHERE e.type = 'supersedes'
-                   )
-                   SELECT n.id, n.event_id FROM nodes n JOIN versions v ON v.id = n.id
-                    WHERE n.tenant = ? AND n.project = ?
-                    ORDER BY n.event_id DESC, n.id ASC""",
-                (
-                    item_id, ctx.tenant_id, ctx.project,
-                    ctx.tenant_id, ctx.project, ctx.tenant_id, ctx.project,
-                    ctx.tenant_id, ctx.project,
-                ),
-            ).fetchall()
-            ids = [str(row["id"]) for row in rows]
-            for version_id in ids:
+            found_roots = {
+                str(row["id"])
+                for row in self.conn.execute(
+                    """SELECT id FROM nodes
+                       WHERE tenant = ? AND project = ?
+                         AND id IN (""" + ", ".join("?" for _ in roots) + ")",
+                    (ctx.tenant_id, ctx.project, *roots),
+                ).fetchall()
+            }
+            missing_ids = [item_id for item_id in roots if item_id not in found_roots]
+            if missing_ids:
+                self.conn.rollback()
+                return {
+                    "forgotten": False,
+                    "deleted_count": 0,
+                    "item_ids": [],
+                    "missing_item_ids": missing_ids,
+                }
+
+            versions: dict[str, int] = {}
+            for item_id in roots:
+                rows = self.conn.execute(
+                    """WITH RECURSIVE versions(id) AS (
+                           SELECT n.id FROM nodes n
+                            WHERE n.id = ? AND n.tenant = ? AND n.project = ?
+                           UNION
+                           SELECT e.src FROM edges e JOIN versions v ON e.dst = v.id
+                             JOIN nodes neighbor ON neighbor.id = e.src
+                              AND neighbor.tenant = ? AND neighbor.project = ?
+                            WHERE e.type = 'supersedes'
+                           UNION
+                           SELECT e.dst FROM edges e JOIN versions v ON e.src = v.id
+                             JOIN nodes neighbor ON neighbor.id = e.dst
+                              AND neighbor.tenant = ? AND neighbor.project = ?
+                            WHERE e.type = 'supersedes'
+                       )
+                       SELECT n.id, n.event_id FROM nodes n JOIN versions v ON v.id = n.id
+                        WHERE n.tenant = ? AND n.project = ?""",
+                    (
+                        item_id, ctx.tenant_id, ctx.project,
+                        ctx.tenant_id, ctx.project, ctx.tenant_id, ctx.project,
+                        ctx.tenant_id, ctx.project,
+                    ),
+                ).fetchall()
+                for row in rows:
+                    versions[str(row["id"])] = int(row["event_id"])
+
+            for version_id, _event_id in sorted(
+                versions.items(), key=lambda pair: (-pair[1], pair[0])
+            ):
                 row = self.conn.execute(
                     """SELECT event_id FROM nodes
                        WHERE id = ? AND tenant = ? AND project = ?""",
@@ -1331,7 +1365,7 @@ class MemoryStore:
                     ('{"scrubbed":true}', source_event_id, ctx.tenant_id),
                 )
                 payload = {"item_id": version_id}
-                _event_id, inserted = self._append(ctx, "delete", payload)
+                _delete_event_id, inserted = self._append(ctx, "delete", payload)
                 if not inserted:
                     raise RuntimeError("Unexpected idempotency collision while forgetting memory history")
                 self._apply_delete_payload(payload)
@@ -1342,10 +1376,11 @@ class MemoryStore:
             raise
 
         if deleted_ids:
-            # Flush the whole chain once, after its atomic commit.
+            # Flush the complete batch once, after its atomic commit.
             self._checkpoint()
         return {
             "forgotten": bool(deleted_ids),
             "deleted_count": len(deleted_ids),
             "item_ids": deleted_ids,
+            "missing_item_ids": [],
         }
