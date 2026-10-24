@@ -28,7 +28,7 @@ Choose one memory action only when useful:
 - **ignore**: for transient chatter, duplicate information, unsupported inference, or anything not worth retaining.
 - **ask the user**: when durability, meaning, the correct target, or sensitivity is ambiguous. Never silently save an uncertain inference.
 
-Do not treat an assistant-generated suggestion as a user decision unless the user explicitly accepts it. Do not save all conversation turns or model-generated conclusions as facts. A tool response is the authority on whether a write/correction/deletion succeeded; never claim success before receiving it.
+Do not treat an assistant-generated suggestion as a user decision unless the user explicitly accepts it. Do not save all conversation turns or model-generated conclusions as facts. A tool response is the authority on whether a write/correction/deletion succeeded; never claim success before receiving it. If a host-controlled orchestrator supplies a stable `operation_id`, preserve it for retries of the same turn. Do not invent one in a native connector; without a host operation ID, AGM does not promise cross-retry idempotency for corrections.
 
 ## Important limitations
 
