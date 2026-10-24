@@ -144,6 +144,27 @@ def load_cases(path: Path) -> list[dict[str, Any]]:
                 raise ValueError(
                     f"case {case_id}: scenario {scenario} requires a {required_operation} operation"
                 )
+            if scenario == "expiry":
+                expiry_operation = next(op for op in operations if op["type"] == "expire_before")
+                cutoff_dt = datetime.fromisoformat(
+                    _validate_timestamp(expiry_operation["cutoff"], f"case {case_id}.operations.cutoff").replace("Z", "+00:00")
+                )
+                due_non_pinned = []
+                for memory in case["memories"]:
+                    created_at = memory.get("created_at")
+                    item_data = memory.get("item", {})
+                    if not created_at or not isinstance(item_data, dict):
+                        continue
+                    created_dt = datetime.fromisoformat(
+                        _validate_timestamp(created_at, f"case {case_id}.memories.created_at").replace("Z", "+00:00")
+                    )
+                    pinned = item_data.get("pin") is True
+                    if created_dt <= cutoff_dt and (not pinned or expiry_operation.get("include_pinned", False)):
+                        due_non_pinned.append(memory)
+                if not due_non_pinned:
+                    raise ValueError(
+                        f"case {case_id}: expiry scenario requires a memory older than cutoff eligible for purge"
+                    )
             cases.append(case)
     if not cases:
         raise ValueError("benchmark contains no cases")
@@ -203,10 +224,7 @@ def evaluate_case(case: dict[str, Any], db_path: Path) -> dict[str, Any]:
                     include_pinned=operation.get("include_pinned", False),
                 )
                 if not result.expired_ids and not result.scrubbed_orphan_events:
-                    # A valid sweep may legitimately find nothing, but a required expiry
-                    # acceptance case must include at least one seeded memory.
-                    if case["memories"]:
-                        raise ValueError(f"{prefix}: expiry operation did not purge any eligible memory")
+                    raise ValueError(f"{prefix}: expiry operation did not purge any eligible memory")
             else:  # schema validation rejects this branch
                 raise ValueError(f"{prefix}: unsupported operation")
 
