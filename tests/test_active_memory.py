@@ -662,3 +662,47 @@ def test_active_memory_rejects_oversized_context_and_decision_inputs(tmp_path):
                 ),
                 user_message="Please remember that I prefer concise answers.",
             )
+
+
+def test_batch_forget_removes_multiple_memories_atomically(tmp_path):
+    with MemoryStore(str(tmp_path / "forget-batch.db")) as store:
+        ctx = _ctx()
+        database = store.write(ctx, WriteItem(
+            kind="fact", entity="deployment", attribute="database", value="SQLite",
+            text="The deployment uses SQLite.",
+        ))
+        theme = store.write(ctx, WriteItem(
+            kind="fact", entity="AGM", attribute="theme", value="turquoise",
+            text="AGM theme is turquoise.",
+        ))
+        assert database.item_id and theme.item_id
+        decision = MemoryDecision(
+            action="forget",
+            target_item_ids=[database.item_id, theme.item_id],
+            evidence_quote="forget that the deployment uses SQLite and AGM theme is turquoise",
+        )
+        result = apply_memory_decision(
+            store, ctx, decision,
+            user_message="Please forget that the deployment uses SQLite and AGM theme is turquoise.",
+        )
+        assert result.status == "forgotten"
+        assert result.deleted_count == 2
+        assert set(result.item_ids) == {database.item_id, theme.item_id}
+        assert store.conn.execute("SELECT COUNT(*) FROM nodes WHERE id IN (?, ?)",
+                                  (database.item_id, theme.item_id)).fetchone()[0] == 0
+
+
+def test_batch_forget_is_all_or_nothing_when_one_target_is_missing(tmp_path):
+    with MemoryStore(str(tmp_path / "forget-batch-missing.db")) as store:
+        ctx = _ctx()
+        saved = store.write(ctx, WriteItem(
+            kind="fact", entity="deployment", attribute="database", value="SQLite",
+            text="The deployment uses SQLite.",
+        ))
+        result = store.forget_many(ctx, [saved.item_id, "n_missing_in_this_scope"])
+        assert result["forgotten"] is False
+        assert result["deleted_count"] == 0
+        assert result["missing_item_ids"] == ["n_missing_in_this_scope"]
+        assert store.conn.execute(
+            "SELECT COUNT(*) FROM nodes WHERE id = ?", (saved.item_id,)
+        ).fetchone()[0] == 1
