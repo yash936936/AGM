@@ -542,3 +542,26 @@ def test_host_operation_id_overrides_model_idempotency_values(tmp_path):
         assert len(event_keys) == 1
         assert event_keys[0] not in {"model-proposed-key", "model-claimed-operation"}
         assert str(event_keys[0]).startswith("active-memory-v1:")
+
+
+def test_active_turn_rejects_invalid_operation_id_before_generation(tmp_path):
+    with MemoryStore(str(tmp_path / "invalid-operation-id.db")) as store:
+        ctx = _ctx()
+        called = {"value": False}
+
+        def generate(message, context):
+            called["value"] = True
+            return ActiveTurnGeneration(
+                answer="unreachable",
+                memory_decision=MemoryDecision(action="ignore"),
+            )
+
+        import pytest
+
+        with pytest.raises(ValueError, match="operation_id"):
+            run_active_turn(
+                store, ctx, "What should we remember?", generate,
+                operation_id=" " * 201,
+            )
+        assert called["value"] is False
+        assert store.conn.execute("SELECT COUNT(*) FROM events").fetchone()[0] == 0
