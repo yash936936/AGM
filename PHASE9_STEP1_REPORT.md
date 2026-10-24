@@ -4,6 +4,7 @@
 - `src/agm/active_memory.py`: read-only retrieval across the current query and optional profile/preference and goal queries; ID deduplication; bounded context rendering; untrusted-memory notice.
 - `src/agm/__init__.py`: exports `TurnMemoryContext` and `prepare_turn_context`.
 - `tests/test_active_memory.py`: coverage for multi-query retrieval, no-write behavior, tenant isolation, deduplication, safety framing, budget bounds, and invalid inputs.
+- `examples/phase8_agent_demo.py`: prepares bounded active-memory context before the offline or optional OpenAI answer path; accepts repeatable `--profile-query` and `--goal-query` arguments and logs context counts/tokens.
 - `docs/decisions.md`: D-027.
 - `docs/status.md`: records this as an incomplete Phase 9 step.
 - `docs/debug.md`: records changes and verification limits.
@@ -23,4 +24,4 @@ No test results are claimed. Changes were written to branch `phase9-active-memor
 - Retrieved memory remains untrusted data; the helper does not make a model call or execute retrieved text.
 
 ## Not finished
-This is only the first Phase 9 step. It is not integrated into the REST/MCP agent workflow, does not resolve conflicting goals/facts beyond existing retrieval behavior, and does not implement during-turn updates or post-answer learning. Run the listed tests and review the output before proceeding.
+This is only the first Phase 9 step. The example agent loop uses the helper, but REST/MCP clients do not yet expose it as a dedicated orchestration operation. It does not resolve conflicting goals/facts beyond existing retrieval behavior and does not implement during-turn updates or post-answer learning. Run the listed tests and review the output before proceeding.
