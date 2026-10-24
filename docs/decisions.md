@@ -2,6 +2,11 @@
 
 > Append-only. Newest entries at top. Never edit or delete past entries — if a decision is reversed, log a new entry that supersedes it and reference the old ID.
 
+## D-032 — Apply shared input limits to active-memory operations — 2026-10-24
+**Decision:** The core context builder rejects queries over 4,000 characters, entities over 1,000 characters and as-of strings over 100 characters, in addition to existing k/token-budget bounds. The shared post-turn policy rejects oversized current-message text, evidence quotes, reasons, target IDs, operation IDs and candidate memory fields before any mutation. REST has compatible request limits; these core checks keep MCP and direct-library callers under the same contract.
+**Why:** Request-model constraints alone do not protect the MCP interface or direct Python API. The shared policy needs deterministic guardrails before storage, ranking, or logging costs are incurred.
+**Affects:** `active_memory.py`, `tests/test_active_memory.py`, input contract documentation. No schema or dependency change.
+
 ## D-031 — Clarify D-027 memory-write idempotency semantics — 2026-10-24
 **Decision:** This decision supersedes only the idempotency sentence in D-027 and the unconditional retry implication in D-028; all other D-027/D-028 behavior stays in force. AGM derives an active-memory idempotency key only when an explicit stable `operation_id` is supplied. For a controlled `run_active_turn`, the host operation ID is authoritative and the generated key must override any model-proposed `WriteItem.idempotency_key`. REST and MCP may accept an operation ID from their caller; it is an idempotency hint, not identity or authorization. If there is no operation ID and no explicit item key, AGM uses its existing write/no-op semantics and does not promise that retrying a correction across delivery attempts will return the same result.
 **Why:** Content-derived keys alone can suppress a legitimate future recurrence of identical information. Explicit host turn identity is the reliable distinction between a retry and a new user request.
