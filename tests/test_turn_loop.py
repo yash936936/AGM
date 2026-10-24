@@ -10,7 +10,7 @@ def test_turn_loop_retrieves_before_model_and_only_evaluates_proposals(tmp_path)
         store.write(ctx, WriteItem(
             text="The user's preferred answer style is concise.",
             kind="fact", entity="user", attribute="answer_style",
-            value="concise", source="test",
+            value="concise",
         ))
         seen = {}
 
