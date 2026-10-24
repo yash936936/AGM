@@ -19,7 +19,7 @@ from .events import HybridLogicalClock, append_event, decode_payload, utc_now
 from .guard import inspect_write_item, sanitize_task_state, sanitize_value
 from .trust import is_probationary
 from .models import (
-    Ctx, DeleteResult, Node, Readback, ReadbackReport, RevokeResult, TaskState,
+    Ctx, DeleteResult, ExpiryResult, Node, Readback, ReadbackReport, RevokeResult, TaskState,
     Packet, ResumeResult, RetrieveResult, RetrieveRoute, WriteItem, WriteResult,
 )
 
@@ -1195,6 +1195,91 @@ class MemoryStore:
             ).fetchone()[0])
         self._checkpoint()
         return DeleteResult(deleted=True, removed=counts)
+
+    @_atomic_mutation(checkpoint=True)
+    def expire_before(self, ctx: Ctx, cutoff: str, *, include_pinned: bool = False) -> ExpiryResult:
+        """Hard-purge memories older than a retention cutoff for this tenant/project.
+
+        Retention age uses the source event creation timestamp, not ``valid_from``.
+        Pinned items are retained unless ``include_pinned=True``. The whole sweep is
+        atomic: nested delete operations use savepoints under this transaction. Any
+        aged content-bearing write event left without a view (for example after
+        writer revocation) is scrubbed too, while the compact rollback audit event
+        remains. This operation is deliberately core-only; adapters are unchanged.
+        """
+        try:
+            cutoff_time = _iso_key(cutoff)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("cutoff must be an ISO 8601 timestamp") from exc
+        if not isinstance(include_pinned, bool):
+            raise ValueError("include_pinned must be a boolean")
+        normalized_cutoff = cutoff_time.isoformat(timespec="microseconds").replace("+00:00", "Z")
+
+        rows = self.conn.execute(
+            """SELECT n.id, n.pinned, n.event_id, ev.created_at
+               FROM nodes n JOIN events ev ON ev.id = n.event_id
+               WHERE n.tenant = ? AND n.project = ?
+               ORDER BY ev.id ASC, n.id ASC""",
+            (ctx.tenant_id, ctx.project),
+        ).fetchall()
+        expired_ids: list[str] = []
+        skipped_pinned_ids: list[str] = []
+        due_node_ids: set[str] = set()
+        pinned_due_ids: set[str] = set()
+        for row in rows:
+            if _iso_key(str(row["created_at"])) > cutoff_time:
+                continue
+            item_id = str(row["id"])
+            due_node_ids.add(item_id)
+            if bool(row["pinned"]) and not include_pinned:
+                skipped_pinned_ids.append(item_id)
+                pinned_due_ids.add(item_id)
+                continue
+            # delete() is nested under this sweep transaction, hence savepointed.
+            result = self.delete(ctx, item_id)
+            if result.deleted:
+                expired_ids.append(item_id)
+
+        # Revocation removes content from materialized views but deliberately
+        # keeps source payloads for audit. Once the configured retention cutoff
+        # passes, scrub an old source payload whose node no longer exists. Never
+        # scrub a pinned node that was explicitly retained by this sweep.
+        scrubbed_orphan_events = 0
+        content_event_types = ("add", "supersede", "contested", "quarantined")
+        placeholders = ",".join("?" for _ in content_event_types)
+        events = self.conn.execute(
+            f"""SELECT id, type, payload, created_at FROM events
+                WHERE tenant = ? AND type IN ({placeholders}) ORDER BY id ASC""",
+            (ctx.tenant_id, *content_event_types),
+        ).fetchall()
+        for event in events:
+            payload = decode_payload(event)
+            if payload.get("scrubbed"):
+                continue
+            if _iso_key(str(event["created_at"])) > cutoff_time:
+                continue
+            event_ctx = payload.get("ctx")
+            if not isinstance(event_ctx, dict) or str(event_ctx.get("project", "default")) != ctx.project:
+                continue
+            node_id = payload.get("node_id")
+            if not node_id or str(node_id) in pinned_due_ids:
+                continue
+            remaining = self.conn.execute("SELECT 1 FROM nodes WHERE id = ?", (str(node_id),)).fetchone()
+            if remaining is not None:
+                continue
+            self.conn.execute(
+                "UPDATE events SET payload = ? WHERE id = ?",
+                ('{"scrubbed":true}', int(event["id"])),
+            )
+            scrubbed_orphan_events += 1
+
+        return ExpiryResult(
+            cutoff=normalized_cutoff,
+            scanned_nodes=len(rows),
+            expired_ids=expired_ids,
+            skipped_pinned_ids=skipped_pinned_ids,
+            scrubbed_orphan_events=scrubbed_orphan_events,
+        )
 
     @_atomic_mutation()
     def rebuild_views(self) -> None:
