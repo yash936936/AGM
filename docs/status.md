@@ -87,5 +87,11 @@
 **Last decisions:** D-001 to D-008 logged.
 **Next up:** code, test, and review one phase at a time.
 
+## 2026-10-24 — Active-memory context and controlled loop implemented, validation deferred
+**Current phase:** Phase 9 active memory implementation on branch phase9-active-memory-before-answer.
+**Implemented:** Labeled query/profile/goal retrieval lanes; bounded untrusted context; explicit conflict warnings; conservative proposal policy for write/correction/history/deletion; controlled retrieval-before-model and proposal-after-response loop; focused tests and a deterministic simulation harness. Existing nine MCP tools and Phase 8 criteria remain unchanged.
+**Validation:** NOT RUN by instruction. No test, compile, MCP smoke, REST smoke, or simulation result is claimed.
+**Next up:** Freeze implementation, then run focused tests, full test suite, compile check, MCP/REST smoke clients, and deterministic simulation as a separate validation pass.
+
 ---
 **Next:** Return to [`context.md`](../context.md) before starting a new task — it routes you to the right file for what you are about to do.
