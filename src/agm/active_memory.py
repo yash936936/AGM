@@ -146,7 +146,7 @@ def _write_item_supported_by_evidence(item: WriteItem, evidence_quote: str) -> b
 
 
 def _correct_target_matches(store: "MemoryStore", ctx: Ctx, item_id: str, item: WriteItem) -> bool:
-    if not item.entity or not item.attribute:
+    if item.kind != "fact" or not item.entity or not item.attribute:
         return False
     row = store.conn.execute(
         """SELECT n.project, n.status, n.entity_id, n.attribute
