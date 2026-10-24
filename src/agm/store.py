@@ -439,6 +439,16 @@ class MemoryStore:
             elif not referenced:
                 self.conn.execute("DELETE FROM entities WHERE id = ?", (entity_id,))
 
+        restore_node_id = payload.get("restore_node_id")
+        if restore_node_id:
+            tenant_id = payload.get("tenant_id")
+            if tenant_id:
+                self.conn.execute(
+                    """UPDATE nodes SET status = 'active', valid_to = NULL
+                       WHERE id = ? AND tenant = ? AND status = 'superseded'""",
+                    (str(restore_node_id), str(tenant_id)),
+                )
+
     def _checkpoint(self) -> None:
         """Flush the WAL so deleted or revoked content does not linger on disk."""
         self.conn.commit()
@@ -1031,10 +1041,43 @@ class MemoryStore:
             counts["entities"] = int(self.conn.execute(
                 "SELECT COUNT(*) FROM entities WHERE id = ?", (entity_id,)
             ).fetchone()[0])
-        # Scrub source payload before appending delete event, per Phase 1 data-removal contract.
+        # Deleting the current single-valued fact restores its nearest surviving predecessor.
+        # Do not roll back a multi-valued set when another value remains active.
+        restore_node_id = None
+        if (
+            str(row["status"]) == "active"
+            and str(row["kind"]) == "fact"
+            and row["entity_id"] is not None
+            and row["attribute"] is not None
+        ):
+            active_siblings = int(self.conn.execute(
+                """SELECT COUNT(*) FROM nodes
+                   WHERE tenant = ? AND project = ? AND entity_id = ? AND attribute = ?
+                     AND status = 'active'""",
+                (ctx.tenant_id, row["project"], row["entity_id"], row["attribute"]),
+            ).fetchone()[0])
+            if active_siblings == 1:
+                predecessor = self.conn.execute(
+                    """SELECT id FROM nodes
+                       WHERE tenant = ? AND project = ? AND entity_id = ? AND attribute = ?
+                         AND status = 'superseded' AND version < ?
+                       ORDER BY version DESC, event_id DESC LIMIT 1""",
+                    (
+                        ctx.tenant_id, row["project"], row["entity_id"], row["attribute"],
+                        row["version"],
+                    ),
+                ).fetchone()
+                if predecessor is not None:
+                    restore_node_id = str(predecessor["id"])
+
+        # Scrub the deleted node's source payload before appending the delete event.
+        # The previous version's source event remains available so replay can restore it.
         source_event_id = int(row["event_id"])
         self.conn.execute("UPDATE events SET payload = ? WHERE id = ?", ('{"scrubbed":true}', source_event_id))
         payload = {"item_id": item_id}
+        if restore_node_id is not None:
+            payload["restore_node_id"] = restore_node_id
+            payload["tenant_id"] = ctx.tenant_id
         event_id, inserted = self._append(ctx, "delete", payload)
         self._apply_delete_payload(payload)
         if entity_id:
