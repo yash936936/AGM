@@ -25,7 +25,7 @@ Implement the persistent-memory turn lifecycle:
   - Adds `ACTIVE_MEMORY_SYSTEM_PROMPT`.
   - Builds a token-budgeted context string from query-specific retrieval plus discoverable profile/preferences, goals, decisions, both eligible sides of contested facts, validity and provenance.
   - Adds metadata-only health diagnostics: SQLite integrity is database-wide, while item/index coverage counters are tenant/project-scoped.
-  - Applies the post-turn memory policy with quote matching, key-value evidence checks, correction intent and target checks, negated-intent guards, idempotency, and explicit confirmation-required responses.
+  - Applies the post-turn memory policy with quote matching, key-value evidence checks, correction intent and target checks, conservative negated-intent guards, explicit operation-ID retry semantics, input-size limits, and confirmation-required responses.
   - Adds `run_active_turn` to enforce retrieve → provider callback → post-turn policy in an application-controlled host.
 - `src/agm/store.py`
   - Adds `MemoryStore.memory_context(...)`.
@@ -70,7 +70,7 @@ Implement the persistent-memory turn lifecycle:
 
 **These tests are authored/updated but have not been executed.** They are not passing-test claims.
 
-- `tests/test_active_memory.py`: bounded context string; context categories and both sides of contested evidence; no cross-tenant retrieval; source quotes and proposed values must match the current message; optional stable operation IDs make retries idempotent without suppressing later repeated preferences; host IDs override model-proposed keys; corrections require explicit intent and the same entity/attribute; forgetting requires explicit subject-matching intent; unrelated targets and negated requests are blocked; health returns metadata with scope-aware counters; the controller retrieves before generation; forgetting a connected correction chain remains deleted after view rebuild.
+- `tests/test_active_memory.py`: bounded context string; context categories and both sides of contested evidence; no cross-tenant retrieval; source quotes and proposed values must match the current message; optional stable operation IDs make retries idempotent without suppressing later repeated preferences; host IDs override model-proposed keys; corrections require explicit intent and the same entity/attribute; forgetting requires explicit subject-matching intent; unrelated targets and negated requests are blocked; input-size limits are enforced; health returns metadata with scope-aware counters; the controller retrieves before generation; forgetting a connected correction chain remains deleted after view rebuild.
 - `tests/test_active_memory_api.py`: new REST endpoints return the intended result shape, enforce existing read/write/delete scopes, and expose a context pack with a bounded rendered string.
 - Updated `tests/test_mcp_stdio.py`: the MCP server lists the original nine tools plus five active-memory tools and returns a bounded context pack and metadata-only health response.
 - Updated `examples/mcp_smoke_client.py`: local MCP host smoke sequence exercises context, health, remember, correct and forgetting a connected two-version chain, while retaining prior guard and handoff checks.
