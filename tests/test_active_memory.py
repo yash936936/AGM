@@ -427,3 +427,49 @@ def test_context_pack_includes_both_sides_of_a_contested_fact(tmp_path):
             {entry.get("value"), entry.get("conflicting_value")} == {"PostgreSQL", "MySQL"}
             for entry in pack.conflicts
         )
+
+
+def test_new_operation_can_reassert_previously_used_preference(tmp_path):
+    with MemoryStore(str(tmp_path / "preference-recurrence.db")) as store:
+        ctx = _ctx()
+        initial = apply_memory_decision(
+            store, ctx,
+            MemoryDecision(
+                action="remember", evidence_quote="I prefer concise answers",
+                operation_id="turn-preference-1",
+                item=WriteItem(
+                    kind="fact", entity="user", attribute="communication_preference",
+                    value="concise", text="The user prefers concise answers.",
+                ),
+            ),
+            user_message="Please remember that I prefer concise answers.",
+        )
+        changed = apply_memory_decision(
+            store, ctx,
+            MemoryDecision(
+                action="correct", target_item_id=initial.item_id,
+                evidence_quote="Actually, I prefer detailed answers instead",
+                operation_id="turn-preference-2",
+                item=WriteItem(
+                    kind="fact", entity="user", attribute="communication_preference",
+                    value="detailed", text="The user prefers detailed answers.",
+                ),
+            ),
+            user_message="Actually, I prefer detailed answers instead.",
+        )
+        restored = apply_memory_decision(
+            store, ctx,
+            MemoryDecision(
+                action="remember", evidence_quote="I prefer concise answers",
+                operation_id="turn-preference-3",
+                item=WriteItem(
+                    kind="fact", entity="user", attribute="communication_preference",
+                    value="concise", text="The user prefers concise answers.",
+                ),
+            ),
+            user_message="I prefer concise answers.",
+        )
+        assert changed.status == "corrected"
+        assert restored.status == "stored"
+        history = store.history(ctx, "user", "communication_preference")
+        assert [item.value for item in history] == ["concise", "detailed", "concise"]
