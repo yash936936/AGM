@@ -1251,3 +1251,29 @@ class MemoryStore:
         state = TaskState.model_validate(json.loads(packet["task_state"]))
         from .handoff import compare_readback
         return compare_readback(state, readback)
+
+
+    def memory_context(
+        self,
+        ctx: Ctx,
+        query: str,
+        *,
+        entity: str | None = None,
+        as_of: str | None = None,
+        k: int = 8,
+        expand: bool = True,
+        high_stakes: bool = False,
+        token_budget: int = 2000,
+        include_profile: bool = True,
+        include_goals: bool = True,
+        include_decisions: bool = True,
+    ):
+        """Assemble a bounded, provenance-bearing context pack for one model turn."""
+        from .active_memory import build_memory_context
+
+        return build_memory_context(
+            self, ctx, query, entity=entity, as_of=as_of, k=k, expand=expand,
+            high_stakes=high_stakes, token_budget=token_budget,
+            include_profile=include_profile, include_goals=include_goals,
+            include_decisions=include_decisions,
+        )
