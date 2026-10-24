@@ -1,4 +1,14 @@
-# Status — AGM prototype
+## 2026-10-25 — M0/M1 completion work on isolated branch; final regression pending
+**Branch:** `work/m0-m1-completion`. Public `main` remains unchanged.
+
+**M0 evidence:** The public baseline commit `f150a1996bda6292fae295c65ce14d9faf17a06b` passed the GitHub Actions matrix on Python 3.11, 3.12, and 3.13 (`153 passed, 1 warning` per runtime). See [run 40118798582](https://github.com/yash936936/AGM/actions/runs/40118798582). This establishes test/CI evidence for that exact baseline, not subsequent branch changes and not production readiness.
+
+**M1 changes on this branch:** evaluation schema and scenario labels validated; explicit default thresholds and zero-tolerance leak scenarios implemented; evaluator negative tests expanded to cover required-value misses, forbidden-value leak, incorrect abstention, malformed JSONL, duplicate case IDs and tenant isolation. M0 gate evidence is reconciled in `docs/M0_ACCEPTANCE_MATRIX_ADDENDUM.md`; `docs/debug.md` has DBG-013.
+
+**Validation status:** Branch CI for the final evaluator version must be checked before considering the code bundle complete. No local runtime was available via the GitHub connector, so Windows regression, REST/MCP smoke clients, simulation and pack/ZIP inspection remain NOT RUN. The evaluator does not yet simulate the delete/revoke lifecycle itself; those remain distinct store/replay tests, not proven merely by assigning a scenario label.
+
+**Still open:** eligible held-out real-history evaluation, security/privacy sign-off, local Windows test run, both smoke clients, packaging/hygiene review against the final tree, and clean local working-tree confirmation. Do not mark M0/M1 production acceptance complete until those gates are supported by evidence.
+
 
 > Updated every run. Newest entry at top.
 
