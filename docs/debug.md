@@ -3,6 +3,12 @@
 > Append-only. Every completed coding task gets an entry here, even "no
 > issues found." Newest entries at top.
 
+## DBG-012 — Phase 9 step 1: pre-answer context assembly
+**Task:** Start active memory behavior by making retrieval-before-answer an explicit, inspectable core operation.
+**Changed:** Added `src/agm/active_memory.py`, exports in `src/agm/__init__.py`, and `tests/test_active_memory.py`. The helper performs query/profile/goal searches, deduplicates by node ID, applies a character-based context budget, and marks memory as untrusted data. D-027 records the design boundary.
+**Tests:** NOT RUN. This session used GitHub repository operations and did not execute Python. No test is reported as passing.
+**Not finished:** No REST/MCP tool or agent loop invokes the helper yet; no post-answer memory update, goal-state resolution, or temporal contradiction resolution was added. The focused test and complete regression suite remain required.
+
 ## DBG-011 — Phase 8 temporal/entity retrieval, corpus sweep and Memory Doctor — 2026-10-24
 **Task:** Diagnose temporal retrieval and entity-centric ranking, build an ingestible mixed-context corpus, profile flat/graph retrieval across different corpus sizes and episode densities, instrument a sample agent loop, and add Memory Doctor.
 **Changes:** `src/agm/retrieve.py` now recognizes entity-summary intent, prioritizes exact entity/attribute answer slots, and uses exact entity+attribute evidence for a temporal query only after the existing `as_of` eligibility filter. The D-024 threshold stays 0.25. Added a 44-record JSONL corpus, an idempotent guarded ingester, `agm doctor`, JSONL SQL/retrieval/event diagnostics, a flat/graph corpus-matrix harness, and offline/optional OpenAI agent runner. `--include-content` is explicit opt-in; default traces contain hashes and metadata rather than raw query/body text.
