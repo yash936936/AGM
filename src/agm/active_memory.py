@@ -623,9 +623,20 @@ def apply_memory_decision(
             ("entity", decision.item.entity, 1000),
             ("attribute", decision.item.attribute, 500),
             ("value", decision.item.value, 4000),
+            ("idempotency_key", decision.item.idempotency_key, 200),
         ):
             if value is not None and len(value) > limit:
                 raise ValueError(f"memory {name} must not exceed {limit} characters")
+        if len(decision.item.relations) > 100:
+            raise ValueError("memory relations must not exceed 100 entries")
+        for relation in decision.item.relations:
+            if len(relation.rel) > 100 or len(relation.target) > 1000:
+                raise ValueError("memory relation fields exceed their character limits")
+        if decision.item.source_span is not None:
+            if len(decision.item.source_span.episode_id) > 200:
+                raise ValueError("memory source episode ID must not exceed 200 characters")
+            if decision.item.source_span.start < 0 or decision.item.source_span.end < decision.item.source_span.start:
+                raise ValueError("memory source span must have non-negative ordered offsets")
     if not _evidence_matches(user_message, decision.evidence_quote):
         return MemoryActionResult(
             status="confirmation_required",
