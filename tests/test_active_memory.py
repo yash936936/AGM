@@ -292,8 +292,17 @@ def test_negated_forget_and_correction_requests_do_not_mutate(tmp_path):
             ),
             user_message="I don't want you to change the answer style.",
         )
+        stop_remembering = apply_memory_decision(
+            store, ctx,
+            MemoryDecision(
+                action="forget", target_item_id=saved.item_id,
+                evidence_quote="do not remember my concise preference",
+            ),
+            user_message="Please do not remember my concise preference.",
+        )
         assert forget.status == "confirmation_required"
         assert correct.status == "confirmation_required"
+        assert stop_remembering.status == "confirmation_required"
         assert store.conn.execute(
             "SELECT COUNT(*) FROM nodes WHERE id = ?", (saved.item_id,)
         ).fetchone()[0] == 1
