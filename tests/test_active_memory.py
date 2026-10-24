@@ -592,3 +592,25 @@ def test_high_stakes_context_does_not_expand_to_probationary_conflict(tmp_path):
         )
         assert "service-api uses PostgreSQL." in pack.context
         assert "service-api uses MySQL." not in pack.context
+
+
+def test_context_text_includes_writer_and_source_span_provenance(tmp_path):
+    from agm import SourceSpan
+
+    with MemoryStore(str(tmp_path / "context-provenance.db")) as store:
+        ctx = _ctx()
+        episode = store.write(ctx, WriteItem(
+            kind="episode", text="The user explicitly said they prefer concise answers.",
+        ))
+        assert episode.item_id
+        store.write(ctx, WriteItem(
+            kind="fact", entity="user", attribute="communication_preference",
+            value="concise", text="The user prefers concise answers.",
+            source_span=SourceSpan(episode_id=episode.item_id, start=4, end=42),
+        ))
+        pack = store.memory_context(
+            ctx, "user prefers concise answers", entity="user", token_budget=1000,
+        )
+        assert "writer=active-memory-test" in pack.context
+        assert f"source_episode={episode.item_id}" in pack.context
+        assert "source_span=4:42" in pack.context
