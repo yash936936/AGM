@@ -85,6 +85,7 @@ async def session_one(db: Path) -> str:
                     "value": "concise", "text": "The user prefers concise answers."},
                 "current_user_message": "Please remember that I prefer concise answers.",
                 "evidence_quote": "I prefer concise answers",
+                "operation_id": "smoke-turn-remember-1",
                 "reason": "Durable communication preference",
             }))
             check("memory_remember requires evidence and stores preference", remembered["status"] == "stored")
@@ -96,6 +97,7 @@ async def session_one(db: Path) -> str:
                 "reason": "User explicitly corrected preference",
                 "current_user_message": "Actually, I prefer detailed answers instead.",
                 "evidence_quote": "I prefer detailed answers instead",
+                "operation_id": "smoke-turn-correct-1",
             }))
             check("memory_correct preserves correction history", corrected["status"] == "corrected")
             forgotten = _data(await session.call_tool("memory_forget", {
