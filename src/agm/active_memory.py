@@ -258,12 +258,21 @@ def _memory_category(node: Node) -> str | None:
 def _render_node(node: Node) -> str:
     fields = [
         f"id={node.id}",
+        f"writer={node.writer_id}",
         f"trust={node.trust_tier}",
         f"confidence={node.confidence:.2f}",
         f"valid_from={node.valid_from}",
     ]
     if node.valid_to:
         fields.append(f"valid_to={node.valid_to}")
+    if node.provenance:
+        episode_id = node.provenance.get("episode_id")
+        span_start = node.provenance.get("start")
+        span_end = node.provenance.get("end")
+        if episode_id:
+            fields.append(f"source_episode={episode_id}")
+        if span_start is not None and span_end is not None:
+            fields.append(f"source_span={span_start}:{span_end}")
     if node.entity:
         fields.append(f"entity={node.entity}")
     if node.attribute:
