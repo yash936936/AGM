@@ -813,6 +813,8 @@ def apply_memory_decision(
                 message="A forget request needs at least one specific memory ID; nothing was changed.",
                 evidence_verified=True,
             )
+        if len(target_ids) > 100:
+            raise ValueError("at most 100 target memory IDs may be forgotten in one operation")
         if _NEGATED_FORGET.search(user_message) or not _FORGET_INTENT.search(user_message):
             return MemoryActionResult(
                 status="confirmation_required",
