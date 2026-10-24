@@ -1,3 +1,9 @@
+## DBG-013 — Restore previous fact version after deleting current value — 2026-10-24
+**Task:** Implement the selected deletion behavior: deleting the current single-valued fact restores its previous version.
+**Changes:** `MemoryStore.delete` now finds the nearest lower-version superseded fact for the same tenant, project, entity and attribute when the deleted fact is the only active value. The delete event carries the predecessor ID and tenant; replay reactivates that predecessor and clears its `valid_to`. Historical deletes and active multi-valued sets do not trigger restoration. The deleted node's source event remains scrubbed.
+**Regression coverage:** Added a test for deleting the current correction, verifying the previous value becomes active, the deleted value is scrubbed from the event log, and `rebuild_views()` reproduces the same state.
+**Validation:** NOT RUN in this session. Changes were committed to the working branch through GitHub file updates, but a Python runtime is not available through that workflow. Full pytest, delete-on-disk, replay and REST/MCP parity checks remain required before merge.
+
 # Debug log — AGM prototype
 
 > Append-only. Every completed coding task gets an entry here, even "no
