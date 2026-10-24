@@ -1277,3 +1277,43 @@ class MemoryStore:
             include_profile=include_profile, include_goals=include_goals,
             include_decisions=include_decisions,
         )
+
+
+    def forget(self, ctx: Ctx, item_id: str) -> dict[str, object]:
+        """Hard-delete the selected memory and its connected supersede history.
+
+        This is the user-facing forget operation. Low-level delete remains
+        available for callers that intentionally remove one version only.
+        """
+        target = self.conn.execute(
+            "SELECT id FROM nodes WHERE id = ? AND tenant = ? AND project = ?",
+            (item_id, ctx.tenant_id, ctx.project),
+        ).fetchone()
+        if target is None:
+            return {"forgotten": False, "deleted_count": 0, "item_ids": []}
+        rows = self.conn.execute(
+            """WITH RECURSIVE versions(id) AS (
+                   SELECT ?
+                   UNION
+                   SELECT e.src FROM edges e JOIN versions v ON e.dst = v.id
+                    WHERE e.type = 'supersedes'
+                   UNION
+                   SELECT e.dst FROM edges e JOIN versions v ON e.src = v.id
+                    WHERE e.type = 'supersedes'
+               )
+               SELECT n.id, n.event_id FROM nodes n JOIN versions v ON v.id = n.id
+                WHERE n.tenant = ? AND n.project = ?
+                ORDER BY n.event_id DESC, n.id ASC""",
+            (item_id, ctx.tenant_id, ctx.project),
+        ).fetchall()
+        # Collect the chain before deleting; delete() also removes supersedes edges.
+        ids = [str(row["id"]) for row in rows]
+        deleted_count = 0
+        for version_id in ids:
+            result = self.delete(ctx, version_id)
+            deleted_count += int(result.deleted)
+        return {
+            "forgotten": deleted_count > 0,
+            "deleted_count": deleted_count,
+            "item_ids": ids if deleted_count else [],
+        }
