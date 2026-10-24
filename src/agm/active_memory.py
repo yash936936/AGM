@@ -521,14 +521,30 @@ def apply_memory_decision(
                 evidence_verified=True,
             )
         item = decision.item
+        if not item.idempotency_key:
+            item = item.model_copy(update={"idempotency_key": _stable_idempotency_key(ctx, decision)})
+        existing_event = store.conn.execute(
+            """SELECT id FROM events
+               WHERE tenant = ? AND writer_id = ? AND idem_key = ?""",
+            (ctx.tenant_id, ctx.writer_id, item.idempotency_key),
+        ).fetchone()
+        if existing_event is not None:
+            existing = store._result_for_existing_event(int(existing_event["id"]))
+            mapped_status = "corrected" if existing.status == "superseded" else existing.status
+            return MemoryActionResult(
+                status=mapped_status,
+                message="Previously applied correction returned from the idempotency record.",
+                item_id=existing.item_id,
+                superseded_id=existing.superseded_id or decision.target_item_id,
+                redactions=existing.redactions,
+                evidence_verified=True,
+            )
         if not _correct_target_matches(store, ctx, decision.target_item_id, item):
             return MemoryActionResult(
                 status="confirmation_required",
                 message="The selected memory is missing/inactive/out of scope, or the replacement does not match its entity and attribute; nothing was changed.",
                 evidence_verified=True,
             )
-        if not item.idempotency_key:
-            item = item.model_copy(update={"idempotency_key": _stable_idempotency_key(ctx, decision)})
         result = store.supersede(ctx, decision.target_item_id, item, decision.reason or "User correction")
         return MemoryActionResult(
             status="corrected" if result.status in {"added", "superseded"} else result.status,
