@@ -647,3 +647,18 @@ def test_active_memory_rejects_oversized_context_and_decision_inputs(tmp_path):
                 user_message="x" * 20001,
             )
         assert store.conn.execute("SELECT COUNT(*) FROM events").fetchone()[0] == 0
+
+        with pytest.raises(ValueError, match="idempotency_key"):
+            apply_memory_decision(
+                store, ctx,
+                MemoryDecision(
+                    action="remember",
+                    evidence_quote="I prefer concise answers",
+                    item=WriteItem(
+                        kind="fact", entity="user", attribute="communication_preference",
+                        value="concise", text="The user prefers concise answers.",
+                        idempotency_key="x" * 201,
+                    ),
+                ),
+                user_message="Please remember that I prefer concise answers.",
+            )
