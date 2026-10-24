@@ -140,7 +140,9 @@ def _write_item_supported_by_evidence(item: WriteItem, evidence_quote: str) -> b
         candidate = re.escape(_normalise_text(raw_value))
         return re.search(r"(?<!\w)" + candidate + r"(?!\w)", quote) is not None
     text_terms = _significant_terms(item.text)
-    return bool(text_terms.intersection(quote_terms))
+    shared_terms = text_terms.intersection(quote_terms)
+    required_terms = min(2, len(text_terms))
+    return required_terms > 0 and len(shared_terms) >= required_terms
 
 
 def _correct_target_matches(store: "MemoryStore", ctx: Ctx, item_id: str, item: WriteItem) -> bool:
@@ -195,14 +197,21 @@ def _forget_target_matches(store: "MemoryStore", ctx: Ctx, item_id: str, evidenc
     if not rows:
         return False
     quote_terms = _significant_terms(evidence_quote)
-    if not quote_terms:
-        return False
+    quote_text = _normalise_text(evidence_quote)
     for row in rows:
+        # Preserve the ability to identify short literal names such as "AI" or
+        # "C++" that do not produce ordinary alphabetic tokens.
+        for key in ("value", "entity"):
+            literal = _normalise_text(str(row[key] or ""))
+            if literal:
+                pattern = re.escape(literal)
+                if re.search(r"(?<!\\w)" + pattern + r"(?!\\w)", quote_text):
+                    return True
         value_terms = _significant_terms(str(row["value"] or ""))
-        if value_terms and value_terms.issubset(quote_terms):
+        if quote_terms and value_terms and value_terms.issubset(quote_terms):
             return True
         entity_terms = _significant_terms(str(row["entity"] or ""))
-        if entity_terms and entity_terms.issubset(quote_terms):
+        if quote_terms and entity_terms and entity_terms.issubset(quote_terms):
             return True
         text_terms = _significant_terms(str(row["text"] or ""))
         # For records without a useful value/entity, require more than one shared
