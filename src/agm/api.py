@@ -16,7 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from .config import KeyIdentity, KeyRegistry, database_path, ensure_loopback_host, load_key_registry
 from .models import (
-    Ctx, MemoryActionResult, MemoryContextPack, MemoryDecision, MemoryHealthReport,
+    Ctx, MemoryActionResult, MemoryContextPack, MemoryDecision, MemoryForgetCategory, MemoryHealthReport,
     Readback, RetrieveResult, TaskState, WriteItem, WriteResult,
 )
 from .active_memory import apply_memory_decision, memory_health as run_memory_health
@@ -72,6 +72,7 @@ class MemoryCorrectRequest(RequestModel):
 class MemoryForgetRequest(RequestModel):
     item_id: str | None = Field(default=None, min_length=1, max_length=200)
     item_ids: list[str] = Field(default_factory=list, max_length=100)
+    category: MemoryForgetCategory | None = None
     current_user_message: str = Field(min_length=1, max_length=20000)
     evidence_quote: str = Field(min_length=1, max_length=4000)
 
@@ -276,7 +277,7 @@ def create_app(
     ) -> MemoryActionResult:
         decision = MemoryDecision(
             action="forget", target_item_id=payload.item_id,
-            target_item_ids=payload.item_ids,
+            target_item_ids=payload.item_ids, target_category=payload.category,
             evidence_quote=payload.evidence_quote, reason="User-requested forgetting",
         )
         try:
