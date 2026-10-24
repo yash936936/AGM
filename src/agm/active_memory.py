@@ -754,7 +754,9 @@ def run_active_turn(
     if not isinstance(generation, ActiveTurnGeneration):
         generation = ActiveTurnGeneration.model_validate(generation)
     decision = generation.memory_decision
-    if operation_id and not decision.operation_id:
+    if operation_id:
+        # A host-supplied turn ID is authoritative; do not accept a model-chosen ID
+        # for a controlled loop, because stable identity is part of retry safety.
         decision = decision.model_copy(update={"operation_id": operation_id})
     action = apply_memory_decision(store, ctx, decision, user_message=user_message)
     return ActiveMemoryTurnResult(answer=generation.answer, context=context, memory_action=action)
