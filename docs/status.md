@@ -2,6 +2,13 @@
 
 > Updated every run. Newest entry at top.
 
+## 2026-10-24 — Active Memory Loop v1 implementation prepared; testing pending
+**Current work:** Active Memory Loop v1 is implemented on branch `feature/active-memory-loop-v1`; this is not yet marked complete.
+**Changes:** Added the `MemoryContextPack` and `MemoryDecision` contracts; `MemoryStore.memory_context` plus profile/preferences, goals and decisions categorization; bounded context text with provenance and validity; source-quote-gated remember/correct/forget policy; correction intent and negated-forget guards; idempotent remember writes; full supersede-history hard deletion for user-facing forget; read-only scoped health checks; `run_active_turn` provider-neutral controller; REST endpoints and five new MCP tools (the original nine tool names remain). Added an offline-only controller example and host instructions. No dependency or remote-exposure change.
+**Safety/contract note:** Native MCP tools still do not guarantee invocation on every consumer-chat turn; source quote verification is fully grounded only when a host-controlled loop supplies the actual user message. The context string uses a characters/4 estimate, not a model tokenizer.
+**Validation:** **NOT RUN by request.** Code tests and smoke tests have been added/updated but have deliberately not been executed; no pass claim is made.
+**Next:** Review the implementation, then run compileall, the full pytest suite, MCP and REST smoke clients, and the focused active-memory checks on the integrator's Windows checkout. Fix any failures before calling the work done. Keep services loopback-only.
+
 ## 2026-10-24 — Phase 8 implemented in reconstructed builder snapshot; Windows revalidation pending
 **Current phase:** Phase 8 — temporal/entity ranking, size/context benchmark, Memory Doctor and agent instrumentation. Apply as a patch to the actual v0.5.1 checkout; do not replace the owner’s core source tree wholesale.
 **Last debug:** DBG-011. **Last decision:** D-026; D-024 verdict rule and D-021 through D-025 are unchanged.
