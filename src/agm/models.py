@@ -185,6 +185,7 @@ class MemoryActionResult(ContractModel):
     item_id: str | None = None
     superseded_id: str | None = None
     redactions: int = 0
+    deleted_count: int = 0
     evidence_verified: bool = False
 
 
