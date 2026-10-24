@@ -83,6 +83,7 @@ After applying/reviewing the implementation on the Windows checkout, run from th
 
 ```bash
 python -m compileall -q src tests eval scripts examples
+python -m pytest -q tests/test_active_memory.py tests/test_active_memory_api.py
 python -m pytest -q
 python examples/mcp_smoke_client.py
 python examples/rest_smoke_client.py
