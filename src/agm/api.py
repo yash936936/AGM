@@ -70,7 +70,8 @@ class MemoryCorrectRequest(RequestModel):
 
 
 class MemoryForgetRequest(RequestModel):
-    item_id: str = Field(min_length=1, max_length=200)
+    item_id: str | None = Field(default=None, min_length=1, max_length=200)
+    item_ids: list[str] = Field(default_factory=list, max_length=100)
     current_user_message: str = Field(min_length=1, max_length=20000)
     evidence_quote: str = Field(min_length=1, max_length=4000)
 
@@ -275,6 +276,7 @@ def create_app(
     ) -> MemoryActionResult:
         decision = MemoryDecision(
             action="forget", target_item_id=payload.item_id,
+            target_item_ids=payload.item_ids,
             evidence_quote=payload.evidence_quote, reason="User-requested forgetting",
         )
         try:
