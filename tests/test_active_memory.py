@@ -802,3 +802,31 @@ def test_batch_forget_supports_explicit_preference_category_request(tmp_path):
             "SELECT COUNT(*) FROM nodes WHERE id IN (?, ?)",
             (communication.item_id, learning.item_id),
         ).fetchone()[0] == 0
+
+
+def test_specific_preference_wording_does_not_authorize_forgetting_all_preferences(tmp_path):
+    with MemoryStore(str(tmp_path / "forget-one-preference.db")) as store:
+        ctx = _ctx()
+        communication = store.write(ctx, WriteItem(
+            kind="fact", entity="user", attribute="communication_preference",
+            value="concise", text="The user prefers concise answers.",
+        ))
+        learning = store.write(ctx, WriteItem(
+            kind="fact", entity="user", attribute="learning_preference",
+            value="examples", text="The user prefers learning with examples.",
+        ))
+        assert communication.item_id and learning.item_id
+        result = apply_memory_decision(
+            store, ctx,
+            MemoryDecision(
+                action="forget",
+                target_item_ids=[communication.item_id, learning.item_id],
+                evidence_quote="forget that I prefer concise answers",
+            ),
+            user_message="Please forget that I prefer concise answers.",
+        )
+        assert result.status == "confirmation_required"
+        assert store.conn.execute(
+            "SELECT COUNT(*) FROM nodes WHERE id IN (?, ?)",
+            (communication.item_id, learning.item_id),
+        ).fetchone()[0] == 2
