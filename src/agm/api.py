@@ -57,6 +57,7 @@ class MemoryRememberRequest(RequestModel):
     current_user_message: str = Field(min_length=1, max_length=20000)
     evidence_quote: str = Field(min_length=1, max_length=4000)
     reason: str = Field(default="", max_length=2000)
+    operation_id: str | None = Field(default=None, min_length=1, max_length=200)
 
 
 class MemoryCorrectRequest(RequestModel):
@@ -65,6 +66,7 @@ class MemoryCorrectRequest(RequestModel):
     reason: str = Field(min_length=1, max_length=2000)
     current_user_message: str = Field(min_length=1, max_length=20000)
     evidence_quote: str = Field(min_length=1, max_length=4000)
+    operation_id: str | None = Field(default=None, min_length=1, max_length=200)
 
 
 class MemoryForgetRequest(RequestModel):
@@ -236,7 +238,7 @@ def create_app(
     ) -> MemoryActionResult:
         decision = MemoryDecision(
             action="remember", item=payload.item, evidence_quote=payload.evidence_quote,
-            reason=payload.reason,
+            reason=payload.reason, operation_id=payload.operation_id,
         )
         try:
             return apply_memory_decision(
@@ -255,6 +257,7 @@ def create_app(
         decision = MemoryDecision(
             action="correct", target_item_id=payload.item_id, item=payload.item,
             reason=payload.reason, evidence_quote=payload.evidence_quote,
+            operation_id=payload.operation_id,
         )
         try:
             return apply_memory_decision(
