@@ -1,27 +1,34 @@
-# Phase 9 Step 1 Report: Pre-answer active memory context
+# Phase 9 Active Memory Implementation Report
 
-## Files changed
-- `src/agm/active_memory.py`: read-only retrieval across the current query and optional profile/preference and goal queries; ID deduplication; bounded context rendering; untrusted-memory notice.
-- `src/agm/__init__.py`: exports `TurnMemoryContext` and `prepare_turn_context`.
-- `tests/test_active_memory.py`: coverage for multi-query retrieval, no-write behavior, tenant isolation, deduplication, safety framing, budget bounds, and invalid inputs.
-- `examples/phase8_agent_demo.py`: prepares bounded active-memory context before the offline or optional OpenAI answer path; accepts repeatable `--profile-query` and `--goal-query` arguments and logs context counts/tokens.
-- `docs/decisions.md`: D-027.
-- `docs/status.md`: records this as an incomplete Phase 9 step.
-- `docs/debug.md`: records changes and verification limits.
+## Implementation delivered
 
-## Tests
-- `python -m pytest -q tests/test_active_memory.py`: NOT RUN.
-- `python -m pytest -q`: NOT RUN.
-- `python -m compileall -q src tests`: NOT RUN.
-- `python examples/mcp_smoke_client.py`: NOT RUN.
-- `python examples/rest_smoke_client.py`: NOT RUN.
+- `src/agm/active_memory.py`: bounded context pack with current-query, profile/preference, and active-goal retrieval lanes; deduplication; tenant/project-safe use of existing retrieval; explicit conflict warnings for multiple open-ended values; untrusted-data framing; approximate token-budget enforcement.
+- `src/agm/active_memory_policy.py`: conservative eligibility policy for write, correction, history, and deletion proposals. Evidence quotes must be present verbatim in the current user message for writes/corrections; corrections need explicit correction language; history and deletion need explicit user intent; deletion needs a concrete target.
+- `src/agm/turn_loop.py`: host-independent turn controller that retrieves before the model callback and evaluates candidate memory operations after the response. It does not automatically call mutation tools.
+- `tests/test_active_memory.py`, `tests/test_active_memory_policy.py`, and `tests/test_turn_loop.py`: focused regression coverage authored but not run.
+- `eval/active_memory_simulation.py`: deterministic multi-turn policy scenarios authored but not run.
+- `docs/active_memory.md`, `README.md`, decision/debug/status logs, and package exports updated.
+- Existing REST/MCP adapters and the nine MCP tool names are unchanged. No pull request was created as part of this implementation pass.
 
-No test results are claimed. Changes were written to branch `phase9-active-memory-before-answer`.
+## Contract notes
 
-## Contract concerns and assumptions
-- Existing contracts remain unchanged. Profile and goal records have no dedicated schema type, so callers must provide explicit retrieval prompts.
-- Token usage is estimated as four characters per token, consistent with the existing handoff convention.
-- Retrieved memory remains untrusted data; the helper does not make a model call or execute retrieved text.
+- Profile and goal retrieval use caller-supplied prompts because the frozen memory schema does not define dedicated profile/goal record types.
+- Token usage is estimated as four characters per token, and whole records are included only when the rendered context fits.
+- Conflicting open-ended facts with the same entity/attribute are explicitly surfaced. This is a conservative signal, not an automatic conflict-resolution policy.
+- The policy only returns recommendations. Host code must still use existing authenticated tools, scope checks, core guards, operation IDs/idempotency, and event-sourced writes.
 
-## Not finished
-This is only the first Phase 9 step. The example agent loop uses the helper, but REST/MCP clients do not yet expose it as a dedicated orchestration operation. It does not resolve conflicting goals/facts beyond existing retrieval behavior and does not implement during-turn updates or post-answer learning. Run the listed tests and review the output before proceeding.
+## Validation status
+
+**NOT RUN, by instruction.** No unit tests, full pytest suite, compile checks, MCP smoke tests, REST smoke tests, or simulation results are claimed.
+
+When implementation is frozen, run:
+
+```bash
+python -m pip install -e ".[dev]"
+python -m pytest -q tests/test_active_memory.py tests/test_active_memory_policy.py tests/test_turn_loop.py
+python -m compileall -q src tests eval
+python examples/mcp_smoke_client.py
+python examples/rest_smoke_client.py
+python eval/active_memory_simulation.py
+python -m pytest -q
+```
