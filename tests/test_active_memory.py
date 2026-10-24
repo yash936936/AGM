@@ -473,3 +473,33 @@ def test_new_operation_can_reassert_previously_used_preference(tmp_path):
         assert restored.status == "stored"
         history = store.history(ctx, "user", "communication_preference")
         assert [item.value for item in history] == ["concise", "detailed", "concise"]
+
+
+def test_retry_after_explicit_forget_does_not_restore_scrubbed_correction(tmp_path):
+    with MemoryStore(str(tmp_path / "retry-after-forget.db")) as store:
+        ctx = _ctx()
+        old = store.write(ctx, WriteItem(
+            kind="fact", entity="AGM", attribute="database", value="SQLite",
+            text="AGM uses SQLite.",
+        ))
+        decision = MemoryDecision(
+            action="correct", target_item_id=old.item_id,
+            evidence_quote="Actually, AGM uses PostgreSQL instead",
+            operation_id="turn-correction-to-forget",
+            item=WriteItem(
+                kind="fact", entity="AGM", attribute="database", value="PostgreSQL",
+                text="AGM uses PostgreSQL.",
+            ),
+        )
+        corrected = apply_memory_decision(
+            store, ctx, decision,
+            user_message="Actually, AGM uses PostgreSQL instead.",
+        )
+        assert corrected.status == "corrected"
+        store.forget(ctx, corrected.item_id)
+        retry = apply_memory_decision(
+            store, ctx, decision,
+            user_message="Actually, AGM uses PostgreSQL instead.",
+        )
+        assert retry.status == "not_found"
+        assert store.history(ctx, "AGM", "database") == []
