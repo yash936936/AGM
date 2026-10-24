@@ -443,7 +443,7 @@ def build_memory_context(
 
 
 def memory_health(store: "MemoryStore", ctx: Ctx) -> MemoryHealthReport:
-    """Run read-only, scope-aware consistency checks and return metadata only."""
+    """Run database-wide SQLite integrity and tenant/project-scoped index checks; return metadata only."""
     integrity_row = store.conn.execute("PRAGMA integrity_check").fetchone()
     integrity_ok = bool(integrity_row and str(integrity_row[0]).casefold() == "ok")
     scope = (ctx.tenant_id, ctx.project)
