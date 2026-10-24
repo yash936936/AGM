@@ -5,7 +5,7 @@
 
 ## DBG-012 — Phase 9 step 1: pre-answer context assembly
 **Task:** Start active memory behavior by making retrieval-before-answer an explicit, inspectable core operation.
-**Changed:** Added `src/agm/active_memory.py`, exports in `src/agm/__init__.py`, and `tests/test_active_memory.py`. The helper performs query/profile/goal searches, deduplicates by node ID, applies a character-based context budget, and marks memory as untrusted data. D-027 records the design boundary.
+**Changed:** Added `src/agm/active_memory.py`, exports in `src/agm/__init__.py`, and `tests/test_active_memory.py`. The helper performs query/profile/goal searches, deduplicates by node ID, applies a character-based context budget, and marks memory as untrusted data. The Phase 8 agent demo now assembles this context before answering and passes it to the optional OpenAI Responses call; offline mode prints retrieved evidence without claiming model reasoning. D-027 records the design boundary.
 **Tests:** NOT RUN. This session used GitHub repository operations and did not execute Python. No test is reported as passing.
 **Not finished:** No REST/MCP tool or agent loop invokes the helper yet; no post-answer memory update, goal-state resolution, or temporal contradiction resolution was added. The focused test and complete regression suite remain required.
 
