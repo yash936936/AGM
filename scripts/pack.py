@@ -34,7 +34,7 @@ PHASE9_OVERLAY_FILES = [
     "src/agm/__init__.py", "src/agm/active_memory.py",
     "src/agm/active_memory_policy.py", "src/agm/turn_loop.py",
     "tests/test_active_memory.py", "tests/test_active_memory_policy.py", "tests/test_turn_loop.py",
-    "eval/active_memory_simulation.py",
+    "eval/active_memory_simulation.py", "examples/active_memory_turn_demo.py",
 ]
 
 # Phase 8 remains patch-based: new diagnostics/agent/evaluation files are added
