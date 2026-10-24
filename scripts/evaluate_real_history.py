@@ -2,8 +2,9 @@
 """Evaluate a consented, de-identified JSONL benchmark against AGM retrieval.
 
 Only aggregate metrics are emitted. Each case is evaluated in a fresh temporary
-SQLite database that is closed and reopened before retrieval. Synthetic fixtures
-are smoke tests only; they are not evidence of real-history quality.
+SQLite database. Initial writes and each requested operation are followed by a
+close/reopen boundary; the final query runs after view rebuild/replay. Synthetic
+fixtures are smoke tests only, not evidence of real-history quality.
 """
 from __future__ import annotations
 
@@ -22,6 +23,7 @@ VALID_SCENARIOS = {
     "cross_session_recall", "tenant_isolation", "current_vs_stale",
     "deletion", "revocation", "abstention", "relevance",
 }
+VALID_OPERATIONS = {"correction", "delete", "revoke_writer"}
 DEFAULT_MIN_CASE_PASS_RATE = 0.95
 DEFAULT_MIN_EXPECTED_RECALL = 0.95
 DEFAULT_MIN_ABSTENTION_ACCURACY = 0.95
@@ -35,6 +37,8 @@ def _nonempty_string(value: Any, field: str) -> str:
 
 
 def _ctx(data: dict[str, Any], prefix: str) -> Ctx:
+    if not isinstance(data, dict):
+        raise ValueError(f"{prefix} must be an object")
     tier = data.get("tier", "human_verified")
     if tier not in ALLOWED_TIERS:
         raise ValueError(f"{prefix}.tier has an unsupported value")
@@ -89,6 +93,27 @@ def load_cases(path: Path) -> list[dict[str, Any]]:
                 if not isinstance(memory, dict) or not isinstance(memory.get("item"), dict):
                     raise ValueError(f"case {case_id}: memory {index} must contain an item object")
                 _ctx(memory, f"case {case_id}.memories[{index}]")
+            operations = case.get("operations", [])
+            if not isinstance(operations, list):
+                raise ValueError(f"case {case_id}: operations must be a list")
+            for op_index, operation in enumerate(operations):
+                prefix = f"case {case_id}.operations[{op_index}]"
+                if not isinstance(operation, dict):
+                    raise ValueError(f"{prefix} must be an object")
+                op_type = operation.get("type")
+                if op_type not in VALID_OPERATIONS:
+                    raise ValueError(f"{prefix}.type is unsupported")
+                _ctx(operation.get("context"), f"{prefix}.context")
+                if op_type in {"correction", "delete"}:
+                    target = operation.get("target_memory_index")
+                    if type(target) is not int or not 0 <= target < len(case["memories"]):
+                        raise ValueError(f"{prefix}.target_memory_index must reference a memory")
+                if op_type == "correction":
+                    if not isinstance(operation.get("item"), dict):
+                        raise ValueError(f"{prefix}.item must be an object")
+                    _nonempty_string(operation.get("reason"), f"{prefix}.reason")
+                if op_type == "revoke_writer":
+                    _nonempty_string(operation.get("writer_id"), f"{prefix}.writer_id")
             cases.append(case)
     if not cases:
         raise ValueError("benchmark contains no cases")
@@ -98,6 +123,9 @@ def load_cases(path: Path) -> list[dict[str, Any]]:
 def evaluate_case(case: dict[str, Any], db_path: Path) -> dict[str, Any]:
     case_id = str(case["case_id"])
     scenario = case.get("scenario", "cross_session_recall")
+    item_ids: list[str] = []
+
+    # Stage 1: seed memories.
     with MemoryStore(str(db_path)) as store:
         for index, memory in enumerate(case["memories"]):
             ctx = _ctx(memory, f"case {case_id}.memories[{index}]")
@@ -105,9 +133,40 @@ def evaluate_case(case: dict[str, Any], db_path: Path) -> dict[str, Any]:
             result = store.write(ctx, item)
             if result.status == "quarantined":
                 raise ValueError(f"case {case_id}: a benchmark memory was quarantined; review fixture quality")
+            if not result.item_id:
+                raise ValueError(f"case {case_id}: a benchmark write returned no item id")
+            item_ids.append(result.item_id)
+
+    # Stage 2: execute actual lifecycle operations through MemoryStore methods.
+    # Open/close around every operation so the next step cannot rely on the same connection.
+    for op_index, operation in enumerate(case.get("operations", [])):
+        prefix = f"case {case_id}.operations[{op_index}]"
+        op_ctx = _ctx(operation["context"], f"{prefix}.context")
+        with MemoryStore(str(db_path)) as store:
+            op_type = operation["type"]
+            if op_type == "correction":
+                target_id = item_ids[operation["target_memory_index"]]
+                write_item = WriteItem.model_validate(operation["item"])
+                result = store.supersede(op_ctx, target_id, write_item, operation["reason"])
+                if result.status != "superseded":
+                    raise ValueError(f"{prefix}: correction did not supersede the target memory")
+            elif op_type == "delete":
+                target_id = item_ids[operation["target_memory_index"]]
+                result = store.delete(op_ctx, target_id)
+                if not result.deleted:
+                    raise ValueError(f"{prefix}: requested memory deletion did not occur")
+            elif op_type == "revoke_writer":
+                result = store.revoke_writer(op_ctx, operation["writer_id"], since=operation.get("since"))
+                if not result.revoked:
+                    raise ValueError(f"{prefix}: writer revocation did not occur")
+            else:  # schema validation rejects this branch
+                raise ValueError(f"{prefix}: unsupported operation")
+
+    # Stage 3: reopen, rebuild views from the event log, then retrieve.
     query = case["query"]
     query_ctx = _ctx(query, f"case {case_id}.query")
     with MemoryStore(str(db_path)) as store:
+        store.rebuild_views()
         result = store.retrieve(
             query_ctx,
             query["text"],
@@ -179,7 +238,7 @@ def evaluate(
     threshold_failures = []
     if case_pass_rate < min_case_pass_rate:
         threshold_failures.append("case_pass_rate")
-    if recall is None or recall < min_expected_recall:
+    if recall is not None and recall < min_expected_recall:
         threshold_failures.append("expected_value_recall")
     if abstention_accuracy is not None and abstention_accuracy < min_abstention_accuracy:
         threshold_failures.append("abstention_accuracy")
@@ -226,7 +285,7 @@ def main() -> int:
             min_expected_recall=args.min_expected_recall,
             min_abstention_accuracy=args.min_abstention_accuracy,
         )
-    except (OSError, ValueError) as exc:
+    except (OSError, ValueError, KeyError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
     encoded = json.dumps(report, indent=2, sort_keys=True)
