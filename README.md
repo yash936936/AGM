@@ -145,7 +145,7 @@ The sample benchmark and full-scale five-seed result are saved in `eval/results/
 
 ## Active memory loop v1
 
-The active-memory workflow adds a compact context pack and a provider-neutral controller. The intended lifecycle is **retrieve before generation → answer using untrusted evidence → apply a conservative post-turn memory decision**. The core exposes `MemoryStore.memory_context(...)`, `run_active_turn(...)`, `ACTIVE_MEMORY_SYSTEM_PROMPT`, and policy helpers. Five high-level MCP tools were added without renaming the nine existing tools: `memory_context`, `memory_remember`, `memory_correct`, `memory_forget`, and `memory_health`. Existing `memory_history` remains the history surface.
+The active-memory workflow adds a compact context pack and a provider-neutral controller. The intended lifecycle is **retrieve before generation → answer using untrusted evidence → apply a conservative post-turn memory decision**. The core exposes `MemoryStore.memory_context(...)`, `run_active_turn(...)`, `ACTIVE_MEMORY_SYSTEM_PROMPT`, and policy helpers. Use `prompts/active_memory_system_prompt.md` as host guidance; a provider adapter should pass `ACTIVE_MEMORY_SYSTEM_PROMPT` and the bounded `context` string to the model before generation. Five high-level MCP tools were added without renaming the nine existing tools: `memory_context`, `memory_remember`, `memory_correct`, `memory_forget`, and `memory_health`. Existing `memory_history` remains the history surface.
 
 Run the offline controller against your local memory database:
 
