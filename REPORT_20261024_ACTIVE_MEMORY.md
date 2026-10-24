@@ -44,7 +44,7 @@ Implement the persistent-memory turn lifecycle:
 - `examples/active_memory_loop.py` (new)
   - Demonstrates the controller offline; it makes no LLM request.
 - `examples/mcp_smoke_client.py`
-  - Updates tool expectations and adds checks for context, health, remember, correct and forget.
+  - Updates tool expectations and adds checks for context, health, remember, correct, single-chain forget and atomic batch forget.
 - `tests/test_mcp_stdio.py`
   - Updates the tool list expectations and adds context/health checks.
 - `tests/test_active_memory.py` (new)
@@ -73,7 +73,7 @@ Implement the persistent-memory turn lifecycle:
 - `tests/test_active_memory.py`: bounded context string; context categories and both sides of contested evidence; no cross-tenant retrieval; source quotes and proposed values must match the current message; optional stable operation IDs make retries idempotent without suppressing later repeated preferences; host IDs override model-proposed keys; corrections require explicit intent and the same entity/attribute; single/batch forgetting requires explicit subject-matching intent; unrelated targets and negated requests are blocked; missing batch targets cause no partial deletion; input-size limits are enforced; health returns metadata with scope-aware counters; the controller retrieves before generation; forgotten correction chains stay deleted after view rebuild.
 - `tests/test_active_memory_api.py`: new REST endpoints return the intended result shape, enforce existing read/write/delete scopes, and expose a context pack with a bounded rendered string.
 - Updated `tests/test_mcp_stdio.py`: the MCP server lists the original nine tools plus five active-memory tools and returns a bounded context pack and metadata-only health response.
-- Updated `examples/mcp_smoke_client.py`: local MCP host smoke sequence exercises context, health, remember, correct and forgetting a connected two-version chain, while retaining prior guard and handoff checks.
+- Updated `examples/mcp_smoke_client.py`: local MCP host smoke sequence exercises context, health, remember, correct, forgetting a connected two-version chain, and forgetting multiple independent targets atomically, while retaining prior guard and handoff checks.
 
 ## Validation commands
 
@@ -114,7 +114,7 @@ Run the MCP smoke client in an environment where the official MCP SDK is install
 6. Confirm the native MCP/REST adapters pass an optional `operation_id` through on remember/correct, and that controlled `run_active_turn(operation_id=...)` overrides any model-proposed operation ID.
 7. Confirm contested counterparty text is included only when tenant/project, temporal and high-stakes eligibility allow it; database-wide SQLite integrity and scoped item/index counts are documented separately.
 8. Confirm shared input caps apply consistently through direct core calls, REST and MCP without changing the frozen base `WriteItem` contract.
-6. Native ChatGPT/Claude integration remains a later milestone; this branch does not guarantee tool invocation on every message.
+9. Native ChatGPT/Claude integration remains a later milestone; this branch does not guarantee tool invocation on every message.
 
 ## Completion rule
 
