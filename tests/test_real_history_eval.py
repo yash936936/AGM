@@ -258,3 +258,23 @@ def test_load_cases_rejects_duplicate_case_ids(tmp_path):
     path.write_text(row + "\n" + row + "\n", encoding="utf-8")
     with pytest.raises(ValueError, match="duplicate case_id"):
         load_cases(path)
+
+
+
+@pytest.mark.parametrize(
+    "scenario, forbidden, expected_message",
+    [
+        ("current_vs_stale", [], "requires a correction operation"),
+        ("deletion", ["delete-marker"], "requires a delete operation"),
+        ("revocation", ["revoke-marker"], "requires a revoke_writer operation"),
+    ],
+)
+def test_mutation_scenarios_require_matching_store_operation(
+    tmp_path, scenario, forbidden, expected_message
+):
+    case = _case()
+    case["scenario"] = scenario
+    case["forbidden_values"] = forbidden
+    path = _write(tmp_path / f"{scenario}.jsonl", case)
+    with pytest.raises(ValueError, match=expected_message):
+        load_cases(path)
