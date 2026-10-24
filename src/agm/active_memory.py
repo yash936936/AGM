@@ -65,7 +65,15 @@ _FORGET_INTENT = re.compile(
     re.IGNORECASE,
 )
 _NEGATED_FORGET = re.compile(
-    r"\b(don't forget|do not forget|never forget|remember to)\b", re.IGNORECASE
+    r"\b(?:don't|do not|never|not)\s+(?:forget|delete|remove|erase|clear|stop remembering)\b|"
+    r"\b(?:don't|do not)\s+(?:want|ask)\s+(?:you\s+to\s+)?(?:forget|delete|remove|erase|clear)\b|"
+    r"\bremember to\b",
+    re.IGNORECASE,
+)
+_NEGATED_CORRECTION = re.compile(
+    r"\b(?:don't|do not|never)\s+(?:change|replace|correct|update|supersede)\b|"
+    r"\bkeep (?:the|my|this) (?:existing|current|old)\b",
+    re.IGNORECASE,
 )
 _CORRECTION_INTENT = re.compile(
     r"\b(actually|correct(?:ion)?|update|change|replace|instead|no longer|not anymore|"
@@ -295,7 +303,7 @@ def build_memory_context(
         rendered = rendered[:char_budget]
         truncated = True
     return MemoryContextPack(
-        status="ok" if all_nodes else "empty",
+        status="ok" if seen else "empty",
         context_id="ctx_" + uuid.uuid4().hex,
         query=query,
         context=rendered,
@@ -435,7 +443,7 @@ def apply_memory_decision(
                 message="A correction needs both the previous item ID and a replacement item.",
                 evidence_verified=True,
             )
-        if not _CORRECTION_INTENT.search(user_message):
+        if _NEGATED_CORRECTION.search(user_message) or not _CORRECTION_INTENT.search(user_message):
             return MemoryActionResult(
                 status="confirmation_required",
                 message="The current turn does not clearly signal a correction; nothing was changed.",
