@@ -108,6 +108,22 @@ async def session_one(db: Path) -> str:
             check("memory_forget deletes the supersede chain", forgotten["status"] == "forgotten"
                   and forgotten["deleted_count"] == 2)
 
+            group_first = _data(await session.call_tool("memory_write", {"item": {
+                "kind": "fact", "entity": "deployment", "attribute": "database", "value": "SQLite",
+                "text": "The deployment uses SQLite."}}))
+            group_second = _data(await session.call_tool("memory_write", {"item": {
+                "kind": "fact", "entity": "AGM", "attribute": "theme", "value": "turquoise",
+                "text": "AGM theme is turquoise."}}))
+            group_forgotten = _data(await session.call_tool("memory_forget", {
+                "item_ids": [group_first["item_id"], group_second["item_id"]],
+                "current_user_message": "Please forget that the deployment uses SQLite and AGM theme is turquoise.",
+                "evidence_quote": "forget that the deployment uses SQLite and AGM theme is turquoise",
+            }))
+            check("memory_forget removes a named group atomically",
+                  group_forgotten["status"] == "forgotten"
+                  and group_forgotten["deleted_count"] == 2
+                  and set(group_forgotten["item_ids"]) == {group_first["item_id"], group_second["item_id"]})
+
             hist = _data(await session.call_tool("memory_history", {"entity": "payments-service"}))
             check("history keeps both versions", {h.get("value") for h in hist} >= {"mysql", "postgres"})
             packet = _data(await session.call_tool("handoff_save", {
