@@ -2,6 +2,12 @@
 
 > Updated every run. Newest entry at top.
 
+## 2026-10-24 — Active Memory Loop v1 category-forget guard added; tests pending
+**Latest review change:** Batch forgetting now recognizes explicit plural category wording (for example, “forget all my preferences”) only for matching attribute families. It rejects broad deletion when the user describes one preference but the model selects a group. Positive and negative regression cases are authored; neither has been run.
+**Decision/debug log:** D-027 through D-035; DBG-019.
+**Validation:** **NOT RUN.** No compile, unit, integration, or smoke commands have been executed.
+**Next:** Continue static review, then wait for the user's signal that implementation is finished before testing. The current code is on the feature branch and draft PR #2; do not merge or expose remotely.
+
 ## 2026-10-24 — Active Memory Loop v1 implementation prepared; tests intentionally pending
 **Latest static-review additions:** Batch forgetting supports up to 100 explicitly selected targets and is atomic across the union of their supersede histories. The policy rejects a batch unless every selected target matches the user's quote; missing/out-of-scope roots cause no deletion. Context rendering places source IDs and evidence metadata before long memory text so truncation preserves provenance. Added tests for overlapping chains, mismatched batch quotes and provenance retention, but none have been run.
 **Decision/debug log:** D-027 through D-034; DBG-018.
