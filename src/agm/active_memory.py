@@ -707,9 +707,14 @@ def apply_memory_decision(
                     evidence_verified=True,
                 )
             existing = store._result_for_existing_event(int(existing_event["id"]))
-            mapped_status = "corrected" if existing.status == "superseded" else existing.status
+            if existing.status != "superseded":
+                return MemoryActionResult(
+                    status="error",
+                    message="The saved operation ID did not resolve to a supersede result; no new action was performed.",
+                    evidence_verified=True,
+                )
             return MemoryActionResult(
-                status=mapped_status,
+                status="corrected",
                 message="Previously applied correction returned from the idempotency record.",
                 item_id=existing.item_id,
                 superseded_id=existing.superseded_id or decision.target_item_id,
