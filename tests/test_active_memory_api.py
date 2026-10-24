@@ -64,6 +64,7 @@ def test_rest_remember_correct_forget_lifecycle(tmp_path):
             "current_user_message": "Please remember that I prefer concise answers.",
             "evidence_quote": "I prefer concise answers",
             "reason": "Durable response preference",
+            "operation_id": "rest-turn-remember-001",
         })
         assert remembered.status_code == 200, remembered.text
         assert remembered.json()["status"] == "stored"
@@ -78,10 +79,26 @@ def test_rest_remember_correct_forget_lifecycle(tmp_path):
             "reason": "Explicit user correction",
             "current_user_message": "Actually, I prefer detailed answers instead.",
             "evidence_quote": "I prefer detailed answers instead",
+            "operation_id": "rest-turn-correct-001",
         })
         assert corrected.status_code == 200, corrected.text
         assert corrected.json()["status"] == "corrected"
         new_id = corrected.json()["item_id"]
+
+        retry = client.post("/v1/memory/correct", headers=_headers(), json={
+            "item_id": old_id,
+            "item": {
+                "kind": "fact", "entity": "user", "attribute": "communication_preference",
+                "value": "detailed", "text": "The user prefers detailed answers.",
+            },
+            "reason": "Explicit user correction",
+            "current_user_message": "Actually, I prefer detailed answers instead.",
+            "evidence_quote": "I prefer detailed answers instead",
+            "operation_id": "rest-turn-correct-001",
+        })
+        assert retry.status_code == 200, retry.text
+        assert retry.json()["status"] == "corrected"
+        assert retry.json()["item_id"] == new_id
 
         forgotten = client.post("/v1/memory/forget", headers=_headers(), json={
             "item_id": new_id,
