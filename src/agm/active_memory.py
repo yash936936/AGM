@@ -156,7 +156,7 @@ def _forget_target_matches(store: "MemoryStore", ctx: Ctx, item_id: str, evidenc
         return False
     for row in rows:
         target_terms = _significant_terms(" ".join(
-            str(row[key] or "") for key in ("text", "entity", "value")
+            str(row[key] or "") for key in ("text", "attribute", "value")
         ))
         if quote_terms.intersection(target_terms):
             return True
