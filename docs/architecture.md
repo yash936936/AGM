@@ -91,7 +91,7 @@ class Readback:   goal: str; decisions: list[str]; open_items: list[str]
 | `memory_context` | POST /v1/memory/context | `MemoryStore.memory_context` (bounded before-answer context) |
 | `memory_remember` | POST /v1/memory/remember | `apply_memory_decision(action="remember")` |
 | `memory_correct` | POST /v1/memory/correct | `supersede` through the active-memory policy |
-| `memory_forget` | POST /v1/memory/forget | hard-delete target plus connected supersede history |
+| `memory_forget` | POST /v1/memory/forget | atomically hard-delete the target plus connected supersede history |
 | `memory_health` | GET /v1/memory/health | read-only scoped health checks |
 | `memory_write` | POST /v1/memory | `write` (legacy low-level operation) |
 | `memory_retrieve` | POST /v1/memory/retrieve | `retrieve` |
@@ -103,7 +103,7 @@ class Readback:   goal: str; decisions: list[str]; open_items: list[str]
 | `handoff_readback` | POST /v1/handoff/{id}/readback | `handoff_readback` |
 | `memory_revoke_writer` | POST /v1/admin/revoke | `revoke_writer` (admin scope) |
 
-`MemoryContextPack.context` is the bounded text intended for model context. The structured sections retain source IDs, validity, confidence, and trust metadata but are not themselves covered by the context-string token estimate. Remember/correct/forget apply a source-quote policy; in the controlled turn loop the host provides the actual current message. In native MCP, message text is model-supplied and should be treated as a best-effort policy guard, not an authorization boundary. Memory tool calls never promote retrieved text to instructions.
+`MemoryContextPack.context` is the bounded text intended for model context. The structured sections retain source IDs, validity, confidence, and trust metadata but are not themselves covered by the context-string token estimate. `MemoryContextItem` metadata intentionally omits the full text because it is already present in `context`, keeping MCP tool responses more compact. The structured lists include only evidence actually placed into the rendered context. Remember/correct/forget apply a source-quote policy; in the controlled turn loop the host provides the actual current message. In native MCP, message text is model-supplied and should be treated as a best-effort policy guard, not an authorization boundary. Memory tool calls never promote retrieved text to instructions.
 
 ## SQLite schema (views marked V are rebuildable from `events`)
 - `events`(id INTEGER PK, tenant, writer_id, tier, hlc TEXT, idem_key, base_version, type, payload JSON, created_at; UNIQUE(tenant, writer_id, idem_key))  — **source of truth**
