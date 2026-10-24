@@ -170,3 +170,91 @@ def test_expire_before_rejects_non_boolean_pinned_policy(tmp_path):
     with MemoryStore(str(tmp_path / "invalid-pinned.db")) as store:
         with pytest.raises(ValueError, match="include_pinned"):
             store.expire_before(_ctx(), CUTOFF, include_pinned=1)
+
+def test_expire_before_is_idempotent(tmp_path):
+    db = tmp_path / "retention-idempotent.db"
+    ctx = _ctx()
+
+    with MemoryStore(str(db)) as store:
+        item = store.write(ctx, WriteItem(
+            kind="episode",
+            text="Idempotent expiry marker IDEMPOTENT-EXPIRY-123",
+        ))
+        _backdate_event(store, item.item_id, OLD_CREATED_AT)
+
+        first = store.expire_before(ctx, CUTOFF)
+        assert item.item_id in first.expired_ids
+
+        second = store.expire_before(ctx, CUTOFF)
+        assert second.expired_ids == []
+        assert store.conn.execute(
+            "SELECT 1 FROM nodes WHERE id = ?", (item.item_id,)
+        ).fetchone() is None
+
+        store.rebuild_views()
+        assert store.conn.execute(
+            "SELECT 1 FROM nodes WHERE id = ?", (item.item_id,)
+        ).fetchone() is None
+
+
+def test_expire_before_includes_exact_cutoff(tmp_path):
+    db = tmp_path / "retention-boundary.db"
+    ctx = _ctx()
+
+    with MemoryStore(str(db)) as store:
+        item = store.write(ctx, WriteItem(
+            kind="episode",
+            text="Exact cutoff expiry marker EXACT-CUTOFF-456",
+        ))
+        _backdate_event(store, item.item_id, CUTOFF)
+
+        result = store.expire_before(ctx, CUTOFF)
+
+        assert item.item_id in result.expired_ids
+        assert store.conn.execute(
+            "SELECT 1 FROM nodes WHERE id = ?", (item.item_id,)
+        ).fetchone() is None
+
+def test_expire_before_rolls_back_entire_sweep_on_failure(tmp_path, monkeypatch):
+    db = tmp_path / "retention-rollback.db"
+    ctx = _ctx()
+
+    with MemoryStore(str(db)) as store:
+        first = store.write(ctx, WriteItem(
+            kind="episode", text="Rollback marker FIRST-RETENTION-101"
+        ))
+        second = store.write(ctx, WriteItem(
+            kind="episode", text="Rollback marker SECOND-RETENTION-202"
+        ))
+        _backdate_event(store, first.item_id, OLD_CREATED_AT)
+        _backdate_event(store, second.item_id, OLD_CREATED_AT)
+
+        def snapshot():
+            return {
+                table: [
+                    tuple(row)
+                    for row in store.conn.execute(
+                        f"SELECT * FROM {table} ORDER BY 1"
+                    ).fetchall()
+                ]
+                for table in ("events", "nodes", "nodes_fts", "embeddings", "edges")
+            }
+
+        before = snapshot()
+        original_delete = store.delete
+        calls = 0
+
+        def fail_on_second_delete(call_ctx, item_id):
+            nonlocal calls
+            calls += 1
+            if calls == 2:
+                raise RuntimeError("injected expiry failure")
+            return original_delete(call_ctx, item_id)
+
+        monkeypatch.setattr(store, "delete", fail_on_second_delete)
+
+        with pytest.raises(RuntimeError, match="injected expiry failure"):
+            store.expire_before(ctx, CUTOFF)
+
+        assert calls == 2
+        assert snapshot() == before
