@@ -189,6 +189,102 @@ def _attribute_key_for_forget(attribute: str | None) -> str:
     return re.sub(r"[^a-z0-9]+", "_", (attribute or "").casefold()).strip("_")
 
 
+def _forget_category_patterns(category: str) -> tuple[list[str], list[str]]:
+    """Return attribute and text patterns for explicitly requested memory categories."""
+    patterns = {
+        "preferences": (
+            ["%preference%", "%style%"],
+            ["%prefer%", "%preference%", "%writing style%"],
+        ),
+        "goals": (
+            ["%goal%", "%objective%"],
+            ["%current goal%", "%active goal%", "%working toward%", "%working on%", "%ongoing project%"],
+        ),
+        "commitments": (
+            ["%commitment%", "%promise%"],
+            ["%committed to%", "%commitment%", "%promise%"],
+        ),
+        "decisions": (
+            ["%decision%", "%choice%", "%architecture%"],
+            ["%decision:%", "%we decided%", "%we chose%", "%selected architecture%", "%chosen approach%"],
+        ),
+        "tasks": (
+            ["%task%", "%todo%", "%next_step%", "%open_task%"],
+            ["%next step%", "%open task%", "%to do%", "%todo%"],
+        ),
+    }
+    return patterns[category]
+
+
+def _forget_category_candidate(node: Node, category: str) -> bool:
+    """Narrow SQL candidates to items that match the requested memory category."""
+    key = _attribute_key_for_forget(node.attribute)
+    text = node.text.casefold()
+    if category == "preferences":
+        return (
+            any(term in key for term in ("preference", "style"))
+            or any(term in text for term in ("i prefer ", "my preference", "the user prefers ", "writing style"))
+        )
+    if category == "goals":
+        return (
+            any(term in key for term in ("goal", "objective"))
+            or any(term in text for term in (
+                "current goal", "active goal", "working toward", "working on ",
+                "ongoing project", "next step is",
+            ))
+        )
+    if category == "commitments":
+        return (
+            any(term in key for term in ("commitment", "promise"))
+            or any(term in text for term in ("committed to ", "commitment", "promise"))
+        )
+    if category == "decisions":
+        return (
+            any(term in key for term in ("decision", "choice", "architecture"))
+            or any(term in text for term in (
+                "decision:", "we decided to ", "decision is to ", "we chose ",
+                "selected architecture", "chosen approach",
+            ))
+        )
+    if category == "tasks":
+        return (
+            any(term in key for term in ("task", "todo", "next_step", "open_task"))
+            or any(term in text for term in ("next step", "open task", "to do", "todo"))
+        )
+    return False
+
+
+def _discover_forget_category_targets(
+    store: "MemoryStore", ctx: Ctx, category: str
+) -> tuple[list[str], bool]:
+    """Resolve category roots in this tenant/project; bool flags an over-100 match set."""
+    attribute_patterns, text_patterns = _forget_category_patterns(category)
+    clauses: list[str] = []
+    params: list[str] = [ctx.tenant_id, ctx.project]
+    for pattern in attribute_patterns:
+        clauses.append("lower(COALESCE(attribute, '')) LIKE ?")
+        params.append(pattern)
+    for pattern in text_patterns:
+        clauses.append("lower(COALESCE(text, '')) LIKE ?")
+        params.append(pattern)
+    rows = store.conn.execute(
+        """SELECT * FROM nodes
+           WHERE tenant = ? AND project = ?
+             AND status IN ('active', 'contested') AND kind = 'fact'
+             AND (""" + " OR ".join(clauses) + """)
+           ORDER BY event_id DESC, id ASC LIMIT 101""",
+        tuple(params),
+    ).fetchall()
+    if len(rows) > 100:
+        return [], True
+    target_ids = [
+        str(row["id"])
+        for row in rows
+        if _forget_category_candidate(store._row_node(row), category)
+    ]
+    return target_ids, len(target_ids) > 100
+
+
 def _forget_target_matches(store: "MemoryStore", ctx: Ctx, item_id: str, evidence_quote: str) -> bool:
     """Ensure a forget request's subject matches the selected version or its history."""
     if item_id.casefold() in evidence_quote.casefold():
