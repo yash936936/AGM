@@ -752,3 +752,24 @@ def test_batch_forget_does_not_partially_delete_when_quote_misses_one_target(tmp
             "SELECT COUNT(*) FROM nodes WHERE id IN (?, ?)",
             (database.item_id, theme.item_id),
         ).fetchone()[0] == 2
+
+
+def test_context_truncation_keeps_provenance_before_long_memory_text(tmp_path):
+    with MemoryStore(str(tmp_path / "context-long-line.db")) as store:
+        ctx = _ctx()
+        long_text = "AGM architecture decision: selected API boundary. " + ("design detail " * 250)
+        saved = store.write(ctx, WriteItem(
+            kind="fact", entity="AGM", attribute="decision",
+            value="API boundary", text=long_text,
+        ))
+        assert saved.item_id
+        pack = store.memory_context(
+            ctx, "AGM architecture decision", entity="AGM",
+            k=8, token_budget=64,
+            include_profile=False, include_goals=False, include_decisions=False,
+        )
+        assert pack.truncated is True
+        assert len(pack.context) <= 64 * 4
+        assert f"id={saved.item_id}" in pack.context
+        assert "writer=active-memory-test" in pack.context
+        assert "valid_from=" in pack.context
