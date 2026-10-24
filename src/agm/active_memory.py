@@ -49,7 +49,11 @@ select an active memory with the same entity and attribute. For forgetting,
 ensure the described subject matches the selected memory or its version history;
 if it is ambiguous, ask the user instead of guessing an ID. Never claim that a
 write succeeded unless AGM confirms it.
-Return the answer and proposed memory decision using the host's required schema."""
+When the controlled host supplies operation_id, preserve it in the memory decision
+so a retry of the same turn is idempotent. Do not invent an operation_id in a
+native connector if the host has not supplied one; omitting it avoids suppressing
+a legitimate later recurrence of the same preference. Return the answer and
+proposed memory decision using the host's required schema."""
 
 
 _PROFILE_ATTRIBUTES = {
