@@ -2,6 +2,12 @@
 
 > Append-only. Newest entries at top. Never edit or delete past entries — if a decision is reversed, log a new entry that supersedes it and reference the old ID.
 
+## D-030 — Surface eligible contested evidence in active context — 2026-10-24
+**Decision:** When `memory_context` finds a returned memory with a `contested_with` ID, resolve that counterparty only inside the same tenant and project, only when its state is normally retrievable (`active` or `contested`), and only if it is valid at the requested `as_of` time. When `high_stakes=True`, apply the existing probation gate before including the opposing content. Render the opposing fact as evidence, retain both IDs/values in the conflict metadata when they fit the context budget, and keep the untrusted-data notice. If the counterparty is ineligible or does not fit, preserve the warning/reference without disclosing ineligible content. The health report's SQLite integrity boolean is database-wide; the item/index counters remain scoped to tenant/project.
+**Why:** Identifying only the conflicting ID tells the model that a dispute exists but does not show both claims needed to answer cautiously. Resolution must not bypass scope, temporal validity or high-stakes eligibility. Health diagnostics should also describe their scope accurately.
+**Affects:** `active_memory.py`, `MemoryContextPack.conflicts`, active-memory tests, architecture and status/reporting. No schema or dependency change.
+
+
 ## D-029 — Use host turn IDs for retry idempotency — 2026-10-24
 **Decision:** A deterministic active-memory idempotency key is created only when a stable `operation_id` is supplied. Controlled `run_active_turn` callers may supply that ID, which is authoritative and overrides any model-proposed value. REST/API callers can preserve the same operation ID when retrying a request. Native MCP callers may pass one, but because it is model-supplied there it is not trusted as identity or authorization. When no operation ID exists, AGM relies on its normal duplicate/no-op behavior and does not promise cross-retry idempotency for corrections. A retry that points to a prior operation whose source event was later scrubbed by forgetting must not resurrect the memory.
 **Why:** Deriving idempotency only from content can suppress a legitimate later recurrence of the same preference after an intervening correction. A per-turn ID lets an orchestrator distinguish repeated delivery of one action from a new action that happens to contain identical text.
