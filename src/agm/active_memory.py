@@ -50,6 +50,8 @@ def prepare_turn_context(
     *,
     profile_queries: Sequence[str] = (),
     goal_queries: Sequence[str] = (),
+    entity: str | None = None,
+    as_of: str | None = None,
     k: int = 8,
     token_budget: int = 2000,
     expand: bool = True,
@@ -82,6 +84,8 @@ def prepare_turn_context(
         store.retrieve(
             ctx,
             search,
+            entity=entity,
+            as_of=as_of,
             k=k,
             expand=expand,
             high_stakes=high_stakes,
