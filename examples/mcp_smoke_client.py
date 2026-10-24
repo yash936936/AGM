@@ -2,9 +2,10 @@
 """Acceptance smoke test for the AGM MCP stdio server, using the official MCP client.
 
 It plays the part of an MCP host such as Claude Code or Claude Desktop: it launches
-`python -m agm serve-mcp --transport stdio` as a subprocess, lists tools, writes and
-corrects a fact, then starts a SECOND server process on the same database (a "fresh
-session") and checks only the current value comes back.
+`python -m agm serve-mcp --transport stdio` as a subprocess, lists the legacy and
+active-memory tools, exercises context/remember/correct/single+batch-forget/health,
+then starts a SECOND server process on the same database (a "fresh session") and
+checks that the correct current fact remains retrievable.
 
 Run:  python examples/mcp_smoke_client.py
 Exit code 0 means every check passed. This does not replace testing with the real host.
