@@ -297,3 +297,51 @@ def test_negated_forget_and_correction_requests_do_not_mutate(tmp_path):
         assert store.conn.execute(
             "SELECT COUNT(*) FROM nodes WHERE id = ?", (saved.item_id,)
         ).fetchone()[0] == 1
+
+
+def test_remember_rejects_value_not_supported_by_evidence_quote(tmp_path):
+    with MemoryStore(str(tmp_path / "unsupported-value.db")) as store:
+        result = apply_memory_decision(
+            store, _ctx(),
+            MemoryDecision(
+                action="remember",
+                evidence_quote="I prefer concise answers",
+                item=WriteItem(
+                    kind="fact", entity="user", attribute="communication_preference",
+                    value="detailed", text="The user prefers detailed answers.",
+                ),
+            ),
+            user_message="Please remember that I prefer concise answers.",
+        )
+        assert result.status == "confirmation_required"
+        assert store.conn.execute("SELECT COUNT(*) FROM events").fetchone()[0] == 0
+
+
+def test_repeated_correction_returns_same_result_without_duplicate_write(tmp_path):
+    with MemoryStore(str(tmp_path / "correct-idempotent.db")) as store:
+        ctx = _ctx()
+        old = store.write(ctx, WriteItem(
+            kind="fact", entity="AGM", attribute="database", value="SQLite",
+            text="AGM uses SQLite.",
+        ))
+        decision = MemoryDecision(
+            action="correct", target_item_id=old.item_id,
+            evidence_quote="Actually, AGM uses PostgreSQL instead",
+            reason="User correction",
+            item=WriteItem(
+                kind="fact", entity="AGM", attribute="database", value="PostgreSQL",
+                text="AGM uses PostgreSQL.",
+            ),
+        )
+        first = apply_memory_decision(
+            store, ctx, decision,
+            user_message="Actually, AGM uses PostgreSQL instead.",
+        )
+        second = apply_memory_decision(
+            store, ctx, decision,
+            user_message="Actually, AGM uses PostgreSQL instead.",
+        )
+        assert first.status == second.status == "corrected"
+        assert first.item_id == second.item_id
+        history = store.history(ctx, "AGM", "database")
+        assert [item.value for item in history] == ["SQLite", "PostgreSQL"]
