@@ -3,6 +3,12 @@
 > Append-only. Every completed coding task gets an entry here, even "no
 > issues found." Newest entries at top.
 
+## DBG-016 — Shared active-memory input boundaries — 2026-10-24
+**Task:** Keep active-memory input limits consistent across direct core calls, REST and MCP.
+**Changes:** Added core guards for context query/entity/as-of lengths and post-turn user-message, evidence-quote, reason, target ID, operation ID and candidate item field sizes. Added regression coverage for oversized context and decision inputs. Recorded D-032.
+**Validation:** **NOT RUN — explicitly deferred.** These checks are authored but not executed.
+**Open:** Confirm all guards work through both REST and MCP adapters in the separate test phase; update host-facing docs if any tool error behavior differs.
+
 ## DBG-015 — Host operation ID authority and final docs — 2026-10-24
 **Task:** Finish active-memory retry semantics and reconcile the report/decision log before the test phase.
 **Changes:** Controlled `run_active_turn(operation_id=...)` now overrides model-proposed `MemoryDecision.operation_id`; the high-level remember/correct paths derive their idempotency key from that host ID even if the model proposed a different `WriteItem.idempotency_key`. Added unit coverage for this rule and REST coverage for correction retries using an explicit operation ID. Updated REST/Claude/README guidance and appended D-031 to explicitly supersede D-027's older unconditional idempotency wording.
