@@ -123,7 +123,9 @@ def _write_item_supported_by_evidence(item: WriteItem, evidence_quote: str) -> b
     if value_terms:
         return value_terms.issubset(quote_terms)
     if raw_value:
-        return _normalise_text(raw_value) in _normalise_text(evidence_quote)
+        quote = _normalise_text(evidence_quote)
+        candidate = re.escape(_normalise_text(raw_value))
+        return re.search(r"(?<!\\w)" + candidate + r"(?!\\w)", quote) is not None
     text_terms = _significant_terms(item.text)
     return bool(text_terms.intersection(quote_terms))
 
@@ -182,10 +184,16 @@ def _forget_target_matches(store: "MemoryStore", ctx: Ctx, item_id: str, evidenc
     if not quote_terms:
         return False
     for row in rows:
-        target_terms = _significant_terms(" ".join(
-            str(row[key] or "") for key in ("text", "attribute", "value")
-        ))
-        if quote_terms.intersection(target_terms):
+        value_terms = _significant_terms(str(row["value"] or ""))
+        if value_terms and value_terms.intersection(quote_terms):
+            return True
+        entity_terms = _significant_terms(str(row["entity"] or ""))
+        if entity_terms and entity_terms.issubset(quote_terms):
+            return True
+        text_terms = _significant_terms(str(row["text"] or ""))
+        # For records without a useful value/entity, require more than one shared
+        # content term so a generic word such as "project" cannot select a memory.
+        if len(quote_terms.intersection(text_terms)) >= 2:
             return True
     return False
 
