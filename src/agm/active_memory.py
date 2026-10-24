@@ -792,6 +792,8 @@ def run_active_turn(
     """Enforce retrieve -> model generation -> validated post-turn decision."""
     if not user_message or not user_message.strip():
         raise ValueError("user_message must be non-empty")
+    if operation_id is not None and (not operation_id.strip() or len(operation_id) > 200):
+        raise ValueError("operation_id must contain 1..200 non-whitespace characters")
     context = store.memory_context(
         ctx, user_message, entity=entity, as_of=as_of, k=k,
         token_budget=token_budget, high_stakes=high_stakes,
