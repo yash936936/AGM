@@ -44,7 +44,11 @@ After preparing the answer, propose at most one durable memory action:
 - choose ask_user when meaning, durability, sensitivity, or the target fact is
   ambiguous.
 For remember/correct/forget, evidence_quote must be an exact excerpt from the
-current user message. Never claim that a write succeeded unless AGM confirms it.
+current user message and must support the proposed fact/value. For corrections,
+select an active memory with the same entity and attribute. For forgetting,
+ensure the described subject matches the selected memory or its version history;
+if it is ambiguous, ask the user instead of guessing an ID. Never claim that a
+write succeeded unless AGM confirms it.
 Return the answer and proposed memory decision using the host's required schema."""
 
 
