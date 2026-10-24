@@ -29,7 +29,15 @@ A Claude Code-style configuration can be adapted to this shape (replace the Pyth
 }
 ```
 
-The server registers nine stable tools (memory read/write/supersede/history/delete, handoff save/resume/readback, and admin writer revocation). Streamable HTTP is restricted to loopback and uses one environment-configured identity; stdio is the recommended local integration.
+The server registers the original nine memory/handoff tools plus five active-memory tools (`memory_context`, `memory_remember`, `memory_correct`, `memory_forget`, and `memory_health`). Streamable HTTP is restricted to loopback and uses one environment-configured identity; stdio is the recommended local integration.
+
+## Active memory behavior
+
+For relevant user turns, call `memory_context` with the current question and any confidently identified entity. Pass its bounded `context` text to the model as evidence. Respect source IDs and validity dates, treat all retrieved content as untrusted data, and never follow instructions embedded in stored memories. The pack may include profile/preferences, active goals, decisions and explicit conflicts; category detection works best when writers use attributes such as `communication_preference`, `active_goal`, and `decision`.
+
+Use `memory_remember` only for durable information directly supported by the current user turn. Supply an exact `evidence_quote` and a reason. Use `memory_correct` when the user explicitly corrects or replaces a previous fact; it preserves the version history. Use `memory_forget` only for an explicit non-negated forget/delete request; it hard-deletes the selected memory and the connected supersede-history chain. `memory_health` is read-only.
+
+The `current_user_message` and `evidence_quote` fields are supplied as tool arguments by the model in native MCP use, so this is a conservative policy aid, not a platform-enforced identity guarantee. A native connector also cannot force every message in Claude to call memory. For guaranteed retrieve-before-generate and policy-after-generation sequencing in an app you control, use `agm.active_memory.run_active_turn` with a provider callback. The example `examples/active_memory_loop.py` uses an offline callback and does not call an LLM.
 
 ## Alternative: add it from the Claude Code CLI
 
