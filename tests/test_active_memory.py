@@ -565,3 +565,30 @@ def test_active_turn_rejects_invalid_operation_id_before_generation(tmp_path):
             )
         assert called["value"] is False
         assert store.conn.execute("SELECT COUNT(*) FROM events").fetchone()[0] == 0
+
+
+def test_high_stakes_context_does_not_expand_to_probationary_conflict(tmp_path):
+    with MemoryStore(str(tmp_path / "context-high-stakes-conflict.db")) as store:
+        accepted_ctx = Ctx(
+            tenant_id="tenant-high-stakes", writer_id="trusted-owner",
+            tier="human_verified", project="project-a",
+        )
+        stale_ctx = Ctx(
+            tenant_id="tenant-high-stakes", writer_id="stale-agent",
+            tier="trusted_agent", project="project-a",
+        )
+        accepted = store.write(accepted_ctx, WriteItem(
+            kind="fact", entity="service-api", attribute="database", value="PostgreSQL",
+            text="service-api uses PostgreSQL.",
+        ))
+        contested = store.write(stale_ctx, WriteItem(
+            kind="fact", entity="service-api", attribute="database", value="MySQL",
+            text="service-api uses MySQL.", base_version=0,
+        ))
+        assert accepted.item_id and contested.item_id and contested.status == "contested"
+        pack = store.memory_context(
+            accepted_ctx, "service-api database", entity="service-api",
+            k=16, token_budget=1000, high_stakes=True,
+        )
+        assert "service-api uses PostgreSQL." in pack.context
+        assert "service-api uses MySQL." not in pack.context
