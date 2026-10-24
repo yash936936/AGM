@@ -2,6 +2,12 @@
 
 > Updated every run. Newest entry at top.
 
+## 2026-10-24 — Active Memory Loop v1 implementation prepared; tests intentionally pending
+**Latest static-review additions:** Batch forgetting supports up to 100 explicitly selected targets and is atomic across the union of their supersede histories. The policy rejects a batch unless every selected target matches the user's quote; missing/out-of-scope roots cause no deletion. Context rendering places source IDs and evidence metadata before long memory text so truncation preserves provenance. Added tests for overlapping chains, mismatched batch quotes and provenance retention, but none have been run.
+**Decision/debug log:** D-027 through D-034; DBG-018.
+**Validation:** **NOT RUN.** No compile, unit, API/MCP integration, smoke or benchmark commands have been executed.
+**Next:** The implementation is staged on `feature/active-memory-loop-v1` / draft PR #2. After the user confirms implementation is finished, run the focused tests, full suite and smoke commands from `REPORT_20261024_ACTIVE_MEMORY.md`. Keep local-only deployment restrictions in place.
+
 ## 2026-10-24 — Active Memory Loop v1 with batch forgetting; validation pending
 **Latest addition:** `memory_forget` can now accept one target or up to 100 explicitly named targets. Every requested item must match the quoted forget intent and be visible in the same tenant/project. Core deletion unions the targets' supersede histories and commits atomically; if a target is absent/out of scope, no deletion occurs. REST/MCP, tests and user-facing docs are updated. D-033 / DBG-017 record the contract.
 **Validation:** **NOT RUN.** No compile, unit, integration or smoke commands have been executed.
