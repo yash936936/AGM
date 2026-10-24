@@ -477,6 +477,7 @@ def _stable_idempotency_key(ctx: Ctx, decision: MemoryDecision) -> str:
         ))
     material = "|".join((
         ctx.tenant_id, ctx.writer_id, ctx.project, decision.action,
+        decision.target_item_id or "",
         _normalise_text(decision.evidence_quote or ""), item_fields,
     ))
     return "active-memory-v1:" + hashlib.sha256(material.encode("utf-8")).hexdigest()
