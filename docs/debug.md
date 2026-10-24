@@ -3,6 +3,13 @@
 > Append-only. Every completed coding task gets an entry here, even "no
 > issues found." Newest entries at top.
 
+## DBG-014 — Active context conflict/health scope clarification — 2026-10-24
+**Task:** Finish static implementation review of contested-fact context and health-report scope before the separate test phase.
+**Changes:** Context assembly now resolves the counterparty of returned contested facts inside the same tenant/project, respects temporal validity and the existing high-stakes probation gate, and places eligible counterparty text into the context pack. Added a regression test for both sides of a conflict. Clarified that SQLite `integrity_check` is database-wide while memory/index counters are tenant/project-scoped. Added D-030. Stable `operation_id` support remains explicit: generated idempotency keys are used only when a host supplies an operation ID.
+**Validation:** **NOT RUN — tests are still deferred by request.** A container attempt to create a local patch via `git clone` could not resolve `github.com`; no repository checkout or tests were run in the container. GitHub branch content was reviewed directly, but this is not runtime validation.
+**Open:** Run compileall, focused active-memory tests, the full suite, MCP/REST smoke clients, and the offline controller on the user's Windows checkout. Pay particular attention to SQLite transaction/recursive CTE behavior, context budget/category behavior, MCP registration and API idempotency fields.
+
+
 ## DBG-014 — Active-memory operation-ID semantics — 2026-10-24
 **Task:** Distinguish retries of one memory action from a legitimate later recurrence of the same preference.
 **Changes:** Added optional `MemoryDecision.operation_id` and exposed it through remember/correct REST and MCP requests. `run_active_turn(operation_id=...)` applies the host-provided ID authoritatively. Idempotency keys are generated only when an operation ID is supplied, and include the target ID for corrections. Replayed actions validate the stored event/item signature and will not restore an event whose payload was scrubbed by forgetting. Without an operation ID, normal same-value no-op behavior remains, but cross-retry correction idempotency is not promised. Added a recurrence regression case for a preference switching concise → detailed → concise under distinct operation IDs.
