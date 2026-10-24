@@ -75,14 +75,14 @@ _FORGET_INTENT = re.compile(
     re.IGNORECASE,
 )
 _NEGATED_FORGET = re.compile(
-    r"\b(?:don't|do not|never|not|won't|will not|cannot|can't)\s+(?:forget|delete|remove|erase|clear|remember|save|store|retain|stop remembering)\b|"
-    r"\b(?:don't|do not|won't|will not|cannot|can't)\s+(?:want|ask)\s+(?:(?:you\s+)?to\s+)?(?:forget|delete|remove|erase|clear|remember|save|store|retain)\b|"
+    r"\b(?:don't|do not|never|not|won't|will not|cannot|can't)\b.{0,60}"
+    r"\b(?:forget|delete|remove|erase|clear|remember|save|store|retain|stop remembering)\b|"
     r"\bremember to\b",
     re.IGNORECASE,
 )
 _NEGATED_CORRECTION = re.compile(
-    r"\b(?:don't|do not|never|won't|will not|cannot|can't)\s+(?:(?:want|need|ask)\s+(?:(?:you\s+)?to\s+)?)?"
-    r"(?:change|replace|correct|update|supersede)\b|"
+    r"\b(?:don't|do not|never|won't|will not|cannot|can't)\b.{0,60}"
+    r"\b(?:change|changed|changing|replace|replaced|correct|corrected|update|updated|supersede|superseded)\b|"
     r"\bkeep (?:the|my|this) (?:existing|current|old)\b",
     re.IGNORECASE,
 )
