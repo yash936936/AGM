@@ -143,5 +143,10 @@
 **Why:** Fastest path for the user's stack, zero services to run, enough for thousands of items. Revisit if Phase 5 shows latency trouble.
 **Affects:** whole project.
 
+## D-028 — Active-memory turn control remains host-authorized — 2026-10-24
+**Decision:** Assemble bounded context before the model call, then evaluate proposed write/correction/history/delete actions after the response. The controller returns policy decisions but never mutates memory automatically.
+**Why:** Retrieved text and model output are untrusted. Explicit user intent, evidence grounding, tenant/project scope, existing guards, and operation IDs remain required before the host invokes existing tools.
+**Affects:** active-memory context, host turn loop, policy tests. The nine existing MCP tool names and Phase 8 evaluation criteria remain unchanged.
+
 ---
 **Next:** Return to [`context.md`](../context.md) before starting a new task — it routes you to the right file for what you are about to do.
