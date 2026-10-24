@@ -96,6 +96,7 @@ def load_cases(path: Path) -> list[dict[str, Any]]:
             operations = case.get("operations", [])
             if not isinstance(operations, list):
                 raise ValueError(f"case {case_id}: operations must be a list")
+            operation_types = set()
             for op_index, operation in enumerate(operations):
                 prefix = f"case {case_id}.operations[{op_index}]"
                 if not isinstance(operation, dict):
@@ -103,6 +104,7 @@ def load_cases(path: Path) -> list[dict[str, Any]]:
                 op_type = operation.get("type")
                 if op_type not in VALID_OPERATIONS:
                     raise ValueError(f"{prefix}.type is unsupported")
+                operation_types.add(op_type)
                 _ctx(operation.get("context"), f"{prefix}.context")
                 if op_type in {"correction", "delete"}:
                     target = operation.get("target_memory_index")
@@ -114,6 +116,15 @@ def load_cases(path: Path) -> list[dict[str, Any]]:
                     _nonempty_string(operation.get("reason"), f"{prefix}.reason")
                 if op_type == "revoke_writer":
                     _nonempty_string(operation.get("writer_id"), f"{prefix}.writer_id")
+            required_operation = {
+                "current_vs_stale": "correction",
+                "deletion": "delete",
+                "revocation": "revoke_writer",
+            }.get(scenario)
+            if required_operation and required_operation not in operation_types:
+                raise ValueError(
+                    f"case {case_id}: scenario {scenario} requires a {required_operation} operation"
+                )
             cases.append(case)
     if not cases:
         raise ValueError("benchmark contains no cases")
