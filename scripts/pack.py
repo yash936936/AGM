@@ -109,7 +109,9 @@ def main() -> int:
             if included(path):
                 archive.write(path, (Path("agm") / path.relative_to(ROOT)).as_posix())
 
-    if phase == 8:
+    if phase == 9:
+        overlay_files = list(PHASE9_OVERLAY_FILES)
+    elif phase == 8:
         overlay_files = list(PHASE8_OVERLAY_FILES)
     elif phase == 7:
         overlay_files = list(PHASE7_OVERLAY_FILES)
