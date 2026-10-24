@@ -391,3 +391,39 @@ def test_future_negation_does_not_trigger_forget_or_correction(tmp_path):
         assert store.conn.execute(
             "SELECT COUNT(*) FROM nodes WHERE id = ?", (saved.item_id,)
         ).fetchone()[0] == 1
+
+
+def test_context_pack_includes_both_sides_of_a_contested_fact(tmp_path):
+    with MemoryStore(str(tmp_path / "context-conflict.db")) as store:
+        accepted_ctx = Ctx(
+            tenant_id="tenant-conflict", writer_id="trusted-owner",
+            tier="human_verified", project="project-a",
+        )
+        stale_ctx = Ctx(
+            tenant_id="tenant-conflict", writer_id="stale-agent",
+            tier="trusted_agent", project="project-a",
+        )
+        first = store.write(accepted_ctx, WriteItem(
+            kind="fact", entity="service-api", attribute="database", value="SQLite",
+            text="service-api uses SQLite.",
+        ))
+        accepted = store.write(accepted_ctx, WriteItem(
+            kind="fact", entity="service-api", attribute="database", value="PostgreSQL",
+            text="service-api uses PostgreSQL.", base_version=1,
+        ))
+        contested = store.write(stale_ctx, WriteItem(
+            kind="fact", entity="service-api", attribute="database", value="MySQL",
+            text="service-api uses MySQL.", base_version=1,
+        ))
+        assert first.item_id and accepted.item_id and contested.item_id
+        assert contested.status == "contested"
+        pack = store.memory_context(
+            accepted_ctx, "service-api database", entity="service-api",
+            k=16, token_budget=1500,
+        )
+        assert "service-api uses PostgreSQL." in pack.context
+        assert "service-api uses MySQL." in pack.context
+        assert any(
+            {entry.get("value"), entry.get("conflicting_value")} == {"PostgreSQL", "MySQL"}
+            for entry in pack.conflicts
+        )
