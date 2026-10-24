@@ -70,13 +70,13 @@ _FORGET_INTENT = re.compile(
     re.IGNORECASE,
 )
 _NEGATED_FORGET = re.compile(
-    r"\b(?:don't|do not|never|not)\s+(?:forget|delete|remove|erase|clear|stop remembering)\b|"
-    r"\b(?:don't|do not)\s+(?:want|ask)\s+(?:(?:you\s+)?to\s+)?(?:forget|delete|remove|erase|clear)\b|"
+    r"\b(?:don't|do not|never|not|won't|will not|cannot|can't)\s+(?:forget|delete|remove|erase|clear|stop remembering)\b|"
+    r"\b(?:don't|do not|won't|will not|cannot|can't)\s+(?:want|ask)\s+(?:(?:you\s+)?to\s+)?(?:forget|delete|remove|erase|clear)\b|"
     r"\bremember to\b",
     re.IGNORECASE,
 )
 _NEGATED_CORRECTION = re.compile(
-    r"\b(?:don't|do not|never)\s+(?:(?:want|need|ask)\s+(?:(?:you\s+)?to\s+)?)?"
+    r"\b(?:don't|do not|never|won't|will not|cannot|can't)\s+(?:(?:want|need|ask)\s+(?:(?:you\s+)?to\s+)?)?"
     r"(?:change|replace|correct|update|supersede)\b|"
     r"\bkeep (?:the|my|this) (?:existing|current|old)\b",
     re.IGNORECASE,
@@ -118,9 +118,12 @@ def _write_item_supported_by_evidence(item: WriteItem, evidence_quote: str) -> b
     quote_terms = _significant_terms(evidence_quote)
     if not quote_terms:
         return False
-    value_terms = _significant_terms(item.value or "")
+    raw_value = (item.value or "").strip()
+    value_terms = _significant_terms(raw_value)
     if value_terms:
         return value_terms.issubset(quote_terms)
+    if raw_value:
+        return _normalise_text(raw_value) in _normalise_text(evidence_quote)
     text_terms = _significant_terms(item.text)
     return bool(text_terms.intersection(quote_terms))
 
