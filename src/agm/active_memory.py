@@ -186,7 +186,7 @@ def _forget_target_matches(store: "MemoryStore", ctx: Ctx, item_id: str, evidenc
         return False
     for row in rows:
         value_terms = _significant_terms(str(row["value"] or ""))
-        if value_terms and value_terms.intersection(quote_terms):
+        if value_terms and value_terms.issubset(quote_terms):
             return True
         entity_terms = _significant_terms(str(row["entity"] or ""))
         if entity_terms and entity_terms.issubset(quote_terms):
