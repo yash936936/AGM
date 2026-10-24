@@ -3,6 +3,12 @@
 > Append-only. Every completed coding task gets an entry here, even "no
 > issues found." Newest entries at top.
 
+## DBG-017 — Atomic batch forgetting across core, REST and MCP — 2026-10-24
+**Task:** Extend explicit memory-forget requests to handle multiple named memories without partial deletion.
+**Changes:** Added `MemoryDecision.target_item_ids` and `MemoryActionResult.item_ids`; added `MemoryStore.forget_many` with tenant/project checks for every requested root, recursive union of supersede histories, source-event scrubbing, delete-event append, and a single transaction/checkpoint. Legacy `forget(ctx, item_id)` delegates to the batch implementation. REST and MCP `memory_forget` now accept one `item_id` or up to 100 `item_ids`. The shared policy checks the quoted request against every target before mutation. Added unit/API coverage and an MCP smoke-client scenario; updated host/architecture docs and D-033.
+**Validation:** **NOT RUN.** Tests and smoke clients remain unexecuted by request.
+**Open:** Verify all-or-nothing behavior with missing/out-of-scope targets, recursive-chain overlap/deduplication, source-event scrubbing/rebuild, and MCP argument schema during the separate test phase.
+
 ## DBG-016 — Shared active-memory input boundaries — 2026-10-24
 **Task:** Keep active-memory input limits consistent across direct core calls, REST and MCP.
 **Changes:** Added core guards for context query/entity/as-of lengths and post-turn user-message, evidence-quote, reason, target ID, operation ID and candidate item field sizes. Added regression coverage for oversized context and decision inputs. Recorded D-032.
