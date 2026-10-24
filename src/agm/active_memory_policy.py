@@ -38,7 +38,7 @@ _FORGET_MARKERS = (
     "do not remember", "erase that",
 )
 _HISTORY_MARKERS = (
-    "what did i say", "what do you remember", "memory history",
+    "what did i say", "what did i tell you", "what do you remember", "memory history",
     "previously told you", "what changed", "history of",
 )
 
