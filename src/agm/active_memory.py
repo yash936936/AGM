@@ -66,12 +66,13 @@ _FORGET_INTENT = re.compile(
 )
 _NEGATED_FORGET = re.compile(
     r"\b(?:don't|do not|never|not)\s+(?:forget|delete|remove|erase|clear|stop remembering)\b|"
-    r"\b(?:don't|do not)\s+(?:want|ask)\s+(?:you\s+to\s+)?(?:forget|delete|remove|erase|clear)\b|"
+    r"\b(?:don't|do not)\s+(?:want|ask)\s+(?:(?:you\s+)?to\s+)?(?:forget|delete|remove|erase|clear)\b|"
     r"\bremember to\b",
     re.IGNORECASE,
 )
 _NEGATED_CORRECTION = re.compile(
-    r"\b(?:don't|do not|never)\s+(?:change|replace|correct|update|supersede)\b|"
+    r"\b(?:don't|do not|never)\s+(?:(?:want|need|ask)\s+(?:(?:you\s+)?to\s+)?)?"
+    r"(?:change|replace|correct|update|supersede)\b|"
     r"\bkeep (?:the|my|this) (?:existing|current|old)\b",
     re.IGNORECASE,
 )
