@@ -23,8 +23,8 @@ Implement the persistent-memory turn lifecycle:
   - Context items retain provenance metadata without duplicating their full text; the rendered context contains the memory text.
 - `src/agm/active_memory.py` (new)
   - Adds `ACTIVE_MEMORY_SYSTEM_PROMPT`.
-  - Builds a token-budgeted context string from query-specific retrieval plus discoverable profile/preferences, goals, decisions, conflicts, validity and provenance.
-  - Adds scoped read-only health diagnostics.
+  - Builds a token-budgeted context string from query-specific retrieval plus discoverable profile/preferences, goals, decisions, both eligible sides of contested facts, validity and provenance.
+  - Adds metadata-only health diagnostics: SQLite integrity is database-wide, while item/index coverage counters are tenant/project-scoped.
   - Applies the post-turn memory policy with quote matching, key-value evidence checks, correction intent and target checks, negated-intent guards, idempotency, and explicit confirmation-required responses.
   - Adds `run_active_turn` to enforce retrieve → provider callback → post-turn policy in an application-controlled host.
 - `src/agm/store.py`
@@ -108,7 +108,7 @@ Run the MCP smoke client in an environment where the official MCP SDK is install
 
 1. All authored tests and smoke clients need to be run on the actual Windows checkout; results are **NOT RUN**.
 2. Review context category recall and retrieval overhead, since context assembly makes supplementary retrievals for profile, goals and decisions.
-3. Validate the recursive SQLite CTE, atomic event scrubbing, WAL checkpoint and rebuild behavior on the user's installed SQLite/Python version.
+3. Validate the tenant/project-filtered recursive SQLite CTE, atomic event scrubbing, WAL checkpoint and rebuild behavior on the user's installed SQLite/Python version.
 4. Decide whether the native model tool should receive only the rendered context string or more compact metadata; the current response intentionally keeps full text in the context string and IDs/trust/validity/provenance in structured fields.
 5. Build a provider-specific callback only after core testing if an LLM-backed controlled turn loop is needed. The current offline example intentionally makes no LLM request.
 6. Native ChatGPT/Claude integration remains a later milestone; this branch does not guarantee tool invocation on every message.
