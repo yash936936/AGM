@@ -144,6 +144,25 @@ class ReadbackReport(ContractModel):
 MemoryDecisionAction = Literal["remember", "correct", "forget", "ignore", "ask_user"]
 
 
+class MemoryContextItem(ContractModel):
+    """Compact evidence metadata; the full guarded text is in context exactly once."""
+
+    id: str
+    kind: Kind
+    entity: str | None = None
+    attribute: str | None = None
+    value: str | None = None
+    valid_from: str
+    valid_to: str | None = None
+    confidence: float
+    writer_id: str
+    trust_tier: Tier
+    provenance: dict[str, object] | None = None
+    contested_with: str | None = None
+    score: float = 0.0
+    via: Via = "seed"
+
+
 class MemoryContextPack(ContractModel):
     """Token-budgeted, provenance-bearing memory context for one model turn."""
 
@@ -151,10 +170,10 @@ class MemoryContextPack(ContractModel):
     context_id: str
     query: str
     context: str
-    profile: list[Node] = Field(default_factory=list)
-    active_goals: list[Node] = Field(default_factory=list)
-    decisions: list[Node] = Field(default_factory=list)
-    relevant_memories: list[Node] = Field(default_factory=list)
+    profile: list[MemoryContextItem] = Field(default_factory=list)
+    active_goals: list[MemoryContextItem] = Field(default_factory=list)
+    decisions: list[MemoryContextItem] = Field(default_factory=list)
+    relevant_memories: list[MemoryContextItem] = Field(default_factory=list)
     conflicts: list[dict[str, object]] = Field(default_factory=list)
     route: RetrieveRoute
     abstain: bool = False
