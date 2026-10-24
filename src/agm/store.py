@@ -1287,39 +1287,42 @@ class MemoryStore:
         Source event payloads are scrubbed and one delete event is appended for
         every removed version; a single transaction prevents partial chains.
         """
-        rows = self.conn.execute(
-            """WITH RECURSIVE versions(id) AS (
-                   SELECT n.id FROM nodes n
-                    WHERE n.id = ? AND n.tenant = ? AND n.project = ?
-                   UNION
-                   SELECT e.src FROM edges e JOIN versions v ON e.dst = v.id
-                     JOIN nodes neighbor ON neighbor.id = e.src
-                      AND neighbor.tenant = ? AND neighbor.project = ?
-                    WHERE e.type = 'supersedes'
-                   UNION
-                   SELECT e.dst FROM edges e JOIN versions v ON e.src = v.id
-                     JOIN nodes neighbor ON neighbor.id = e.dst
-                      AND neighbor.tenant = ? AND neighbor.project = ?
-                    WHERE e.type = 'supersedes'
-               )
-               SELECT n.id, n.event_id FROM nodes n JOIN versions v ON v.id = n.id
-                WHERE n.tenant = ? AND n.project = ?
-                ORDER BY n.event_id DESC, n.id ASC""",
-            (
-                item_id, ctx.tenant_id, ctx.project,
-                ctx.tenant_id, ctx.project, ctx.tenant_id, ctx.project,
-                ctx.tenant_id, ctx.project,
-            ),
-        ).fetchall()
-        ids = [str(row["id"]) for row in rows]
-        if not ids:
-            return {"forgotten": False, "deleted_count": 0, "item_ids": []}
-
         if self.conn.in_transaction:
             self.conn.commit()
-        deleted_ids: list[str] = []
         self.conn.execute("BEGIN IMMEDIATE")
         try:
+            rows = self.conn.execute(
+                """WITH RECURSIVE versions(id) AS (
+                       SELECT n.id FROM nodes n
+                        WHERE n.id = ? AND n.tenant = ? AND n.project = ?
+                       UNION
+                       SELECT e.src FROM edges e
+                        JOIN versions v ON e.dst = v.id
+                        JOIN nodes n ON n.id = e.src
+                        WHERE e.type = 'supersedes'
+                          AND n.tenant = ? AND n.project = ?
+                       UNION
+                       SELECT e.dst FROM edges e
+                        JOIN versions v ON e.src = v.id
+                        JOIN nodes n ON n.id = e.dst
+                        WHERE e.type = 'supersedes'
+                          AND n.tenant = ? AND n.project = ?
+                   )
+                   SELECT n.id, n.event_id FROM nodes n JOIN versions v ON v.id = n.id
+                    WHERE n.tenant = ? AND n.project = ?
+                    ORDER BY n.event_id DESC, n.id ASC""",
+                (
+                    item_id, ctx.tenant_id, ctx.project,
+                    ctx.tenant_id, ctx.project, ctx.tenant_id, ctx.project,
+                    ctx.tenant_id, ctx.project,
+                ),
+            ).fetchall()
+            ids = [str(row["id"]) for row in rows]
+            if not ids:
+                self.conn.rollback()
+                return {"forgotten": False, "deleted_count": 0, "item_ids": []}
+
+            deleted_ids: list[str] = []
             for version_id in ids:
                 row = self.conn.execute(
                     """SELECT event_id FROM nodes
