@@ -503,3 +503,42 @@ def test_retry_after_explicit_forget_does_not_restore_scrubbed_correction(tmp_pa
         )
         assert retry.status == "not_found"
         assert store.history(ctx, "AGM", "database") == []
+
+
+def test_host_operation_id_overrides_model_idempotency_values(tmp_path):
+    with MemoryStore(str(tmp_path / "host-operation-id.db")) as store:
+        ctx = _ctx()
+        user_message = "Please remember that I prefer concise answers."
+
+        def generate(message, context):
+            return ActiveTurnGeneration(
+                answer="Not an LLM call in this test.",
+                memory_decision=MemoryDecision(
+                    action="remember",
+                    operation_id="model-claimed-operation",
+                    evidence_quote="I prefer concise answers",
+                    item=WriteItem(
+                        kind="fact", entity="user", attribute="communication_preference",
+                        value="concise", text="The user prefers concise answers.",
+                        idempotency_key="model-proposed-key",
+                    ),
+                ),
+            )
+
+        first = run_active_turn(
+            store, ctx, user_message, generate, operation_id="host-turn-001",
+        )
+        second = run_active_turn(
+            store, ctx, user_message, generate, operation_id="host-turn-001",
+        )
+        event_keys = [
+            row["idem_key"] for row in store.conn.execute(
+                "SELECT idem_key FROM events WHERE tenant = ? AND type = 'add' ORDER BY id",
+                (ctx.tenant_id,),
+            ).fetchall()
+        ]
+        assert first.memory_action.status == "stored"
+        assert second.memory_action.status in {"stored", "noop"}
+        assert len(event_keys) == 1
+        assert event_keys[0] not in {"model-proposed-key", "model-claimed-operation"}
+        assert str(event_keys[0]).startswith("active-memory-v1:")
