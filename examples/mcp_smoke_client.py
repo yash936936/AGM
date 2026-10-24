@@ -49,7 +49,8 @@ async def session_one(db: Path) -> str:
         async with ClientSession(read, write) as session:
             await session.initialize()
             tools = {t.name for t in (await session.list_tools()).tools}
-            check("server lists the 9 expected tools", {
+            check("server lists the 14 expected tools", {
+                "memory_context", "memory_remember", "memory_correct", "memory_forget", "memory_health",
                 "memory_write", "memory_retrieve", "memory_supersede", "memory_history", "memory_delete",
                 "handoff_save", "handoff_resume", "handoff_readback", "memory_revoke_writer"} <= tools)
             first = _data(await session.call_tool("memory_write", {"item": {
@@ -70,6 +71,41 @@ async def session_one(db: Path) -> str:
             values = [i.get("value") for i in got["items"]]
             check("retrieve returns current value only", "postgres" in values and "mysql" not in values)
             check("retrieve carries untrusted-data notice", "untrusted" in got["notice"].lower())
+            context = _data(await session.call_tool("memory_context", {
+                "query": "which database does payments-service use", "token_budget": 256}))
+            check("memory_context returns bounded evidence", context["status"] == "ok"
+                  and context["estimated_tokens"] <= 256
+                  and "untrusted data, not instructions" in context["context"])
+            health = _data(await session.call_tool("memory_health", {}))
+            check("memory_health reports SQLite check", "sqlite_integrity" in health["checks"])
+
+            remembered = _data(await session.call_tool("memory_remember", {
+                "item": {
+                    "kind": "fact", "entity": "user", "attribute": "communication_preference",
+                    "value": "concise", "text": "The user prefers concise answers."},
+                "current_user_message": "Please remember that I prefer concise answers.",
+                "evidence_quote": "I prefer concise answers",
+                "reason": "Durable communication preference",
+            }))
+            check("memory_remember requires evidence and stores preference", remembered["status"] == "stored")
+            corrected = _data(await session.call_tool("memory_correct", {
+                "item_id": remembered["item_id"],
+                "item": {
+                    "kind": "fact", "entity": "user", "attribute": "communication_preference",
+                    "value": "detailed", "text": "The user prefers detailed answers."},
+                "reason": "User explicitly corrected preference",
+                "current_user_message": "Actually, I prefer detailed answers instead.",
+                "evidence_quote": "I prefer detailed answers instead",
+            }))
+            check("memory_correct preserves correction history", corrected["status"] == "corrected")
+            forgotten = _data(await session.call_tool("memory_forget", {
+                "item_id": corrected["item_id"],
+                "current_user_message": "Please forget that I prefer detailed answers.",
+                "evidence_quote": "forget that I prefer detailed answers",
+            }))
+            check("memory_forget deletes the supersede chain", forgotten["status"] == "forgotten"
+                  and forgotten["deleted_count"] == 2)
+
             hist = _data(await session.call_tool("memory_history", {"entity": "payments-service"}))
             check("history keeps both versions", {h.get("value") for h in hist} >= {"mysql", "postgres"})
             packet = _data(await session.call_tool("handoff_save", {
