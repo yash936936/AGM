@@ -7,6 +7,7 @@ Retrieved content is always evidence, never instructions.
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 import uuid
 from typing import TYPE_CHECKING, Callable
@@ -593,6 +594,23 @@ def apply_memory_decision(
             )
         if not item.idempotency_key and decision.operation_id:
             item = item.model_copy(update={"idempotency_key": _stable_idempotency_key(ctx, decision)})
+        if item.idempotency_key:
+            existing_event = store.conn.execute(
+                """SELECT payload FROM events
+                   WHERE tenant = ? AND writer_id = ? AND idem_key = ?""",
+                (ctx.tenant_id, ctx.writer_id, item.idempotency_key),
+            ).fetchone()
+            if existing_event is not None:
+                try:
+                    existing_payload = json.loads(existing_event["payload"])
+                except (TypeError, json.JSONDecodeError):
+                    existing_payload = {"scrubbed": True}
+                if existing_payload.get("scrubbed"):
+                    return MemoryActionResult(
+                        status="not_found",
+                        message="This operation ID refers to a memory that was later scrubbed; use a new operation ID for a new user request.",
+                        evidence_verified=True,
+                    )
         result = store.write(ctx, item)
         status_map = {
             "added": "stored", "superseded": "stored", "noop": "noop",
@@ -632,13 +650,23 @@ def apply_memory_decision(
             item = item.model_copy(update={"idempotency_key": _stable_idempotency_key(ctx, decision)})
         existing_event = (
             store.conn.execute(
-                """SELECT id FROM events
+                """SELECT id, payload FROM events
                    WHERE tenant = ? AND writer_id = ? AND idem_key = ?""",
                 (ctx.tenant_id, ctx.writer_id, item.idempotency_key),
             ).fetchone()
             if item.idempotency_key else None
         )
         if existing_event is not None:
+            try:
+                existing_payload = json.loads(existing_event["payload"])
+            except (TypeError, json.JSONDecodeError):
+                existing_payload = {"scrubbed": True}
+            if existing_payload.get("scrubbed"):
+                return MemoryActionResult(
+                    status="not_found",
+                    message="This correction operation was scrubbed by a later forget request; no memory was restored.",
+                    evidence_verified=True,
+                )
             existing = store._result_for_existing_event(int(existing_event["id"]))
             mapped_status = "corrected" if existing.status == "superseded" else existing.status
             return MemoryActionResult(
