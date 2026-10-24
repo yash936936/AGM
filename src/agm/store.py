@@ -1293,15 +1293,23 @@ class MemoryStore:
                     WHERE n.id = ? AND n.tenant = ? AND n.project = ?
                    UNION
                    SELECT e.src FROM edges e JOIN versions v ON e.dst = v.id
+                     JOIN nodes neighbor ON neighbor.id = e.src
+                      AND neighbor.tenant = ? AND neighbor.project = ?
                     WHERE e.type = 'supersedes'
                    UNION
                    SELECT e.dst FROM edges e JOIN versions v ON e.src = v.id
+                     JOIN nodes neighbor ON neighbor.id = e.dst
+                      AND neighbor.tenant = ? AND neighbor.project = ?
                     WHERE e.type = 'supersedes'
                )
                SELECT n.id, n.event_id FROM nodes n JOIN versions v ON v.id = n.id
                 WHERE n.tenant = ? AND n.project = ?
                 ORDER BY n.event_id DESC, n.id ASC""",
-            (item_id, ctx.tenant_id, ctx.project, ctx.tenant_id, ctx.project),
+            (
+                item_id, ctx.tenant_id, ctx.project,
+                ctx.tenant_id, ctx.project, ctx.tenant_id, ctx.project,
+                ctx.tenant_id, ctx.project,
+            ),
         ).fetchall()
         ids = [str(row["id"]) for row in rows]
         if not ids:
