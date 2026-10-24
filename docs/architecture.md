@@ -58,6 +58,10 @@ class WriteResult:
     item_id: str | None; superseded_id: str | None; contested_with: str | None
     redactions: int; warnings: list[str]
 
+class ExpiryResult:
+    cutoff: str; scanned_nodes: int; expired_ids: list[str]
+    skipped_pinned_ids: list[str]; scrubbed_orphan_events: int
+
 class MemoryStore:
     def __init__(self, db_path: str, embedder: Embedder | None = None): ...
     def write(self, ctx: Ctx, item: WriteItem) -> WriteResult
@@ -66,6 +70,7 @@ class MemoryStore:
                  k: int = 8, expand: bool = True, include_superseded: bool = False) -> RetrieveResult
     def history(self, ctx: Ctx, entity: str, attribute: str | None = None) -> list[Node]
     def delete(self, ctx: Ctx, item_id: str) -> DeleteResult      # hard delete + derived data
+    def expire_before(self, ctx: Ctx, cutoff: str, *, include_pinned: bool = False) -> ExpiryResult
     def revoke_writer(self, ctx: Ctx, writer_id: str, since: str | None = None) -> RevokeResult
     def rebuild_views(self) -> None
     # handoff.py
@@ -113,6 +118,10 @@ Write: auth → redact secrets → screen instruction-like text (quarantine if h
 append event (idempotency check) → apply to views (ADD / SUPERSEDE / NOOP / CONTESTED) → embed and index.
 Retrieve: embed query → seed (FTS5 + vector, filters) → expand (if on) → validity filter → rank →
 sufficiency (widen once, else abstain) → return with route and notice.
+
+## Retention contract
+
+`MemoryStore.expire_before` is a core-only hard-purge sweep scoped to the caller's tenant/project. Its cutoff is evaluated against source event creation time, not a fact's valid_from date. The sweep skips pinned items by default, and `include_pinned=True` opts those items into purge. The full sweep is atomic; it uses existing delete events and scrubs aged source payloads left outside materialized views after writer revocation. Compact delete/revoke audit events remain. This is local SQLite retention behavior, not a guarantee about external backups, copies, or filesystem snapshots.
 
 ## File tree (living document — keep in sync with src/)
 ```
