@@ -94,5 +94,11 @@
 **Found:** Nothing failing. Three open items remain by design: root folder path (context.md, workflow.md) and which hosted clients support custom connectors (trd.md). Contracts themselves are unreviewed by running code, so they may need adjustment once Phase 1 is built.
 **Fixed:** None needed.
 
+## DBG-013 — Active-memory context, policy, and turn-loop implementation — 2026-10-24
+**Task:** Add labeled current-query/profile/goal retrieval sections, bounded prompt rendering, explicit conflict notices for multiple open-ended values, a conservative post-response memory-operation policy, and a host-independent turn controller.
+**Tested:** Not run by instruction. Added focused tests for policy grounding, correction language, explicit history/forget intent, and retrieval-before-model ordering. Added a deterministic simulated-conversation harness.
+**Fixed:** No automatic writes or deletions are performed by the controller. Existing authenticated tools and the nine-tool MCP surface remain unchanged.
+**Open concerns:** Token use is an approximate four-characters-per-token estimate. Conflict detection is intentionally conservative and limited to multiple retrieved open-ended fact values for the same entity/attribute. REST/MCP do not gain a new orchestration endpoint; hosts can compose the core helper without changing the frozen adapter surface.
+
 ---
 **Next:** Return to [`context.md`](../context.md) before starting a new task — it routes you to the right file for what you are about to do.
