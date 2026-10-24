@@ -192,3 +192,25 @@ def test_active_turn_retrieves_before_generation_and_applies_post_turn_decision(
         assert observed["context_id"].startswith("ctx_")
         assert result.answer == "AGM uses SQLite, according to memory."
         assert result.memory_action.status == "ignored"
+
+
+def test_forget_removes_superseded_versions_and_survives_view_rebuild(tmp_path):
+    with MemoryStore(str(tmp_path / "forget-history.db")) as store:
+        ctx = _ctx()
+        old = store.write(ctx, WriteItem(
+            kind="fact", entity="AGM", attribute="database", value="SQLite",
+            text="AGM uses SQLite.",
+        ))
+        new = store.write(ctx, WriteItem(
+            kind="fact", entity="AGM", attribute="database", value="PostgreSQL",
+            text="AGM uses PostgreSQL.",
+        ))
+        assert old.item_id and new.item_id
+        forgotten = store.forget(ctx, new.item_id)
+        assert forgotten["forgotten"] is True
+        assert forgotten["deleted_count"] == 2
+        store.rebuild_views()
+        assert store.conn.execute(
+            "SELECT COUNT(*) FROM nodes WHERE id IN (?, ?)", (old.item_id, new.item_id)
+        ).fetchone()[0] == 0
+        assert store.history(ctx, "AGM", "database") == []
