@@ -3,6 +3,11 @@
 > Append-only. Every completed coding task gets an entry here, even "no
 > issues found." Newest entries at top.
 
+## DBG-014 — Active-memory operation-ID semantics — 2026-10-24
+**Task:** Distinguish retries of one memory action from a legitimate later recurrence of the same preference.
+**Changes:** Added optional `MemoryDecision.operation_id` and exposed it through remember/correct REST and MCP requests. `run_active_turn(operation_id=...)` applies the host-provided ID authoritatively. Idempotency keys are generated only when an operation ID is supplied, and include the target ID for corrections. Replayed actions validate the stored event/item signature and will not restore an event whose payload was scrubbed by forgetting. Without an operation ID, normal same-value no-op behavior remains, but cross-retry correction idempotency is not promised. Added a recurrence regression case for a preference switching concise → detailed → concise under distinct operation IDs.
+**Validation:** **NOT RUN** as requested; no tests or compile commands have been executed.
+
 ## DBG-013 — Active Memory Loop v1 safety and report pass — 2026-10-24
 **Task:** Complete implementation review refinements and prepare for a separate test cycle.
 **Changes after DBG-012:** Added compact `MemoryContextItem` metadata so memory text appears once in the context string instead of being duplicated in each category. Tightened remember/correct actions to require key-value terms in the quoted message; corrections must resolve to the selected active fact's same entity/attribute and use target-scoped idempotency on retries. Forget checks that its quote matches the selected memory or connected version history; forgetting is now implemented as a tenant/project-scoped recursive traversal plus one atomic event-scrub/delete transaction and one WAL checkpoint. Added tests for mismatch/negative intents, unrelated target prevention, correction retry idempotency, and replay after forgetting a complete version chain. Updated system instructions and docs.
