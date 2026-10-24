@@ -345,3 +345,37 @@ def test_repeated_correction_returns_same_result_without_duplicate_write(tmp_pat
         assert first.item_id == second.item_id
         history = store.history(ctx, "AGM", "database")
         assert [item.value for item in history] == ["SQLite", "PostgreSQL"]
+
+
+def test_future_negation_does_not_trigger_forget_or_correction(tmp_path):
+    with MemoryStore(str(tmp_path / "future-negative.db")) as store:
+        ctx = _ctx()
+        saved = store.write(ctx, WriteItem(
+            kind="fact", entity="user", attribute="communication_preference",
+            value="concise", text="The user prefers concise answers.",
+        ))
+        forget = apply_memory_decision(
+            store, ctx,
+            MemoryDecision(
+                action="forget", target_item_id=saved.item_id,
+                evidence_quote="I won't forget my concise preference",
+            ),
+            user_message="I won't forget my concise preference.",
+        )
+        correction = apply_memory_decision(
+            store, ctx,
+            MemoryDecision(
+                action="correct", target_item_id=saved.item_id,
+                evidence_quote="I won't change my concise preference",
+                item=WriteItem(
+                    kind="fact", entity="user", attribute="communication_preference",
+                    value="detailed", text="The user prefers detailed answers.",
+                ),
+            ),
+            user_message="I won't change my concise preference.",
+        )
+        assert forget.status == "confirmation_required"
+        assert correction.status == "confirmation_required"
+        assert store.conn.execute(
+            "SELECT COUNT(*) FROM nodes WHERE id = ?", (saved.item_id,)
+        ).fetchone()[0] == 1
