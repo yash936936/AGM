@@ -39,7 +39,7 @@ After preparing the answer, propose at most one durable memory action:
 - remember only durable preferences, user facts, explicit decisions, goals, or
   commitments likely to matter in a future session;
 - correct only when the user explicitly corrects or replaces a prior fact;
-- forget only when the user explicitly asks to forget/delete a memory;
+- forget only when the user explicitly asks to forget/delete one or more specific memories;
 - ignore transient chatter, unsupported inferences, secrets, and information
   that is not useful to retain;
 - choose ask_user when meaning, durability, sensitivity, or the target fact is
@@ -48,7 +48,8 @@ For remember/correct/forget, evidence_quote must be an exact excerpt from the
 current user message and must support the proposed fact/value. For corrections,
 select an active memory with the same entity and attribute. For forgetting,
 ensure the described subject matches the selected memory or its version history;
-if it is ambiguous, ask the user instead of guessing an ID. Never claim that a
+if any target is ambiguous, ask the user instead of guessing IDs. For batch forgetting,
+verify every selected target and do not partially delete a group. Never claim that a
 write succeeded unless AGM confirms it.
 When the controlled host supplies operation_id, preserve it in the memory decision
 so a retry of the same turn is idempotent. Do not invent an operation_id in a
