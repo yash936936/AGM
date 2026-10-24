@@ -11,7 +11,8 @@ import os
 from typing import Any, Literal
 
 from .config import database_path, ensure_loopback_host, runtime_identity_from_env
-from .models import Ctx, Readback, TaskState, WriteItem
+from .models import Ctx, MemoryDecision, Readback, TaskState, WriteItem
+from .active_memory import apply_memory_decision, memory_health as run_memory_health
 from .store import MemoryStore
 
 _LOG = logging.getLogger(__name__)
@@ -37,6 +38,74 @@ def create_mcp_server(
     def require(scope: str) -> None:
         if "*" not in scopes and "admin" not in scopes and scope not in scopes:
             raise PermissionError(f"MCP identity lacks required scope: {scope}")
+
+    @server.tool()
+    def memory_context(
+        query: str,
+        entity: str | None = None,
+        as_of: str | None = None,
+        k: int = 8,
+        token_budget: int = 2000,
+        expand: bool = True,
+        high_stakes: bool = False,
+    ) -> dict[str, Any]:
+        """Build a bounded before-answer context pack with profile, goals, decisions, evidence and provenance."""
+        require("memory:read")
+        return store.memory_context(
+            ctx, query, entity=entity, as_of=as_of, k=k, token_budget=token_budget,
+            expand=expand, high_stakes=high_stakes,
+        ).model_dump(mode="json")
+
+    @server.tool()
+    def memory_remember(
+        item: dict[str, Any],
+        current_user_message: str,
+        evidence_quote: str,
+        reason: str = "",
+    ) -> dict[str, Any]:
+        """Save a durable, directly user-supported memory; evidence_quote must occur in the current user message."""
+        require("memory:write")
+        decision = MemoryDecision(
+            action="remember", item=WriteItem.model_validate(item),
+            evidence_quote=evidence_quote, reason=reason,
+        )
+        return apply_memory_decision(store, ctx, decision, user_message=current_user_message).model_dump(mode="json")
+
+    @server.tool()
+    def memory_correct(
+        item_id: str,
+        item: dict[str, Any],
+        reason: str,
+        current_user_message: str,
+        evidence_quote: str,
+    ) -> dict[str, Any]:
+        """Correct a memory only when the user turn supports the correction; the old version remains in history."""
+        require("memory:write")
+        decision = MemoryDecision(
+            action="correct", target_item_id=item_id, item=WriteItem.model_validate(item),
+            reason=reason, evidence_quote=evidence_quote,
+        )
+        return apply_memory_decision(store, ctx, decision, user_message=current_user_message).model_dump(mode="json")
+
+    @server.tool()
+    def memory_forget(
+        item_id: str,
+        current_user_message: str,
+        evidence_quote: str,
+    ) -> dict[str, Any]:
+        """Delete a memory only when the user explicitly requests forgetting/removal in the current turn."""
+        require("memory:delete")
+        decision = MemoryDecision(
+            action="forget", target_item_id=item_id, evidence_quote=evidence_quote,
+            reason="User-requested forgetting",
+        )
+        return apply_memory_decision(store, ctx, decision, user_message=current_user_message).model_dump(mode="json")
+
+    @server.tool()
+    def memory_health() -> dict[str, Any]:
+        """Run read-only SQLite/index coverage diagnostics within this identity's tenant and project."""
+        require("memory:read")
+        return run_memory_health(store, ctx).model_dump(mode="json")
 
     @server.tool()
     def memory_write(item: dict[str, Any]) -> dict[str, Any]:
