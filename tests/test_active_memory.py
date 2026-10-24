@@ -194,6 +194,7 @@ def test_active_turn_retrieves_before_generation_and_applies_post_turn_decision(
         result = run_active_turn(store, ctx, "Which database does AGM use?", generate)
         assert observed["query"] == "Which database does AGM use?"
         assert observed["context_id"].startswith("ctx_")
+        assert observed["has_memory"] is True
         assert result.answer == "AGM uses SQLite, according to memory."
         assert result.memory_action.status == "ignored"
 
