@@ -1,3 +1,13 @@
+## DBG-015 — Require mutation operations for mutation scenario labels — 2026-10-25
+**Task:** Prevent benchmark cases from claiming correction, deletion, or revocation coverage through a scenario label without running the matching store operation.
+
+**Changes:** `load_cases` now requires `correction` for `current_vs_stale`, `delete` for `deletion`, and `revoke_writer` for `revocation`. Added parameterized negative tests for all three mislabeled cases. This supplements DBG-014's end-to-end synthetic operation cases and prevents false acceptance coverage.
+
+**Validation:** CI run [40124931082](https://github.com/yash936936/AGM/actions/runs/40124931082), commit `5122f24f1bcc7bd40ec7607f6d28bdeb28e2bffa`: 174 passed, 1 warning on Python 3.11 (12.12s), Python 3.12 (13.19s), and Python 3.13 (14.96s). Repository hygiene and `git diff --check` passed. The completion report refresh after this run triggers a new final-head CI run.
+
+**Still open:** Local Windows regression and smoke clients, simulation and packaging remain NOT RUN here. Retention/expiry mutation policy remains unimplemented. Real-history evaluation is NOT RUN; security/privacy review is NOT ESTABLISHED.
+
+
 ## DBG-014 — M1 evaluator exercises mutation operations through replay — 2026-10-25
 **Task:** Close a release-gate gap where deletion/revocation scenario tags were only labels, not actual tested operations.
 
