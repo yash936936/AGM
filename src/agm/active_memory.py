@@ -109,6 +109,18 @@ def _significant_terms(value: str) -> set[str]:
     }
 
 
+def _write_item_supported_by_evidence(item: WriteItem, evidence_quote: str) -> bool:
+    """Conservatively reject a candidate whose key value is absent from its quote."""
+    quote_terms = _significant_terms(evidence_quote)
+    if not quote_terms:
+        return False
+    value_terms = _significant_terms(item.value or "")
+    if value_terms:
+        return value_terms.issubset(quote_terms)
+    text_terms = _significant_terms(item.text)
+    return bool(text_terms.intersection(quote_terms))
+
+
 def _correct_target_matches(store: "MemoryStore", ctx: Ctx, item_id: str, item: WriteItem) -> bool:
     if not item.entity or not item.attribute:
         return False
@@ -504,6 +516,12 @@ def apply_memory_decision(
                 evidence_verified=True,
             )
         item = decision.item
+        if not _write_item_supported_by_evidence(item, decision.evidence_quote or ""):
+            return MemoryActionResult(
+                status="confirmation_required",
+                message="The proposed memory's key value is not directly supported by the quoted user text; nothing was stored.",
+                evidence_verified=True,
+            )
         if not item.idempotency_key:
             item = item.model_copy(update={"idempotency_key": _stable_idempotency_key(ctx, decision)})
         result = store.write(ctx, item)
@@ -535,6 +553,12 @@ def apply_memory_decision(
                 evidence_verified=True,
             )
         item = decision.item
+        if not _write_item_supported_by_evidence(item, decision.evidence_quote or ""):
+            return MemoryActionResult(
+                status="confirmation_required",
+                message="The replacement fact's key value is not directly supported by the quoted correction; nothing was changed.",
+                evidence_verified=True,
+            )
         if not item.idempotency_key:
             item = item.model_copy(update={"idempotency_key": _stable_idempotency_key(ctx, decision)})
         existing_event = store.conn.execute(
