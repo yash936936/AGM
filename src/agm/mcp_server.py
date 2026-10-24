@@ -95,11 +95,13 @@ def create_mcp_server(
         evidence_quote: str,
         item_id: str | None = None,
         item_ids: list[str] | None = None,
+        category: str | None = None,
     ) -> dict[str, Any]:
-        """Forget one memory or a batch; each target must match the explicit user request."""
+        """Forget specific IDs or all current memories in an explicitly named category."""
         require("memory:delete")
         decision = MemoryDecision(
             action="forget", target_item_id=item_id, target_item_ids=item_ids or [],
+            target_category=category,
             evidence_quote=evidence_quote, reason="User-requested forgetting",
         )
         return apply_memory_decision(store, ctx, decision, user_message=current_user_message).model_dump(mode="json")
