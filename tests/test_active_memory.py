@@ -623,4 +623,4 @@ def test_context_string_discloses_primary_abstention(tmp_path):
         )
         assert pack.abstain is True
         assert "Query retrieval abstained" in pack.context
-        assert "Auxiliary memories alone may not answer." in pack.context
+        assert "Auxiliary memory alone is insufficient evidence." in pack.context
