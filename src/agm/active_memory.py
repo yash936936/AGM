@@ -16,6 +16,7 @@ from .models import (
     ActiveTurnGeneration,
     Ctx,
     MemoryActionResult,
+    MemoryContextItem,
     MemoryContextPack,
     MemoryDecision,
     MemoryHealthReport,
@@ -226,6 +227,17 @@ def _render_node(node: Node) -> str:
     return f"- {node.text} [{' ; '.join(fields)}]"
 
 
+def _context_item(node: Node) -> MemoryContextItem:
+    """Return provenance metadata without duplicating the text already in context."""
+    return MemoryContextItem(
+        id=node.id, kind=node.kind, entity=node.entity, attribute=node.attribute,
+        value=node.value, valid_from=node.valid_from, valid_to=node.valid_to,
+        confidence=node.confidence, writer_id=node.writer_id, trust_tier=node.trust_tier,
+        provenance=node.provenance, contested_with=node.contested_with,
+        score=node.score, via=node.via,
+    )
+
+
 def build_memory_context(
     store: "MemoryStore",
     ctx: Ctx,
@@ -350,6 +362,7 @@ def build_memory_context(
         if truncated:
             break
 
+    rendered_conflicts: list[dict[str, object]] = []
     if conflicts and not truncated:
         header = "\n\n## Conflicts requiring caution\n"
         current_len = sum(len(part) for part in parts)
@@ -366,6 +379,7 @@ def build_memory_context(
                     truncated = True
                     break
                 parts.append(line + "\n")
+                rendered_conflicts.append(item)
 
     rendered = "".join(parts).strip()
     if not all_nodes:
@@ -378,11 +392,11 @@ def build_memory_context(
         context_id="ctx_" + uuid.uuid4().hex,
         query=query,
         context=rendered,
-        profile=profile,
-        active_goals=goals,
-        decisions=decisions,
-        relevant_memories=relevant,
-        conflicts=conflicts,
+        profile=[_context_item(node) for node in profile if node.id in seen],
+        active_goals=[_context_item(node) for node in goals if node.id in seen],
+        decisions=[_context_item(node) for node in decisions if node.id in seen],
+        relevant_memories=[_context_item(node) for node in relevant if node.id in seen],
+        conflicts=rendered_conflicts,
         route=primary.route,
         abstain=primary.abstain,
         abstain_reason=primary.abstain_reason,
