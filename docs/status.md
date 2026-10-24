@@ -4,7 +4,7 @@
 
 ## 2026-10-24 — Phase 9 step 1: pre-answer context assembly added on a feature branch
 **Current phase:** Phase 9, step 1 only. The helper is on `phase9-active-memory-before-answer`; it is not merged and Phase 9 is not complete.
-**Changes:** Added `prepare_turn_context` to retrieve the current query plus optional caller-supplied profile/preference and goal queries, deduplicate records, and build a token-bounded prompt context with explicit untrusted-data framing and provenance/trust fields. Existing REST/MCP contracts and storage events are unchanged.
+**Changes:** Added `prepare_turn_context` to retrieve the current query plus optional caller-supplied profile/preference and goal queries, deduplicate records, and build a token-bounded prompt context with explicit untrusted-data framing and provenance/trust fields. The Phase 8 agent demo now builds this context before its offline or optional OpenAI answer path and logs context counts/tokens. Existing REST/MCP contracts and storage events are unchanged.
 **Validation:** NOT RUN in this session. The code was committed through GitHub repository operations; no local Python environment was available to execute pytest or smoke clients. Run the focused test and full checks before merging.
 **Next:** Run `python -m pytest -q tests/test_active_memory.py`, then `python -m pytest -q`, compileall and both MCP/REST smoke clients. Review test failures and integrate the helper into the agent-turn orchestration only after the focused behavior is verified.
 
