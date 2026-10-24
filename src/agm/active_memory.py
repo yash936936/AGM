@@ -118,6 +118,14 @@ def _significant_terms(value: str) -> set[str]:
     }
 
 
+def _item_signature(item: WriteItem | dict[str, object]) -> tuple[str, ...]:
+    data = item.model_dump(mode="json") if isinstance(item, WriteItem) else item
+    return tuple(
+        _normalise_text(str(data.get(key) or ""))
+        for key in ("kind", "entity", "attribute", "value", "text")
+    )
+
+
 def _write_item_supported_by_evidence(item: WriteItem, evidence_quote: str) -> bool:
     """Conservatively reject a candidate whose key value is absent from its quote."""
     quote_terms = _significant_terms(evidence_quote)
@@ -596,7 +604,7 @@ def apply_memory_decision(
             item = item.model_copy(update={"idempotency_key": _stable_idempotency_key(ctx, decision)})
         if item.idempotency_key:
             existing_event = store.conn.execute(
-                """SELECT payload FROM events
+                """SELECT type, payload FROM events
                    WHERE tenant = ? AND writer_id = ? AND idem_key = ?""",
                 (ctx.tenant_id, ctx.writer_id, item.idempotency_key),
             ).fetchone()
@@ -609,6 +617,17 @@ def apply_memory_decision(
                     return MemoryActionResult(
                         status="not_found",
                         message="This operation ID refers to a memory that was later scrubbed; use a new operation ID for a new user request.",
+                        evidence_verified=True,
+                    )
+                stored_item = existing_payload.get("item")
+                if (
+                    not isinstance(stored_item, dict)
+                    or _item_signature(stored_item) != _item_signature(item)
+                    or existing_event["type"] not in {"add", "supersede", "quarantined", "contested"}
+                ):
+                    return MemoryActionResult(
+                        status="confirmation_required",
+                        message="The operation ID is already associated with a different action or memory; nothing was changed.",
                         evidence_verified=True,
                     )
         result = store.write(ctx, item)
@@ -650,7 +669,7 @@ def apply_memory_decision(
             item = item.model_copy(update={"idempotency_key": _stable_idempotency_key(ctx, decision)})
         existing_event = (
             store.conn.execute(
-                """SELECT id, payload FROM events
+                """SELECT id, type, payload FROM events
                    WHERE tenant = ? AND writer_id = ? AND idem_key = ?""",
                 (ctx.tenant_id, ctx.writer_id, item.idempotency_key),
             ).fetchone()
@@ -665,6 +684,26 @@ def apply_memory_decision(
                 return MemoryActionResult(
                     status="not_found",
                     message="This correction operation was scrubbed by a later forget request; no memory was restored.",
+                    evidence_verified=True,
+                )
+            stored_item = existing_payload.get("item")
+            if not isinstance(stored_item, dict) or _item_signature(stored_item) != _item_signature(item):
+                return MemoryActionResult(
+                    status="confirmation_required",
+                    message="The operation ID is already associated with a different memory; nothing was changed.",
+                    evidence_verified=True,
+                )
+            if existing_event["type"] == "quarantined":
+                return MemoryActionResult(
+                    status="quarantined",
+                    message="The matching correction was quarantined by AGM and was not activated.",
+                    item_id=existing_payload.get("node_id"),
+                    evidence_verified=True,
+                )
+            if existing_event["type"] != "supersede" or existing_payload.get("fact_id") != decision.target_item_id:
+                return MemoryActionResult(
+                    status="confirmation_required",
+                    message="The operation ID is already associated with a different action or target; nothing was changed.",
                     evidence_verified=True,
                 )
             existing = store._result_for_existing_event(int(existing_event["id"]))
