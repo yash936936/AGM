@@ -1,4 +1,12 @@
-## 2026-10-25 — M0/M1 completion work on isolated branch; final regression pending
+## 2026-10-25 — M1 evaluator hardening CI passed; full M0/M1 release gates remain open
+**Branch:** `work/m0-m1-completion`.
+
+**CI evidence:** The code+test tree through commit `e5370c46dc538ca4be1f471276ae21afa00bfe1e` passed GitHub Actions on Python 3.11, 3.12, and 3.13: `168 passed, 1 warning` in each job (11.45s, 15.66s, 7.66s). Run: https://github.com/yash936936/AGM/actions/runs/40124281832. This includes M0 and the expanded evaluator tests. Documentation-only commits after that run changed status/debug files; they still require CI on the final branch head.
+
+**Current M1 status:** Evaluator supports named scenario labels, input validation, minimum case-pass/recall/abstention thresholds, separate release-gate status, zero-tolerance leak checks, and scenario coverage. Negative tests verify required-value miss, forbidden-value leak, incorrect abstention, malformed input, duplicate IDs, and tenant isolation.
+
+**Not complete:** The harness evaluates retrieval snapshots; tagging a case as deletion/revocation does not execute those lifecycle operations. Dedicated M0 tests cover delete/revoke/replay, but M1 acceptance still needs explicit end-to-end scenarios that perform correction, deletion and revocation before querying. Need explicit metric threshold review/freeze before held-out use. Real-history evaluation is NOT RUN. Production security/privacy review is NOT ESTABLISHED. Local Windows full regression, smoke clients, simulation, package inspection and final-tree hygiene remain NOT RUN here.
+
 **Branch:** `work/m0-m1-completion`. Public `main` remains unchanged.
 
 **M0 evidence:** The public baseline commit `f150a1996bda6292fae295c65ce14d9faf17a06b` passed the GitHub Actions matrix on Python 3.11, 3.12, and 3.13 (`153 passed, 1 warning` per runtime). See [run 40118798582](https://github.com/yash936936/AGM/actions/runs/40118798582). This establishes test/CI evidence for that exact baseline, not subsequent branch changes and not production readiness.
