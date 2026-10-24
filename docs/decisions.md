@@ -1,12 +1,12 @@
+# Decisions — AGM prototype
+
+> Append-only. Newest entries at top. Never edit or delete past entries — if a decision is reversed, log a new entry that supersedes it and reference the old ID.
+
 ## D-028 — Restore prior single-valued fact when deleting the current version — 2026-10-24
 **Decision:** When a current active single-valued fact is deleted, restore its nearest prior `superseded` version if one exists. Set that version back to `active` and clear `valid_to`. If no predecessor exists, leave the fact absent. Do not restore a predecessor when another active value for the same entity/attribute/project remains, because that may be a multi-valued fact set. Deleting a historical superseded version does not change the current value.
 **Deletion contract:** The deleted node's original event payload is still scrubbed and its derived views are removed. The delete event records only the predecessor ID and tenant needed to replay the restoration. Replay must produce the same current fact state as the live mutation.
 **Why:** Removing a correction should not erase the last known prior value when the user explicitly asks for rollback semantics. Hard purge of the deleted version remains distinct from restoration of an older, separately recorded version.
 **Affects:** `src/agm/store.py`, deletion/replay tests and release acceptance checks. This decision does not relax tenant isolation or the hard-delete contract.
-
-# Decisions — AGM prototype
-
-> Append-only. Newest entries at top. Never edit or delete past entries — if a decision is reversed, log a new entry that supersedes it and reference the old ID.
 
 ## D-027 — Add optional Gemini provider for Phase 8 agent QA — 2026-10-24
 **Decision:** Keep offline as the default provider. Add a lazily imported `gemini` provider to the Phase 8 agent demo using the official `google-genai` SDK, `GEMINI_API_KEY`, and optional `GEMINI_MODEL` (default `gemini-3.8-flash`). Preserve the existing OpenAI provider. Keep provider SDKs as optional extras rather than hard dependencies, record response/model/token/safety metadata when available, and never log API keys.
