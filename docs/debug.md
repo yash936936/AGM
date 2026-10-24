@@ -3,6 +3,12 @@
 > Append-only. Every completed coding task gets an entry here, even "no
 > issues found." Newest entries at top.
 
+## DBG-019 — Batch category wording guard — 2026-10-24
+**Task:** Distinguish a bulk category-forget request from a request about one member of that category.
+**Changes:** Category matching now requires explicit plural/group terms such as “preferences”, “goals”, “decisions”, “tasks” or “styles” and an attribute-family match. Added a regression case ensuring “forget that I prefer concise answers” cannot authorize deleting a second, unrelated learning preference when both IDs are selected. D-035 records this policy.
+**Validation:** **NOT RUN.** The new regression case is authored but remains unexecuted by request.
+**Open:** In the separate test phase, confirm both the positive “forget all my preferences” case and this negative single-preference case pass, then run the full batch-forget/MCP/REST suite.
+
 ## DBG-018 — Final active-memory coverage and truncation review — 2026-10-24
 **Task:** Close the active-memory implementation pass without starting validation.
 **Changes:** Added regression coverage for overlapping batch-forget chains and for all-or-nothing behavior when a batch quote does not match every selected target. Context evidence now renders provenance before long memory text so small token budgets retain source IDs/trust/validity during truncation. Updated the in-code system prompt, docs and report; D-034 records the provenance-ordering contract.
