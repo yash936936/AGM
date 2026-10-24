@@ -117,6 +117,47 @@ def test_delete_hard_removes_views_and_scrubs_event(store, ctx):
     assert "SecretCorp" not in " ".join(row["payload"] for row in store.conn.execute("SELECT payload FROM events").fetchall())
 
 
+def test_delete_current_fact_restores_previous_version_and_replays(store, ctx):
+    old = store.write(ctx, WriteItem(
+        kind="fact", entity="Ada", attribute="employer", value="OldCorp",
+        text="Ada worked at OldCorp.", valid_from="2020-01-01T00:00:00Z",
+    ))
+    new = store.write(ctx, WriteItem(
+        kind="fact", entity="Ada", attribute="employer", value="NewCorp",
+        text="Ada moved to NewCorp.", valid_from="2021-01-01T00:00:00Z",
+    ))
+
+    result = store.delete(ctx, str(new.item_id))
+
+    assert result.deleted
+    restored = store.conn.execute(
+        "SELECT status, valid_to FROM nodes WHERE id = ?", (old.item_id,)
+    ).fetchone()
+    assert restored["status"] == "active"
+    assert restored["valid_to"] is None
+    assert store.conn.execute(
+        "SELECT COUNT(*) FROM nodes WHERE id = ?", (new.item_id,)
+    ).fetchone()[0] == 0
+    assert "NewCorp" not in " ".join(
+        row["payload"] for row in store.conn.execute("SELECT payload FROM events").fetchall()
+    )
+
+    store.rebuild_views()
+
+    replayed = store.conn.execute(
+        "SELECT status, valid_to FROM nodes WHERE id = ?", (old.item_id,)
+    ).fetchone()
+    assert replayed["status"] == "active"
+    assert replayed["valid_to"] is None
+    assert store.conn.execute(
+        "SELECT COUNT(*) FROM nodes WHERE id = ?", (new.item_id,)
+    ).fetchone()[0] == 0
+    current = store.retrieve(
+        ctx, "Ada employer", entity="Ada", as_of="2022-01-01T00:00:00Z"
+    )
+    assert [node.id for node in current.items] == [old.item_id]
+
+
 def test_as_of_before_correction_returns_old_value(store, ctx):
     old = store.write(ctx, WriteItem(
         kind="fact", entity="Ada", attribute="location", value="London",
