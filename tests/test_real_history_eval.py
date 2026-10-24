@@ -10,6 +10,7 @@ from scripts.evaluate_real_history import evaluate, load_cases
 def _case(case_id="case-1"):
     return {
         "case_id": case_id,
+        "scenario": "cross_session_recall",
         "memories": [
             {
                 "tenant_id": "tenant-a",
@@ -49,6 +50,7 @@ def test_evaluator_reports_success_for_recalled_value(tmp_path):
     assert report["cases"] == 1
     assert report["all_cases_pass"] is True
     assert report["expected_value_recall"] == 1.0
+    assert report["release_gate_pass"] is True
     assert report["release_blocking_violations"] == 0
 
 
@@ -68,6 +70,7 @@ def test_evaluator_detects_missing_expected_value(tmp_path, monkeypatch):
     assert report["missing_expected_values"] == 1
     assert report["expected_value_recall"] == 0.0
     assert report["all_cases_pass"] is False
+    assert report["release_gate_pass"] is False
 
 
 def test_evaluator_detects_forbidden_value_leak_and_blocks_release(tmp_path, monkeypatch):
@@ -79,15 +82,19 @@ def test_evaluator_detects_forbidden_value_leak_and_blocks_release(tmp_path, mon
         result = original(case, db_path)
         result["leak_count"] = 1
         result["pass"] = False
+        result["zero_tolerance_violation"] = True
         return result
 
     case = _case()
+    case["scenario"] = "tenant_isolation"
     case["forbidden_values"] = ["tenant-b-marker"]
     monkeypatch.setattr(evaluator, "evaluate_case", leaking)
     report = evaluator.evaluate(_write(tmp_path / "leak.jsonl", case))
     assert report["forbidden_value_leaks"] == 1
-    assert report["release_blocking_violations"] == 1
+    assert report["zero_tolerance_failures"] == 1
+    assert report["release_blocking_violations"] == 2
     assert report["all_cases_pass"] is False
+    assert report["release_gate_pass"] is False
 
 
 def test_evaluator_detects_wrong_abstention(tmp_path, monkeypatch):
@@ -108,10 +115,12 @@ def test_evaluator_detects_wrong_abstention(tmp_path, monkeypatch):
     report = evaluator.evaluate(_write(tmp_path / "abstention.jsonl", case))
     assert report["abstention_accuracy"] == 0.0
     assert report["all_cases_pass"] is False
+    assert report["release_gate_pass"] is False
 
 
 def test_evaluator_tenant_isolation_fixture_does_not_leak(tmp_path):
     case = _case()
+    case["scenario"] = "tenant_isolation"
     case["memories"].append({
         "tenant_id": "tenant-b",
         "writer_id": "writer-b",
@@ -129,6 +138,16 @@ def test_evaluator_tenant_isolation_fixture_does_not_leak(tmp_path):
     report = evaluate(_write(tmp_path / "tenant.jsonl", case))
     assert report["release_blocking_violations"] == 0
     assert report["all_cases_pass"] is True
+    assert report["scenario_coverage"]["tenant_isolation"]["cases"] == 1
+
+
+def test_zero_tolerance_scenarios_require_forbidden_sentinels(tmp_path):
+    case = _case()
+    case["scenario"] = "deletion"
+    case["forbidden_values"] = []
+    path = _write(tmp_path / "invalid.jsonl", case)
+    with pytest.raises(ValueError, match="requires forbidden_values"):
+        load_cases(path)
 
 
 @pytest.mark.parametrize(
