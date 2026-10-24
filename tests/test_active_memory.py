@@ -60,6 +60,7 @@ def test_remember_requires_matching_current_turn_evidence_and_is_idempotent(tmp_
         decision = MemoryDecision(
             action="remember",
             evidence_quote="I prefer concise answers",
+            operation_id="turn-remember-001",
             reason="Stable communication preference likely to help future answers.",
             item=WriteItem(
                 kind="fact", entity="user", attribute="communication_preference",
@@ -337,6 +338,7 @@ def test_repeated_correction_returns_same_result_without_duplicate_write(tmp_pat
         decision = MemoryDecision(
             action="correct", target_item_id=old.item_id,
             evidence_quote="Actually, AGM uses PostgreSQL instead",
+            operation_id="turn-correction-001",
             reason="User correction",
             item=WriteItem(
                 kind="fact", entity="AGM", attribute="database", value="PostgreSQL",
