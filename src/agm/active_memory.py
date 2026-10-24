@@ -93,6 +93,76 @@ def _evidence_matches(user_message: str, evidence_quote: str | None) -> bool:
     return _normalise_text(evidence_quote) in _normalise_text(user_message)
 
 
+_STOP_WORDS = {
+    "a", "an", "and", "are", "as", "at", "be", "by", "do", "for",
+    "forget", "from", "i", "in", "is", "it", "me", "my", "of", "on",
+    "or", "please", "remove", "delete", "that", "the", "this", "to",
+    "want", "with", "you", "your", "memory",
+}
+
+
+def _significant_terms(value: str) -> set[str]:
+    return {
+        token for token in re.findall(r"[a-z0-9][a-z0-9_-]{2,}", value.casefold())
+        if token not in _STOP_WORDS
+    }
+
+
+def _correct_target_matches(store: "MemoryStore", ctx: Ctx, item_id: str, item: WriteItem) -> bool:
+    if not item.entity or not item.attribute:
+        return False
+    row = store.conn.execute(
+        """SELECT n.project, n.status, n.entity_id, n.attribute
+           FROM nodes n WHERE n.id = ? AND n.tenant = ?""",
+        (item_id, ctx.tenant_id),
+    ).fetchone()
+    if row is None or str(row["project"]) != ctx.project or str(row["status"]) != "active":
+        return False
+    if str(row["attribute"] or "").strip().casefold() != item.attribute.strip().casefold():
+        return False
+    from .store import canonical_entity
+
+    replacement_entity_id = store._resolve_entity_id(
+        ctx.tenant_id, canonical_entity(item.entity),
+    )
+    return replacement_entity_id is not None and replacement_entity_id == str(row["entity_id"])
+
+
+def _forget_target_matches(store: "MemoryStore", ctx: Ctx, item_id: str, evidence_quote: str) -> bool:
+    """Ensure a forget request's subject matches the selected version or its history."""
+    if item_id.casefold() in evidence_quote.casefold():
+        return True
+    rows = store.conn.execute(
+        """WITH RECURSIVE versions(id) AS (
+               SELECT n.id FROM nodes n
+                WHERE n.id = ? AND n.tenant = ? AND n.project = ?
+               UNION
+               SELECT e.src FROM edges e JOIN versions v ON e.dst = v.id
+                WHERE e.type = 'supersedes'
+               UNION
+               SELECT e.dst FROM edges e JOIN versions v ON e.src = v.id
+                WHERE e.type = 'supersedes'
+           )
+           SELECT n.text, n.attribute, n.value, e.canonical AS entity
+             FROM nodes n JOIN versions v ON v.id = n.id
+             LEFT JOIN entities e ON e.id = n.entity_id
+            WHERE n.tenant = ? AND n.project = ?""",
+        (item_id, ctx.tenant_id, ctx.project, ctx.tenant_id, ctx.project),
+    ).fetchall()
+    if not rows:
+        return False
+    quote_terms = _significant_terms(evidence_quote)
+    if not quote_terms:
+        return False
+    for row in rows:
+        target_terms = _significant_terms(" ".join(
+            str(row[key] or "") for key in ("text", "entity", "value")
+        ))
+        if quote_terms.intersection(target_terms):
+            return True
+    return False
+
+
 def _attribute_key(node: Node) -> str:
     return re.sub(r"[^a-z0-9]+", "_", (node.attribute or "").casefold()).strip("_")
 
@@ -451,6 +521,12 @@ def apply_memory_decision(
                 evidence_verified=True,
             )
         item = decision.item
+        if not _correct_target_matches(store, ctx, decision.target_item_id, item):
+            return MemoryActionResult(
+                status="confirmation_required",
+                message="The selected memory is missing/inactive/out of scope, or the replacement does not match its entity and attribute; nothing was changed.",
+                evidence_verified=True,
+            )
         if not item.idempotency_key:
             item = item.model_copy(update={"idempotency_key": _stable_idempotency_key(ctx, decision)})
         result = store.supersede(ctx, decision.target_item_id, item, decision.reason or "User correction")
@@ -476,6 +552,12 @@ def apply_memory_decision(
             return MemoryActionResult(
                 status="confirmation_required",
                 message="The current turn does not unambiguously request forgetting; nothing was changed.",
+                evidence_verified=True,
+            )
+        if not _forget_target_matches(store, ctx, decision.target_item_id, decision.evidence_quote or ""):
+            return MemoryActionResult(
+                status="confirmation_required",
+                message="The selected memory does not clearly match the user's quoted forget request; nothing was changed.",
                 evidence_verified=True,
             )
         result = store.forget(ctx, decision.target_item_id)
