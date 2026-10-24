@@ -24,7 +24,7 @@ def create_mcp_server(
     ctx: Ctx,
     scopes: frozenset[str],
 ) -> Any:
-    """Register the nine stable tool names from the architecture parity table."""
+    """Register the stable memory/handoff tools plus active-memory workflow tools."""
     try:
         from mcp.server.fastmcp import FastMCP
     except ImportError as exc:  # make missing extras actionable
