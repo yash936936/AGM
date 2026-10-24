@@ -59,7 +59,7 @@ Implement the persistent-memory turn lifecycle:
 - `docs/architecture.md`
 - `docs/appflow.md`
 - `docs/debug.md`
-- `docs/decisions.md` — D-027 and D-028 appended at the top.
+- `docs/decisions.md` — D-027 through D-030; newest decisions cover explicit operation IDs, target-safe mutations, and contested evidence/health scope.
 - `docs/phases.md`
 - `docs/status.md`
 - `examples/claude_code_mcp.md`
@@ -111,6 +111,8 @@ Run the MCP smoke client in an environment where the official MCP SDK is install
 3. Validate the tenant/project-filtered recursive SQLite CTE, atomic event scrubbing, WAL checkpoint and rebuild behavior on the user's installed SQLite/Python version.
 4. Decide whether the native model tool should receive only the rendered context string or more compact metadata; the current response intentionally keeps full text in the context string and IDs/trust/validity/provenance in structured fields.
 5. Build a provider-specific callback only after core testing if an LLM-backed controlled turn loop is needed. The current offline example intentionally makes no LLM request.
+7. Confirm the native MCP/REST adapters pass an optional `operation_id` through on remember/correct, and that controlled `run_active_turn(operation_id=...)` overrides any model-proposed operation ID.
+8. Confirm contested counterparty text is included only when tenant/project, temporal and high-stakes eligibility allow it; database-wide SQLite integrity and scoped item/index counts are documented separately.
 6. Native ChatGPT/Claude integration remains a later milestone; this branch does not guarantee tool invocation on every message.
 
 ## Completion rule
