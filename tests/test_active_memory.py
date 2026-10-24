@@ -214,3 +214,82 @@ def test_forget_removes_superseded_versions_and_survives_view_rebuild(tmp_path):
             "SELECT COUNT(*) FROM nodes WHERE id IN (?, ?)", (old.item_id, new.item_id)
         ).fetchone()[0] == 0
         assert store.history(ctx, "AGM", "database") == []
+
+
+def test_correction_cannot_target_an_unrelated_fact(tmp_path):
+    with MemoryStore(str(tmp_path / "wrong-correction-target.db")) as store:
+        ctx = _ctx()
+        old = store.write(ctx, WriteItem(
+            kind="fact", entity="AGM", attribute="database", value="SQLite",
+            text="AGM uses SQLite.",
+        ))
+        decision = MemoryDecision(
+            action="correct", target_item_id=old.item_id,
+            evidence_quote="Actually, the AGM theme is turquoise.",
+            reason="Test wrong target protection",
+            item=WriteItem(
+                kind="fact", entity="AGM", attribute="theme", value="turquoise",
+                text="AGM theme is turquoise.",
+            ),
+        )
+        result = apply_memory_decision(
+            store, ctx, decision,
+            user_message="Actually, the AGM theme is turquoise.",
+        )
+        assert result.status == "confirmation_required"
+        assert store.history(ctx, "AGM", "database")[0].value == "SQLite"
+
+
+def test_forget_cannot_delete_unrelated_memory(tmp_path):
+    with MemoryStore(str(tmp_path / "wrong-forget-target.db")) as store:
+        ctx = _ctx()
+        saved = store.write(ctx, WriteItem(
+            kind="fact", entity="AGM", attribute="database", value="SQLite",
+            text="AGM uses SQLite.",
+        ))
+        result = apply_memory_decision(
+            store, ctx,
+            MemoryDecision(
+                action="forget", target_item_id=saved.item_id,
+                evidence_quote="forget my turquoise color preference",
+            ),
+            user_message="Please forget my turquoise color preference.",
+        )
+        assert result.status == "confirmation_required"
+        assert store.conn.execute(
+            "SELECT COUNT(*) FROM nodes WHERE id = ?", (saved.item_id,)
+        ).fetchone()[0] == 1
+
+
+def test_negated_forget_and_correction_requests_do_not_mutate(tmp_path):
+    with MemoryStore(str(tmp_path / "negative-intent.db")) as store:
+        ctx = _ctx()
+        saved = store.write(ctx, WriteItem(
+            kind="fact", entity="user", attribute="communication_preference",
+            value="concise", text="The user prefers concise answers.",
+        ))
+        forget = apply_memory_decision(
+            store, ctx,
+            MemoryDecision(
+                action="forget", target_item_id=saved.item_id,
+                evidence_quote="delete my concise preference",
+            ),
+            user_message="I do not want you to delete my concise preference.",
+        )
+        correct = apply_memory_decision(
+            store, ctx,
+            MemoryDecision(
+                action="correct", target_item_id=saved.item_id,
+                evidence_quote="change the answer style",
+                item=WriteItem(
+                    kind="fact", entity="user", attribute="communication_preference",
+                    value="detailed", text="The user prefers detailed answers.",
+                ),
+            ),
+            user_message="I don't want you to change the answer style.",
+        )
+        assert forget.status == "confirmation_required"
+        assert correct.status == "confirmation_required"
+        assert store.conn.execute(
+            "SELECT COUNT(*) FROM nodes WHERE id = ?", (saved.item_id,)
+        ).fetchone()[0] == 1
