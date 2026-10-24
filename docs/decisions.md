@@ -2,6 +2,11 @@
 
 > Append-only. Newest entries at top. Never edit or delete past entries — if a decision is reversed, log a new entry that supersedes it and reference the old ID.
 
+## D-035 — Batch category forget requires explicit group wording — 2026-10-24
+**Decision:** In addition to matching an individual memory's value/entity/text, batch forgetting may match a memory category only when the user explicitly names a plural/group category, such as “all my preferences”, “my goals”, or “my decisions”. A singular preference statement such as “I prefer concise answers” must not authorize deletion of every memory classified as a preference. All batch targets must still independently pass subject matching before the atomic deletion is attempted.
+**Why:** Users should be able to request removal of a named group, but a request about one particular preference must not be broadened into a bulk delete.
+**Affects:** `_forget_category_matches`, batch-forget policy and unit coverage. No schema or dependency change.
+
 ## D-034 — Keep provenance ahead of memory text in bounded contexts — 2026-10-24
 **Decision:** Render each context evidence line with source ID, writer, trust tier, confidence, validity window, entity/attribute/value and source-span metadata before the memory text. When the context budget truncates a long line, provenance should remain visible and the text should be shortened rather than allowing the source ID to be cut off first.
 **Why:** The model needs source IDs and evidence-quality signals to cite or question a memory. Long content must not crowd out the metadata needed to trace it.
