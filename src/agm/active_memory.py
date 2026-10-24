@@ -155,16 +155,23 @@ def _forget_target_matches(store: "MemoryStore", ctx: Ctx, item_id: str, evidenc
                 WHERE n.id = ? AND n.tenant = ? AND n.project = ?
                UNION
                SELECT e.src FROM edges e JOIN versions v ON e.dst = v.id
+                 JOIN nodes neighbor ON neighbor.id = e.src
+                  AND neighbor.tenant = ? AND neighbor.project = ?
                 WHERE e.type = 'supersedes'
                UNION
                SELECT e.dst FROM edges e JOIN versions v ON e.src = v.id
+                 JOIN nodes neighbor ON neighbor.id = e.dst
+                  AND neighbor.tenant = ? AND neighbor.project = ?
                 WHERE e.type = 'supersedes'
            )
-           SELECT n.text, n.attribute, n.value, e.canonical AS entity
+           SELECT n.text, n.attribute, n.value
              FROM nodes n JOIN versions v ON v.id = n.id
-             LEFT JOIN entities e ON e.id = n.entity_id
             WHERE n.tenant = ? AND n.project = ?""",
-        (item_id, ctx.tenant_id, ctx.project, ctx.tenant_id, ctx.project),
+        (
+            item_id, ctx.tenant_id, ctx.project,
+            ctx.tenant_id, ctx.project, ctx.tenant_id, ctx.project,
+            ctx.tenant_id, ctx.project,
+        ),
     ).fetchall()
     if not rows:
         return False
