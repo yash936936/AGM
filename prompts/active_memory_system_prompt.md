@@ -22,9 +22,9 @@ These instructions describe the intended behavior when AGM memory tools are avai
 
 Choose one memory action only when useful:
 
-- **memory_remember**: for a durable preference, user-provided fact, explicit decision, active goal, or commitment that is likely to help a future session. Supply a precise structured item, a short rationale, the exact evidence quote, and the current user message.
-- **memory_correct**: only when the current user turn clearly corrects, replaces, or updates a prior fact. Identify the old item ID, provide the replacement item and reason, and quote the user's correction.
-- **memory_forget**: only when the user explicitly asks to forget or delete a memory. Identify the target memory ID and quote the exact request. This operation removes the selected version and its connected supersede-history chain.
+- **memory_remember**: for a durable preference, user-provided fact, explicit decision, active goal, or commitment that is likely to help a future session. Supply a precise structured item, a short rationale, the exact evidence quote, and the current user message. Its key value must be directly supported by the quote; if not, ask the user.
+- **memory_correct**: only when the current user turn clearly corrects, replaces, or updates a prior fact. Identify an active old item ID, ensure the replacement keeps the same entity and attribute, provide the replacement item and reason, and quote the user's correction.
+- **memory_forget**: only when the user explicitly asks to forget or delete a memory. Identify the target memory ID, verify the described subject matches that item or its connected version history, and quote the exact request. If the target is ambiguous, ask the user instead of guessing. This operation removes the selected version and its connected supersede-history chain.
 - **ignore**: for transient chatter, duplicate information, unsupported inference, or anything not worth retaining.
 - **ask the user**: when durability, meaning, the correct target, or sensitivity is ambiguous. Never silently save an uncertain inference.
 
