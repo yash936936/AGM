@@ -340,20 +340,60 @@ def build_memory_context(
         unique.setdefault(node.id, node)
     all_nodes = list(unique.values())
 
+    # A contested edge points to the competing memory. Resolve that precise ID
+    # inside the same scope, applying the same time and high-stakes eligibility.
+    conflict_nodes: list[Node] = []
+    known_ids = {node.id for node in all_nodes}
+    if any(node.contested_with for node in all_nodes):
+        from .store import _iso_key
+        as_of_key = _iso_key(as_of) if as_of is not None else None
+        from .trust import is_probationary
+        for node in list(all_nodes):
+            other_id = node.contested_with
+            if not other_id or other_id in known_ids:
+                continue
+            row = store.conn.execute(
+                """SELECT * FROM nodes WHERE id = ? AND tenant = ? AND project = ?
+                   AND status IN ('active', 'contested')""",
+                (other_id, ctx.tenant_id, ctx.project),
+            ).fetchone()
+            if row is None:
+                continue
+            if as_of_key is not None:
+                if _iso_key(str(row["valid_from"])) > as_of_key:
+                    continue
+                if row["valid_to"] is not None and _iso_key(str(row["valid_to"])) <= as_of_key:
+                    continue
+            if high_stakes and is_probationary(store.conn, row):
+                continue
+            conflicting = store._row_node(row)
+            conflict_nodes.append(conflicting)
+            known_ids.add(conflicting.id)
+            unique.setdefault(conflicting.id, conflicting)
+    all_nodes = list(unique.values())
+
     profile = [node for node in all_nodes if _memory_category(node) == "profile"]
     goals = [node for node in all_nodes if _memory_category(node) == "active_goals"]
     decisions = [node for node in all_nodes if _memory_category(node) == "decisions"]
-    relevant = list(primary.items)
-    conflicts = [
-        {
+    relevant = list(primary.items) + conflict_nodes
+    conflict_records: dict[tuple[str, str], dict[str, object]] = {}
+    nodes_by_id = {node.id: node for node in all_nodes}
+    for node in all_nodes:
+        if not node.contested_with:
+            continue
+        other = nodes_by_id.get(node.contested_with)
+        pair = tuple(sorted((node.id, node.contested_with)))
+        if pair in conflict_records:
+            continue
+        conflict_records[pair] = {
             "item_id": node.id,
             "conflicts_with": node.contested_with,
-            "entity": node.entity,
-            "attribute": node.attribute,
+            "entity": node.entity or (other.entity if other else None),
+            "attribute": node.attribute or (other.attribute if other else None),
             "value": node.value,
+            "conflicting_value": other.value if other else None,
         }
-        for node in all_nodes if node.contested_with
-    ]
+    conflicts = list(conflict_records.values())
 
     char_budget = token_budget * 4
     notice = (
@@ -364,10 +404,11 @@ def build_memory_context(
     seen: set[str] = set()
     truncated = False
     groups: list[tuple[str, list[Node]]] = [
-        ("Current-question evidence", relevant),
+        ("Current-question evidence", primary.items),
         ("Persistent profile and preferences", profile),
         ("Active goals and ongoing work", goals),
         ("Decisions", decisions),
+        ("Conflicting evidence — do not silently merge", conflict_nodes),
     ]
     for title, nodes in groups:
         new_nodes = [node for node in nodes if node.id not in seen]
