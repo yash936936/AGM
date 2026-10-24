@@ -2,6 +2,11 @@
 
 > Append-only. Newest entries at top. Never edit or delete past entries — if a decision is reversed, log a new entry that supersedes it and reference the old ID.
 
+## D-034 — Keep provenance ahead of memory text in bounded contexts — 2026-10-24
+**Decision:** Render each context evidence line with source ID, writer, trust tier, confidence, validity window, entity/attribute/value and source-span metadata before the memory text. When the context budget truncates a long line, provenance should remain visible and the text should be shortened rather than allowing the source ID to be cut off first.
+**Why:** The model needs source IDs and evidence-quality signals to cite or question a memory. Long content must not crowd out the metadata needed to trace it.
+**Affects:** `active_memory._render_node`, truncation regression coverage and implementation report. No schema or dependency change.
+
 ## D-033 — Batch forgetting is explicit, scoped, and all-or-nothing — 2026-10-24
 **Decision:** Extend the active-memory forget contract to accept one target (`target_item_id` / `item_id`) or a batch of up to 100 explicitly selected target IDs (`target_item_ids` / `item_ids`). The user quote must match every selected target or its connected supersede history. The core resolves all roots inside the same tenant/project, expands each root to its connected supersede chain, and deletes the union in a single transaction. If any requested root is missing/out of scope, or any quote fails the per-target subject check, the operation performs no deletion. The legacy single-ID `MemoryStore.forget` remains as a wrapper around `forget_many`.
 **Why:** Users need to remove several explicitly named memories in one request, while avoiding partial deletes or a guessed target. The all-or-nothing policy preserves privacy expectations and makes retries/confirmation behavior predictable.
