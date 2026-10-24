@@ -500,7 +500,7 @@ def _stable_idempotency_key(ctx: Ctx, decision: MemoryDecision) -> str:
         ))
     material = "|".join((
         ctx.tenant_id, ctx.writer_id, ctx.project, decision.action,
-        decision.target_item_id or "",
+        decision.operation_id or "", decision.target_item_id or "",
         _normalise_text(decision.evidence_quote or ""), item_fields,
     ))
     return "active-memory-v1:" + hashlib.sha256(material.encode("utf-8")).hexdigest()
@@ -546,7 +546,7 @@ def apply_memory_decision(
                 message="The proposed memory's key value is not directly supported by the quoted user text; nothing was stored.",
                 evidence_verified=True,
             )
-        if not item.idempotency_key:
+        if not item.idempotency_key and decision.operation_id:
             item = item.model_copy(update={"idempotency_key": _stable_idempotency_key(ctx, decision)})
         result = store.write(ctx, item)
         status_map = {
@@ -583,13 +583,16 @@ def apply_memory_decision(
                 message="The replacement fact's key value is not directly supported by the quoted correction; nothing was changed.",
                 evidence_verified=True,
             )
-        if not item.idempotency_key:
+        if not item.idempotency_key and decision.operation_id:
             item = item.model_copy(update={"idempotency_key": _stable_idempotency_key(ctx, decision)})
-        existing_event = store.conn.execute(
-            """SELECT id FROM events
-               WHERE tenant = ? AND writer_id = ? AND idem_key = ?""",
-            (ctx.tenant_id, ctx.writer_id, item.idempotency_key),
-        ).fetchone()
+        existing_event = (
+            store.conn.execute(
+                """SELECT id FROM events
+                   WHERE tenant = ? AND writer_id = ? AND idem_key = ?""",
+                (ctx.tenant_id, ctx.writer_id, item.idempotency_key),
+            ).fetchone()
+            if item.idempotency_key else None
+        )
         if existing_event is not None:
             existing = store._result_for_existing_event(int(existing_event["id"]))
             mapped_status = "corrected" if existing.status == "superseded" else existing.status
@@ -665,6 +668,7 @@ def run_active_turn(
     k: int = 8,
     token_budget: int = 2000,
     high_stakes: bool = False,
+    operation_id: str | None = None,
 ) -> ActiveMemoryTurnResult:
     """Enforce retrieve -> model generation -> validated post-turn decision."""
     if not user_message or not user_message.strip():
@@ -676,5 +680,8 @@ def run_active_turn(
     generation = generate(user_message, context)
     if not isinstance(generation, ActiveTurnGeneration):
         generation = ActiveTurnGeneration.model_validate(generation)
-    action = apply_memory_decision(store, ctx, generation.memory_decision, user_message=user_message)
+    decision = generation.memory_decision
+    if operation_id and not decision.operation_id:
+        decision = decision.model_copy(update={"operation_id": operation_id})
+    action = apply_memory_decision(store, ctx, decision, user_message=user_message)
     return ActiveMemoryTurnResult(answer=generation.answer, context=context, memory_action=action)
