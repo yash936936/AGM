@@ -927,31 +927,70 @@ def apply_memory_decision(
         )
 
     if decision.action == "forget":
-        target_ids = list(dict.fromkeys(
+        explicit_target_ids = list(dict.fromkeys(
             ([decision.target_item_id] if decision.target_item_id else [])
             + decision.target_item_ids
         ))
-        if not target_ids:
-            return MemoryActionResult(
-                status="confirmation_required",
-                message="A forget request needs at least one specific memory ID; nothing was changed.",
-                evidence_verified=True,
-            )
-        if len(target_ids) > 100:
-            raise ValueError("at most 100 target memory IDs may be forgotten in one operation")
         if _NEGATED_FORGET.search(user_message) or not _FORGET_INTENT.search(user_message):
             return MemoryActionResult(
                 status="confirmation_required",
                 message="The current turn does not unambiguously request forgetting; nothing was changed.",
                 evidence_verified=True,
             )
+
+        category_target_ids: list[str] = []
+        if decision.target_category:
+            category_terms = {
+                "preferences": {"preferences", "styles"},
+                "goals": {"goals", "objectives", "aims"},
+                "commitments": {"commitments", "promises"},
+                "decisions": {"decisions", "choices", "architectures"},
+                "tasks": {"tasks", "todos", "steps"},
+            }[decision.target_category]
+            quote_terms = _significant_terms(decision.evidence_quote or "")
+            if not category_terms.intersection(quote_terms):
+                return MemoryActionResult(
+                    status="confirmation_required",
+                    message="A category forget requires explicit group wording in the quoted user request; nothing was changed.",
+                    evidence_verified=True,
+                )
+            category_target_ids, too_many = _discover_forget_category_targets(
+                store, ctx, decision.target_category,
+            )
+            if too_many:
+                return MemoryActionResult(
+                    status="confirmation_required",
+                    message="More than 100 memories match this category in the current project. Nothing was changed; narrow the request or select specific IDs.",
+                    evidence_verified=True,
+                )
+            if not category_target_ids:
+                return MemoryActionResult(
+                    status="not_found",
+                    message="No current memories matched that category in this tenant/project; nothing was changed.",
+                    evidence_verified=True,
+                )
+
+        if not explicit_target_ids and not category_target_ids:
+            return MemoryActionResult(
+                status="confirmation_required",
+                message="A forget request needs a specific memory ID, a batch of IDs, or an explicit category; nothing was changed.",
+                evidence_verified=True,
+            )
         if any(
             not _forget_target_matches(store, ctx, target_id, decision.evidence_quote or "")
-            for target_id in target_ids
+            for target_id in explicit_target_ids
         ):
             return MemoryActionResult(
                 status="confirmation_required",
                 message="At least one selected memory does not clearly match the user's quoted forget request; nothing was changed.",
+                evidence_verified=True,
+            )
+
+        target_ids = list(dict.fromkeys(explicit_target_ids + category_target_ids))
+        if len(target_ids) > 100:
+            return MemoryActionResult(
+                status="confirmation_required",
+                message="This forget request selects more than 100 memories. Nothing was changed; narrow the request or split it into smaller groups.",
                 evidence_verified=True,
             )
         result = store.forget_many(ctx, target_ids)
