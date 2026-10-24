@@ -59,7 +59,7 @@ Implement the persistent-memory turn lifecycle:
 - `docs/architecture.md`
 - `docs/appflow.md`
 - `docs/debug.md`
-- `docs/decisions.md` — D-027 through D-031; newest decisions cover target-safe mutations, contested evidence/health scope, and explicit host-operation-ID semantics.
+- `docs/decisions.md` — D-027 through D-032; newest decisions cover target-safe mutations, contested evidence/health scope, explicit host-operation-ID semantics, and shared input limits.
 - `docs/phases.md`
 - `docs/status.md`
 - `examples/claude_code_mcp.md`
@@ -113,6 +113,7 @@ Run the MCP smoke client in an environment where the official MCP SDK is install
 5. Build a provider-specific callback only after core testing if an LLM-backed controlled turn loop is needed. The current offline example intentionally makes no LLM request.
 6. Confirm the native MCP/REST adapters pass an optional `operation_id` through on remember/correct, and that controlled `run_active_turn(operation_id=...)` overrides any model-proposed operation ID.
 7. Confirm contested counterparty text is included only when tenant/project, temporal and high-stakes eligibility allow it; database-wide SQLite integrity and scoped item/index counts are documented separately.
+8. Confirm shared input caps apply consistently through direct core calls, REST and MCP without changing the frozen base `WriteItem` contract.
 6. Native ChatGPT/Claude integration remains a later milestone; this branch does not guarantee tool invocation on every message.
 
 ## Completion rule
