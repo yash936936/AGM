@@ -624,3 +624,26 @@ def test_context_string_discloses_primary_abstention(tmp_path):
         assert pack.abstain is True
         assert "Query retrieval abstained" in pack.context
         assert "Auxiliary memory alone is insufficient evidence." in pack.context
+
+
+def test_active_memory_rejects_oversized_context_and_decision_inputs(tmp_path):
+    import pytest
+
+    with MemoryStore(str(tmp_path / "active-memory-bounds.db")) as store:
+        ctx = _ctx()
+        with pytest.raises(ValueError, match="query"):
+            store.memory_context(ctx, "x" * 4001)
+        with pytest.raises(ValueError, match="current user message"):
+            apply_memory_decision(
+                store, ctx,
+                MemoryDecision(
+                    action="remember",
+                    evidence_quote="I prefer concise answers",
+                    item=WriteItem(
+                        kind="fact", entity="user", attribute="communication_preference",
+                        value="concise", text="The user prefers concise answers.",
+                    ),
+                ),
+                user_message="x" * 20001,
+            )
+        assert store.conn.execute("SELECT COUNT(*) FROM events").fetchone()[0] == 0
