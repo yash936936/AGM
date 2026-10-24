@@ -62,12 +62,13 @@ def create_mcp_server(
         current_user_message: str,
         evidence_quote: str,
         reason: str = "",
+        operation_id: str | None = None,
     ) -> dict[str, Any]:
         """Save a durable, directly user-supported memory; evidence_quote must occur in the current user message."""
         require("memory:write")
         decision = MemoryDecision(
             action="remember", item=WriteItem.model_validate(item),
-            evidence_quote=evidence_quote, reason=reason,
+            evidence_quote=evidence_quote, reason=reason, operation_id=operation_id,
         )
         return apply_memory_decision(store, ctx, decision, user_message=current_user_message).model_dump(mode="json")
 
@@ -78,12 +79,13 @@ def create_mcp_server(
         reason: str,
         current_user_message: str,
         evidence_quote: str,
+        operation_id: str | None = None,
     ) -> dict[str, Any]:
         """Correct a memory only when the user turn supports the correction; the old version remains in history."""
         require("memory:write")
         decision = MemoryDecision(
             action="correct", target_item_id=item_id, item=WriteItem.model_validate(item),
-            reason=reason, evidence_quote=evidence_quote,
+            reason=reason, evidence_quote=evidence_quote, operation_id=operation_id,
         )
         return apply_memory_decision(store, ctx, decision, user_message=current_user_message).model_dump(mode="json")
 
