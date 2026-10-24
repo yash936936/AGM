@@ -169,8 +169,9 @@ def _forget_target_matches(store: "MemoryStore", ctx: Ctx, item_id: str, evidenc
                   AND neighbor.tenant = ? AND neighbor.project = ?
                 WHERE e.type = 'supersedes'
            )
-           SELECT n.text, n.attribute, n.value
+           SELECT n.text, n.attribute, n.value, e.canonical AS entity
              FROM nodes n JOIN versions v ON v.id = n.id
+             LEFT JOIN entities e ON e.id = n.entity_id
             WHERE n.tenant = ? AND n.project = ?""",
         (
             item_id, ctx.tenant_id, ctx.project,
