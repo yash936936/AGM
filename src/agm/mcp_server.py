@@ -91,15 +91,16 @@ def create_mcp_server(
 
     @server.tool()
     def memory_forget(
-        item_id: str,
         current_user_message: str,
         evidence_quote: str,
+        item_id: str | None = None,
+        item_ids: list[str] | None = None,
     ) -> dict[str, Any]:
-        """Delete a memory only when the user explicitly requests forgetting/removal in the current turn."""
+        """Forget one memory or a batch; each target must match the explicit user request."""
         require("memory:delete")
         decision = MemoryDecision(
-            action="forget", target_item_id=item_id, evidence_quote=evidence_quote,
-            reason="User-requested forgetting",
+            action="forget", target_item_id=item_id, target_item_ids=item_ids or [],
+            evidence_quote=evidence_quote, reason="User-requested forgetting",
         )
         return apply_memory_decision(store, ctx, decision, user_message=current_user_message).model_dump(mode="json")
 
