@@ -29,17 +29,17 @@ Implement the persistent-memory turn lifecycle:
   - Adds `run_active_turn` to enforce retrieve → provider callback → post-turn policy in an application-controlled host.
 - `src/agm/store.py`
   - Adds `MemoryStore.memory_context(...)`.
-  - Adds tenant/project-scoped `MemoryStore.forget(...)`, which removes the selected memory and connected supersede-history chain by scrubbing source event payloads, appending delete events, removing materialized/index data, and checkpointing inside one transaction.
+  - Adds tenant/project-scoped `MemoryStore.forget(...)` and `forget_many(...)`, which remove one or up to 100 selected memories plus their connected supersede-history chains by scrubbing source event payloads, appending delete events, removing materialized/index data, and checkpointing in one all-or-nothing transaction.
 - `src/agm/__init__.py`
   - Exports the new active-memory contract and helper APIs.
 
 ### Adapters and example
 
 - `src/agm/mcp_server.py`
-  - Adds `memory_context`, `memory_remember`, `memory_correct`, `memory_forget`, and `memory_health`.
+  - Adds `memory_context`, `memory_remember`, `memory_correct`, `memory_forget` (single/batch targets), and `memory_health`.
   - Preserves the original nine MCP tool names and existing scope checks.
 - `src/agm/api.py`
-  - Adds `POST /v1/memory/context`, `POST /v1/memory/remember`, `POST /v1/memory/correct`, `POST /v1/memory/forget`, and `GET /v1/memory/health`.
+  - Adds `POST /v1/memory/context`, `POST /v1/memory/remember`, `POST /v1/memory/correct`, `POST /v1/memory/forget` (single/batch targets), and `GET /v1/memory/health`.
   - Uses the existing API-key identity and scopes; legacy routes remain available.
 - `examples/active_memory_loop.py` (new)
   - Demonstrates the controller offline; it makes no LLM request.
@@ -59,7 +59,7 @@ Implement the persistent-memory turn lifecycle:
 - `docs/architecture.md`
 - `docs/appflow.md`
 - `docs/debug.md`
-- `docs/decisions.md` — D-027 through D-032; newest decisions cover target-safe mutations, contested evidence/health scope, explicit host-operation-ID semantics, and shared input limits.
+- `docs/decisions.md` — D-027 through D-033; newest decisions cover target-safe mutations, contested evidence/health scope, explicit host-operation-ID semantics, shared input limits and atomic batch forgetting.
 - `docs/phases.md`
 - `docs/status.md`
 - `examples/claude_code_mcp.md`
@@ -70,7 +70,7 @@ Implement the persistent-memory turn lifecycle:
 
 **These tests are authored/updated but have not been executed.** They are not passing-test claims.
 
-- `tests/test_active_memory.py`: bounded context string; context categories and both sides of contested evidence; no cross-tenant retrieval; source quotes and proposed values must match the current message; optional stable operation IDs make retries idempotent without suppressing later repeated preferences; host IDs override model-proposed keys; corrections require explicit intent and the same entity/attribute; forgetting requires explicit subject-matching intent; unrelated targets and negated requests are blocked; input-size limits are enforced; health returns metadata with scope-aware counters; the controller retrieves before generation; forgetting a connected correction chain remains deleted after view rebuild.
+- `tests/test_active_memory.py`: bounded context string; context categories and both sides of contested evidence; no cross-tenant retrieval; source quotes and proposed values must match the current message; optional stable operation IDs make retries idempotent without suppressing later repeated preferences; host IDs override model-proposed keys; corrections require explicit intent and the same entity/attribute; single/batch forgetting requires explicit subject-matching intent; unrelated targets and negated requests are blocked; missing batch targets cause no partial deletion; input-size limits are enforced; health returns metadata with scope-aware counters; the controller retrieves before generation; forgotten correction chains stay deleted after view rebuild.
 - `tests/test_active_memory_api.py`: new REST endpoints return the intended result shape, enforce existing read/write/delete scopes, and expose a context pack with a bounded rendered string.
 - Updated `tests/test_mcp_stdio.py`: the MCP server lists the original nine tools plus five active-memory tools and returns a bounded context pack and metadata-only health response.
 - Updated `examples/mcp_smoke_client.py`: local MCP host smoke sequence exercises context, health, remember, correct and forgetting a connected two-version chain, while retaining prior guard and handoff checks.
