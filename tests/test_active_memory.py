@@ -622,5 +622,5 @@ def test_context_string_discloses_primary_abstention(tmp_path):
             _ctx(), "Find the owner of an absent service.", token_budget=256,
         )
         assert pack.abstain is True
-        assert "Query-specific retrieval abstained" in pack.context
-        assert "Auxiliary profile/goals/decisions do not establish an unsupported answer." in pack.context
+        assert "Query retrieval abstained" in pack.context
+        assert "Auxiliary memories alone may not answer." in pack.context
