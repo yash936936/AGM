@@ -172,7 +172,7 @@ The high-level remember/correct/forget operations require an evidence quote matc
 **Native connector limitation:** an MCP server cannot guarantee that every message in consumer Claude or ChatGPT automatically invokes memory. The source quote and current-message fields in native MCP calls are model-supplied. The quote gate is most meaningful in `run_active_turn` when an application-controlled host passes the actual user message. This feature does not relax the local/loopback-only deployment rule.
 
 Equivalent REST surfaces:
-`POST /v1/memory/context`, `POST /v1/memory/remember`, `POST /v1/memory/correct`, `POST /v1/memory/forget`, and `GET /v1/memory/health`. All use the existing API-key scopes; no new dependency was added.
+`POST /v1/memory/context`, `POST /v1/memory/remember`, `POST /v1/memory/correct`, `POST /v1/memory/forget`, and `GET /v1/memory/health`. All use the existing API-key scopes; no new dependency was added. The health response reports SQLite integrity at database scope, while item/index coverage counters are scoped to the authenticated tenant and project.
 
 ## Tests and smoke check
 
