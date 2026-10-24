@@ -59,7 +59,7 @@ Implement the persistent-memory turn lifecycle:
 - `docs/architecture.md`
 - `docs/appflow.md`
 - `docs/debug.md`
-- `docs/decisions.md` — D-027 through D-030; newest decisions cover explicit operation IDs, target-safe mutations, and contested evidence/health scope.
+- `docs/decisions.md` — D-027 through D-031; newest decisions cover target-safe mutations, contested evidence/health scope, and explicit host-operation-ID semantics.
 - `docs/phases.md`
 - `docs/status.md`
 - `examples/claude_code_mcp.md`
@@ -70,7 +70,7 @@ Implement the persistent-memory turn lifecycle:
 
 **These tests are authored/updated but have not been executed.** They are not passing-test claims.
 
-- `tests/test_active_memory.py`: bounded context string; context sections can classify memories using supported attribute conventions; no cross-tenant retrieval; a source quote must match the current message; the stored/corrected value must be supported by the quote; remember writes validate quoted values; optional stable operation IDs make retries idempotent without suppressing later repeated preferences; corrections require explicit intent and the same entity/attribute; retries with the same operation ID do not create a second version; forgetting requires explicit and subject-matching intent; unrelated targets and negated requests are blocked; health returns scoped metadata; the controller retrieves before invoking the generation callback; forgetting a connected correction chain remains deleted after view rebuild.
+- `tests/test_active_memory.py`: bounded context string; context categories and both sides of contested evidence; no cross-tenant retrieval; source quotes and proposed values must match the current message; optional stable operation IDs make retries idempotent without suppressing later repeated preferences; host IDs override model-proposed keys; corrections require explicit intent and the same entity/attribute; forgetting requires explicit subject-matching intent; unrelated targets and negated requests are blocked; health returns metadata with scope-aware counters; the controller retrieves before generation; forgetting a connected correction chain remains deleted after view rebuild.
 - `tests/test_active_memory_api.py`: new REST endpoints return the intended result shape, enforce existing read/write/delete scopes, and expose a context pack with a bounded rendered string.
 - Updated `tests/test_mcp_stdio.py`: the MCP server lists the original nine tools plus five active-memory tools and returns a bounded context pack and metadata-only health response.
 - Updated `examples/mcp_smoke_client.py`: local MCP host smoke sequence exercises context, health, remember, correct and forgetting a connected two-version chain, while retaining prior guard and handoff checks.
@@ -111,8 +111,8 @@ Run the MCP smoke client in an environment where the official MCP SDK is install
 3. Validate the tenant/project-filtered recursive SQLite CTE, atomic event scrubbing, WAL checkpoint and rebuild behavior on the user's installed SQLite/Python version.
 4. Decide whether the native model tool should receive only the rendered context string or more compact metadata; the current response intentionally keeps full text in the context string and IDs/trust/validity/provenance in structured fields.
 5. Build a provider-specific callback only after core testing if an LLM-backed controlled turn loop is needed. The current offline example intentionally makes no LLM request.
-7. Confirm the native MCP/REST adapters pass an optional `operation_id` through on remember/correct, and that controlled `run_active_turn(operation_id=...)` overrides any model-proposed operation ID.
-8. Confirm contested counterparty text is included only when tenant/project, temporal and high-stakes eligibility allow it; database-wide SQLite integrity and scoped item/index counts are documented separately.
+6. Confirm the native MCP/REST adapters pass an optional `operation_id` through on remember/correct, and that controlled `run_active_turn(operation_id=...)` overrides any model-proposed operation ID.
+7. Confirm contested counterparty text is included only when tenant/project, temporal and high-stakes eligibility allow it; database-wide SQLite integrity and scoped item/index counts are documented separately.
 6. Native ChatGPT/Claude integration remains a later milestone; this branch does not guarantee tool invocation on every message.
 
 ## Completion rule
