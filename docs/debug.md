@@ -1,4 +1,16 @@
-# Debug log — AGM prototype
+## DBG-013 — M0/M1 release-gate evidence and evaluator hardening — 2026-10-25
+**Task:** Reconcile the M0 matrix with actual public CI evidence and harden the M1 evaluation harness so benchmark schema, scenario coverage, threshold failures, and zero-tolerance leak cases are explicit.
+
+**Changes:** Updated `docs/M0_ACCEPTANCE_MATRIX_ADDENDUM.md` to record successful public CI jobs tied to baseline commit `f150a1996bda6292fae295c65ce14d9faf17a06b`, while preserving later-code rerun, real-history, and security/privacy review as separate gates. Hardened `scripts/evaluate_real_history.py` with named scenario validation, zero-tolerance scenarios (`tenant_isolation`, `deletion`, `revocation`), benchmark input validation, default minimum case pass rate and expected recall of 0.95, configurable thresholds, threshold failure reporting, scenario coverage, and a separate release-gate result. Expanded evaluator regression tests for missing expected values, forbidden leaks, wrong abstention, malformed fixtures, duplicate IDs, zero-tolerance sentinel requirements, and a correct tenant-isolation case. No new dependency and no frozen API/REST/MCP contract changes.
+
+**Evidence found before this task:** Public CI run [40118798582](https://github.com/yash936936/AGM/actions/runs/40118798582), baseline commit `f150a1996bda6292fae295c65ce14d9faf17a06b), had successful Python 3.11, 3.12, and 3.13 jobs: `153 passed, 1 warning` in each job (10.99s, 14.02s, and 11.89s respectively). The warning is Starlette/httpx deprecation. This predates the current M1 hardening commits.
+
+**Validation during this task:** GitHub Actions workflow runs for documentation and evaluator edits were triggered on branch `work/m0-m1-completion`. Earlier targeted test runs after the first test-file update reported successful CI; final runs for evaluator changes are pending at time of entry. No claim is made that the newest evaluator changes pass until the newest run completes and is inspected. No local Python runtime is available through this GitHub-only execution path, so local tests, both host smoke clients, simulation, packaging, and Windows-specific verification are NOT RUN here.
+
+**Not finished:** The synthetic benchmark still does not exercise actual store-level delete/revoke operations by scenario; its contract currently evaluates seeded retrieval cases and treats scenario tags as acceptance classification. Dedicated store tests in M0 cover deletion/replay/revocation separately. Real consented held-out evaluation and production privacy/security sign-off are NOT RUN/NOT ESTABLISHED. A Windows run of the full `debug.md` checklist is still required.
+
+**Contract concerns / assumptions:** Defaults of 0.95 for case pass rate, expected-value recall, and abstention accuracy are provisional operational defaults for the evaluator CLI, not established real-user quality targets. They must be preregistered/reviewed before any held-out run; command-line overrides are available. Zero-leak rules apply to the named scenario classes. No raw benchmark cases are written to aggregate reports.
+
 
 > Append-only. Every completed coding task gets an entry here, even "no
 > issues found." Newest entries at top.
