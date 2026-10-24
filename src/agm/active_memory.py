@@ -108,7 +108,7 @@ _STOP_WORDS = {
 
 def _significant_terms(value: str) -> set[str]:
     return {
-        token for token in re.findall(r"[a-z0-9][a-z0-9_-]{2,}", value.casefold())
+        token for token in re.findall(r"[a-z0-9]{3,}", value.casefold())
         if token not in _STOP_WORDS
     }
 
