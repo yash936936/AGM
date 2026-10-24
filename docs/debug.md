@@ -3,6 +3,12 @@
 > Append-only. Every completed coding task gets an entry here, even "no
 > issues found." Newest entries at top.
 
+## DBG-018 — Final active-memory coverage and truncation review — 2026-10-24
+**Task:** Close the active-memory implementation pass without starting validation.
+**Changes:** Added regression coverage for overlapping batch-forget chains and for all-or-nothing behavior when a batch quote does not match every selected target. Context evidence now renders provenance before long memory text so small token budgets retain source IDs/trust/validity during truncation. Updated the in-code system prompt, docs and report; D-034 records the provenance-ordering contract.
+**Validation:** **NOT RUN.** No compile/test/smoke commands were executed, as requested.
+**Open for test phase:** Validate batch deletion event replay/atomicity, `memory_forget` schema in MCP/REST, and the bounded long-line renderer on the Windows checkout; then run the full focused/full-suite smoke sequence in `REPORT_20261024_ACTIVE_MEMORY.md`.
+
 ## DBG-017 — Atomic batch forgetting across core, REST and MCP — 2026-10-24
 **Task:** Extend explicit memory-forget requests to handle multiple named memories without partial deletion.
 **Changes:** Added `MemoryDecision.target_item_ids` and `MemoryActionResult.item_ids`; added `MemoryStore.forget_many` with tenant/project checks for every requested root, recursive union of supersede histories, source-event scrubbing, delete-event append, and a single transaction/checkpoint. Legacy `forget(ctx, item_id)` delegates to the batch implementation. REST and MCP `memory_forget` now accept one `item_id` or up to 100 `item_ids`. The shared policy checks the quoted request against every target before mutation. Added unit/API coverage and an MCP smoke-client scenario; updated host/architecture docs and D-033.
