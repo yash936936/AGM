@@ -1,4 +1,16 @@
-## DBG-013 — M0/M1 release-gate evidence and evaluator hardening — 2026-10-25
+## DBG-014 — M1 evaluator exercises mutation operations through replay — 2026-10-25
+**Task:** Close a release-gate gap where deletion/revocation scenario tags were only labels, not actual tested operations.
+
+**Changes:** Extended the benchmark schema with explicit `operations` supporting correction via `MemoryStore.supersede`, hard delete via `MemoryStore.delete`, and writer rollback via `MemoryStore.revoke_writer`. The evaluator closes/reopens between each operation, rebuilds views from the event log, then retrieves and scores expected/forbidden values and abstention. Missing expected values no longer fail the recall threshold when the benchmark contains no expected-value assertions; the case-pass and zero-tolerance criteria still apply.
+
+**Tests added:** An end-to-end correction test verifies the new current value is found and the old value is forbidden after replay; a hard-delete test verifies the forbidden marker remains absent after rebuild and expects abstention; a writer-revocation test verifies the revoked writer's marker remains absent after replay and expects abstention. Each test uses synthetic markers only.
+
+**Validation:** Branch CI run [40124787565](https://github.com/yash936936/AGM/actions/runs/40124787565), commit `20ea048a887ad9b31a36a7615ac12f841cdfea01`, reports `171 passed, 1 warning` on Python 3.11 (9.46s), 3.12 (13.68s), and 3.13 (15.78s). These are actual GitHub Actions test outputs, not local Windows output. The subsequent documentation update is a new tree and must receive its own CI run.
+
+**Not run:** local Windows full test suite, MCP and REST smoke clients, active-memory simulation, `eval/stale_facts.py`, package inspection and Windows working-tree hygiene. Consented real-history benchmark and security/privacy review remain not run/not established.
+
+**Contract concerns:** no frozen public API or required dependency was changed. Default evaluator thresholds remain provisional and must be preregistered for a held-out benchmark.
+
 **Task:** Reconcile the M0 matrix with actual public CI evidence and harden the M1 evaluation harness so benchmark schema, scenario coverage, threshold failures, and zero-tolerance leak cases are explicit.
 
 **Changes:** Updated `docs/M0_ACCEPTANCE_MATRIX_ADDENDUM.md` to record successful public CI jobs tied to baseline commit `f150a1996bda6292fae295c65ce14d9faf17a06b`, while preserving later-code rerun, real-history, and security/privacy review as separate gates. Hardened `scripts/evaluate_real_history.py` with named scenario validation, zero-tolerance scenarios (`tenant_isolation`, `deletion`, `revocation`), benchmark input validation, default minimum case pass rate and expected recall of 0.95, configurable thresholds, threshold failure reporting, scenario coverage, and a separate release-gate result. Expanded evaluator regression tests for missing expected values, forbidden leaks, wrong abstention, malformed fixtures, duplicate IDs, zero-tolerance sentinel requirements, and a correct tenant-isolation case. No new dependency and no frozen API/REST/MCP contract changes.
