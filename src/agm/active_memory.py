@@ -558,16 +558,13 @@ def memory_health(store: "MemoryStore", ctx: Ctx) -> MemoryHealthReport:
 
 
 def _stable_idempotency_key(ctx: Ctx, decision: MemoryDecision) -> str:
-    item = decision.item
-    item_fields = ""
-    if item:
-        item_fields = "|".join((
-            item.kind, item.entity or "", item.attribute or "", item.value or "", item.text,
-        ))
+    # The host operation ID is the stable identity for this memory action.
+    # Keep item/target/evidence payload out of the key so reusing the same ID
+    # with different content reaches the payload/target checks and is rejected,
+    # rather than being silently treated as a new operation.
     material = "|".join((
         ctx.tenant_id, ctx.writer_id, ctx.project, decision.action,
-        decision.operation_id or "", decision.target_item_id or "",
-        _normalise_text(decision.evidence_quote or ""), item_fields,
+        decision.operation_id or "",
     ))
     return "active-memory-v1:" + hashlib.sha256(material.encode("utf-8")).hexdigest()
 
