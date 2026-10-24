@@ -3,6 +3,12 @@
 > Append-only. Every completed coding task gets an entry here, even "no
 > issues found." Newest entries at top.
 
+## DBG-012 — Optional Gemini provider for Phase 8 live-agent testing — 2026-10-24
+**Task:** Add a second real-model provider to the Phase 8 RAG demo so paired flat/graph retrieval can be evaluated with Gemini without adding a mandatory dependency.
+**Changes:** Adds `--provider gemini`, lazily imports the official `google-genai` package, reads `GEMINI_API_KEY` and optional `GEMINI_MODEL` (default `gemini-3.8-flash`), passes system instructions to the model, and logs response ID/model version/token counts/block/finish status when present. Missing SDK/key and empty/safety-blocked response paths return explicit errors without logging the key. OpenAI and offline modes remain supported. Mocked tests do not make network calls.
+**Data use:** Gemini API Free Tier prompt/output content may be used by Google to improve products. Use the synthetic Phase 8 database, not private or production memories, unless data-use terms have been reviewed.
+**Validation:** API implementation validated with mocked SDK; no live Gemini request was made here. Live validation requires the user's Google AI Studio key and available free-tier model limits. Gemini docs: https://ai.google.dev/gemini-api/docs/billing and https://ai.google.dev/gemini-api/docs/pricing.
+
 ## DBG-011 — Phase 8 temporal/entity retrieval, corpus sweep and Memory Doctor — 2026-10-24
 **Task:** Diagnose temporal retrieval and entity-centric ranking, build an ingestible mixed-context corpus, profile flat/graph retrieval across different corpus sizes and episode densities, instrument a sample agent loop, and add Memory Doctor.
 **Changes:** `src/agm/retrieve.py` now recognizes entity-summary intent, prioritizes exact entity/attribute answer slots, and uses exact entity+attribute evidence for a temporal query only after the existing `as_of` eligibility filter. The D-024 threshold stays 0.25. Added a 44-record JSONL corpus, an idempotent guarded ingester, `agm doctor`, JSONL SQL/retrieval/event diagnostics, a flat/graph corpus-matrix harness, and offline/optional OpenAI agent runner. `--include-content` is explicit opt-in; default traces contain hashes and metadata rather than raw query/body text.

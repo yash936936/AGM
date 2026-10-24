@@ -2,6 +2,12 @@
 
 > Updated every run. Newest entry at top.
 
+## 2026-10-24 — Optional Gemini provider added for live Phase 8 agent QA
+**Current phase:** Phase 8 provider integration; offline remains the default and the live Gemini call is still to be performed by the user with their own API key.
+**Changes:** `examples/phase8_agent_demo.py` now accepts `--provider gemini`, reads `GEMINI_API_KEY` and optional `GEMINI_MODEL` (default `gemini-3.8-flash`), logs response/model/token/safety metadata when provided, and keeps the SDK lazy/optional. `pyproject.toml` now exposes `.[gemini]` and `.[openai]` extras. OpenAI support is preserved. No retrieval/evaluation thresholds changed.
+**Privacy:** Google states that Free Tier content may be used to improve Google products; use the synthetic `phase8-memory.db` for live tests and check the current AI Studio tier/rate limits. Never log or commit credentials.
+**Validation here:** implementation is covered by mocked SDK tests; no real Gemini API request was made from the builder. Apply `PHASE8_GEMINI_PATCH.diff`, install the optional SDK, then run paired flat/graph Gemini calls and review their JSONL traces before treating live-agent QA as complete.
+
 ## 2026-10-24 — Phase 8 implemented in reconstructed builder snapshot; Windows revalidation pending
 **Current phase:** Phase 8 — temporal/entity ranking, size/context benchmark, Memory Doctor and agent instrumentation. Apply as a patch to the actual v0.5.1 checkout; do not replace the owner’s core source tree wholesale.
 **Last debug:** DBG-011. **Last decision:** D-026; D-024 verdict rule and D-021 through D-025 are unchanged.

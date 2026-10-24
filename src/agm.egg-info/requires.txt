@@ -7,3 +7,9 @@ mcp<2,>=1.26
 [dev]
 pytest
 httpx<1,>=0.27
+
+[gemini]
+google-genai>=1.0.0
+
+[openai]
+openai>=1.0.0

@@ -18,6 +18,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest", "httpx>=0.27,<1"]
+openai = ["openai>=1.0.0"]
+gemini = ["google-genai>=1.0.0"]
 
 [project.scripts]
 agm = "agm.cli:main"
