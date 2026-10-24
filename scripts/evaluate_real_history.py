@@ -13,6 +13,7 @@ import json
 import math
 import sys
 import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -21,19 +22,30 @@ from agm import Ctx, MemoryStore, WriteItem
 ALLOWED_TIERS = {"human_verified", "tool_verified", "trusted_agent", "untrusted"}
 VALID_SCENARIOS = {
     "cross_session_recall", "tenant_isolation", "current_vs_stale",
-    "deletion", "revocation", "abstention", "relevance",
+    "deletion", "revocation", "expiry", "abstention", "relevance",
 }
-VALID_OPERATIONS = {"correction", "delete", "revoke_writer"}
+VALID_OPERATIONS = {"correction", "delete", "revoke_writer", "expire_before"}
 DEFAULT_MIN_CASE_PASS_RATE = 0.95
 DEFAULT_MIN_EXPECTED_RECALL = 0.95
 DEFAULT_MIN_ABSTENTION_ACCURACY = 0.95
-ZERO_TOLERANCE_SCENARIOS = {"tenant_isolation", "deletion", "revocation"}
+ZERO_TOLERANCE_SCENARIOS = {"tenant_isolation", "deletion", "revocation", "expiry"}
 
 
 def _nonempty_string(value: Any, field: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{field} must be a non-empty string")
     return value
+
+
+def _validate_timestamp(value: Any, field: str) -> str:
+    text = _nonempty_string(value, field)
+    try:
+        parsed = datetime.fromisoformat(text[:-1] + "+00:00" if text.endswith("Z") else text)
+    except ValueError as exc:
+        raise ValueError(f"{field} must be an ISO 8601 timestamp") from exc
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
 def _ctx(data: dict[str, Any], prefix: str) -> Ctx:
@@ -93,6 +105,8 @@ def load_cases(path: Path) -> list[dict[str, Any]]:
                 if not isinstance(memory, dict) or not isinstance(memory.get("item"), dict):
                     raise ValueError(f"case {case_id}: memory {index} must contain an item object")
                 _ctx(memory, f"case {case_id}.memories[{index}]")
+                if "created_at" in memory:
+                    _validate_timestamp(memory["created_at"], f"case {case_id}.memories[{index}].created_at")
             operations = case.get("operations", [])
             if not isinstance(operations, list):
                 raise ValueError(f"case {case_id}: operations must be a list")
@@ -116,10 +130,15 @@ def load_cases(path: Path) -> list[dict[str, Any]]:
                     _nonempty_string(operation.get("reason"), f"{prefix}.reason")
                 if op_type == "revoke_writer":
                     _nonempty_string(operation.get("writer_id"), f"{prefix}.writer_id")
+                if op_type == "expire_before":
+                    _validate_timestamp(operation.get("cutoff"), f"{prefix}.cutoff")
+                    if "include_pinned" in operation and not isinstance(operation["include_pinned"], bool):
+                        raise ValueError(f"{prefix}.include_pinned must be boolean")
             required_operation = {
                 "current_vs_stale": "correction",
                 "deletion": "delete",
                 "revocation": "revoke_writer",
+                "expiry": "expire_before",
             }.get(scenario)
             if required_operation and required_operation not in operation_types:
                 raise ValueError(
@@ -147,6 +166,14 @@ def evaluate_case(case: dict[str, Any], db_path: Path) -> dict[str, Any]:
             if not result.item_id:
                 raise ValueError(f"case {case_id}: a benchmark write returned no item id")
             item_ids.append(result.item_id)
+            if "created_at" in memory:
+                store.conn.execute(
+                    "UPDATE events SET created_at = ? WHERE id = "
+                    "(SELECT event_id FROM nodes WHERE id = ?)",
+                    (_validate_timestamp(memory["created_at"], f"case {case_id}.memories[{index}].created_at"), result.item_id),
+                )
+        if any("created_at" in memory for memory in case["memories"]):
+            store.conn.commit()
 
     # Stage 2: execute actual lifecycle operations through MemoryStore methods.
     # Open/close around every operation so the next step cannot rely on the same connection.
@@ -170,6 +197,16 @@ def evaluate_case(case: dict[str, Any], db_path: Path) -> dict[str, Any]:
                 result = store.revoke_writer(op_ctx, operation["writer_id"], since=operation.get("since"))
                 if not result.revoked:
                     raise ValueError(f"{prefix}: writer revocation did not occur")
+            elif op_type == "expire_before":
+                result = store.expire_before(
+                    op_ctx, operation["cutoff"],
+                    include_pinned=operation.get("include_pinned", False),
+                )
+                if not result.expired_ids and not result.scrubbed_orphan_events:
+                    # A valid sweep may legitimately find nothing, but a required expiry
+                    # acceptance case must include at least one seeded memory.
+                    if case["memories"]:
+                        raise ValueError(f"{prefix}: expiry operation did not purge any eligible memory")
             else:  # schema validation rejects this branch
                 raise ValueError(f"{prefix}: unsupported operation")
 
