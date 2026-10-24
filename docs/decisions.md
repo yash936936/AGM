@@ -2,6 +2,12 @@
 
 > Append-only. Newest entries at top. Never edit or delete past entries — if a decision is reversed, log a new entry that supersedes it and reference the old ID.
 
+## D-031 — Clarify D-027 memory-write idempotency semantics — 2026-10-24
+**Decision:** This decision supersedes only the idempotency sentence in D-027 and the unconditional retry implication in D-028; all other D-027/D-028 behavior stays in force. AGM derives an active-memory idempotency key only when an explicit stable `operation_id` is supplied. For a controlled `run_active_turn`, the host operation ID is authoritative and the generated key must override any model-proposed `WriteItem.idempotency_key`. REST and MCP may accept an operation ID from their caller; it is an idempotency hint, not identity or authorization. If there is no operation ID and no explicit item key, AGM uses its existing write/no-op semantics and does not promise that retrying a correction across delivery attempts will return the same result.
+**Why:** Content-derived keys alone can suppress a legitimate future recurrence of identical information. Explicit host turn identity is the reliable distinction between a retry and a new user request.
+**Affects:** `MemoryDecision.operation_id`, `apply_memory_decision`, `run_active_turn`, REST/MCP remember/correct schemas, idempotency tests and documentation.
+
+
 ## D-030 — Surface eligible contested evidence in active context — 2026-10-24
 **Decision:** When `memory_context` finds a returned memory with a `contested_with` ID, resolve that counterparty only inside the same tenant and project, only when its state is normally retrievable (`active` or `contested`), and only if it is valid at the requested `as_of` time. When `high_stakes=True`, apply the existing probation gate before including the opposing content. Render the opposing fact as evidence, retain both IDs/values in the conflict metadata when they fit the context budget, and keep the untrusted-data notice. If the counterparty is ineligible or does not fit, preserve the warning/reference without disclosing ineligible content. The health report's SQLite integrity boolean is database-wide; the item/index counters remain scoped to tenant/project.
 **Why:** Identifying only the conflicting ID tells the model that a dispute exists but does not show both claims needed to answer cautiously. Resolution must not bypass scope, temporal validity or high-stakes eligibility. Health diagnostics should also describe their scope accurately.
