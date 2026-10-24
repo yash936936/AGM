@@ -773,3 +773,32 @@ def test_context_truncation_keeps_provenance_before_long_memory_text(tmp_path):
         assert f"id={saved.item_id}" in pack.context
         assert "writer=active-memory-test" in pack.context
         assert "valid_from=" in pack.context
+
+
+def test_batch_forget_supports_explicit_preference_category_request(tmp_path):
+    with MemoryStore(str(tmp_path / "forget-preferences.db")) as store:
+        ctx = _ctx()
+        communication = store.write(ctx, WriteItem(
+            kind="fact", entity="user", attribute="communication_preference",
+            value="concise", text="The user prefers concise answers.",
+        ))
+        learning = store.write(ctx, WriteItem(
+            kind="fact", entity="user", attribute="learning_preference",
+            value="examples", text="The user prefers learning with examples.",
+        ))
+        assert communication.item_id and learning.item_id
+        result = apply_memory_decision(
+            store, ctx,
+            MemoryDecision(
+                action="forget",
+                target_item_ids=[communication.item_id, learning.item_id],
+                evidence_quote="forget all my preferences",
+            ),
+            user_message="Please forget all my preferences.",
+        )
+        assert result.status == "forgotten"
+        assert result.deleted_count == 2
+        assert store.conn.execute(
+            "SELECT COUNT(*) FROM nodes WHERE id IN (?, ?)",
+            (communication.item_id, learning.item_id),
+        ).fetchone()[0] == 0
