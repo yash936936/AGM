@@ -166,6 +166,23 @@ def _correct_target_matches(store: "MemoryStore", ctx: Ctx, item_id: str, item: 
     return replacement_entity_id is not None and replacement_entity_id == str(row["entity_id"])
 
 
+def _forget_category_matches(attribute: str | None, quote_terms: set[str]) -> bool:
+    """Allow an explicit category request to match every selected member of that category."""
+    key = _attribute_key_for_forget(attribute)
+    groups = {
+        "preference": {"preference", "preferences", "prefer", "style", "styles"},
+        "goal": {"goal", "goals", "objective", "objectives", "aim", "aims"},
+        "commitment": {"commitment", "commitments", "promise", "promises"},
+        "decision": {"decision", "decisions", "choice", "choices", "architecture"},
+        "task": {"task", "tasks", "todo", "todos"},
+    }
+    return any(group_key in key and bool(terms & quote_terms) for group_key, terms in groups.items())
+
+
+def _attribute_key_for_forget(attribute: str | None) -> str:
+    return re.sub(r"[^a-z0-9]+", "_", (attribute or "").casefold()).strip("_")
+
+
 def _forget_target_matches(store: "MemoryStore", ctx: Ctx, item_id: str, evidence_quote: str) -> bool:
     """Ensure a forget request's subject matches the selected version or its history."""
     if item_id.casefold() in evidence_quote.casefold():
@@ -208,6 +225,8 @@ def _forget_target_matches(store: "MemoryStore", ctx: Ctx, item_id: str, evidenc
                 pattern = re.escape(literal)
                 if re.search(r"(?<!\w)" + pattern + r"(?!\w)", quote_text):
                     return True
+        if _forget_category_matches(str(row["attribute"] or ""), quote_terms):
+            return True
         value_terms = _significant_terms(str(row["value"] or ""))
         if quote_terms and value_terms and value_terms.issubset(quote_terms):
             return True
