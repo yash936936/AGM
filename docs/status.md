@@ -2,6 +2,14 @@
 
 > Updated every run. Newest entry at top.
 
+## 2026-10-24 — Active Memory Loop v1 implementation review refined; runtime testing pending
+**Current work:** The implementation is on `feature/active-memory-loop-v1`; no test commands have been run.
+**Final refinements:** Conflict context now attempts to include the opposing contested fact only when it is visible in the same tenant/project, active/contested, valid at `as_of`, and allowed by the high-stakes probation gate. Health reporting is documented accurately: SQLite integrity is database-wide; item/index counters are tenant/project-scoped. Retry idempotency now requires an explicit stable `operation_id` from a controlled host; native MCP must not invent one.
+**Decision/debug log:** D-027 through D-030; DBG-014.
+**Validation:** **NOT RUN.** No compile, unit, integration, MCP smoke, REST smoke or evaluation command was executed. A local patch-export attempt was blocked by unavailable DNS to GitHub from the container; the feature branch itself is available on GitHub.
+**Next:** Integrate the branch/diff onto the actual Windows checkout without replacing local Gemini changes, then run compileall, the active-memory-focused tests, full pytest, both smoke clients, and the offline controller. Fix all failures before marking this work complete. Keep services loopback-only.
+
+
 ## 2026-10-24 — Active Memory Loop v1 implementation prepared; testing pending
 **Current work:** Active Memory Loop v1 is implemented on branch `feature/active-memory-loop-v1`; not yet marked complete.
 **Core behavior:** Added `MemoryContextPack`/compact `MemoryContextItem`/decision/result contracts; `MemoryStore.memory_context` assembles relevant query evidence, discoverable profile/preferences, active goals, decisions, conflicts, provenance, validity, and an abstention signal within a bounded rendered context string. `run_active_turn` enforces retrieve → provider callback → post-turn policy for an app that controls the turn.
