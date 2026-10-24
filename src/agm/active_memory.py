@@ -327,6 +327,12 @@ def build_memory_context(
     """
     if not query or not query.strip():
         raise ValueError("query must be non-empty")
+    if len(query) > 4000:
+        raise ValueError("query must not exceed 4000 characters")
+    if entity is not None and len(entity) > 1000:
+        raise ValueError("entity must not exceed 1000 characters")
+    if as_of is not None and len(as_of) > 100:
+        raise ValueError("as_of must not exceed 100 characters")
     if k < 1 or k > 50:
         raise ValueError("k must be between 1 and 50")
     if token_budget < 64 or token_budget > 12000:
@@ -598,6 +604,28 @@ def apply_memory_decision(
             status="confirmation_required",
             message=decision.reason or "The proposed memory is ambiguous; ask the user before saving.",
         )
+    if not user_message or len(user_message) > 20000:
+        raise ValueError("current user message must contain 1..20000 characters")
+    if decision.evidence_quote is not None and len(decision.evidence_quote) > 4000:
+        raise ValueError("evidence_quote must not exceed 4000 characters")
+    if len(decision.reason) > 2000:
+        raise ValueError("memory decision reason must not exceed 2000 characters")
+    if decision.target_item_id is not None and len(decision.target_item_id) > 200:
+        raise ValueError("target item ID must not exceed 200 characters")
+    if decision.operation_id is not None and (
+        not decision.operation_id.strip() or len(decision.operation_id) > 200
+    ):
+        raise ValueError("operation_id must contain 1..200 non-whitespace characters")
+    if decision.item is not None:
+        if not decision.item.text or len(decision.item.text) > 20000:
+            raise ValueError("memory text must contain 1..20000 characters")
+        for name, value, limit in (
+            ("entity", decision.item.entity, 1000),
+            ("attribute", decision.item.attribute, 500),
+            ("value", decision.item.value, 4000),
+        ):
+            if value is not None and len(value) > limit:
+                raise ValueError(f"memory {name} must not exceed {limit} characters")
     if not _evidence_matches(user_message, decision.evidence_quote):
         return MemoryActionResult(
             status="confirmation_required",
