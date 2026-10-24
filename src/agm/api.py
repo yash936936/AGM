@@ -15,7 +15,11 @@ from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, ConfigDict, Field
 
 from .config import KeyIdentity, KeyRegistry, database_path, ensure_loopback_host, load_key_registry
-from .models import Ctx, Readback, RetrieveResult, TaskState, WriteItem, WriteResult
+from .models import (
+    Ctx, MemoryActionResult, MemoryContextPack, MemoryDecision, MemoryHealthReport,
+    Readback, RetrieveResult, TaskState, WriteItem, WriteResult,
+)
+from .active_memory import apply_memory_decision, memory_health as run_memory_health
 from .store import MemoryStore
 
 _LOG = logging.getLogger(__name__)
@@ -33,6 +37,40 @@ class RetrieveRequest(RequestModel):
     expand: bool = True
     include_superseded: bool = False
     high_stakes: bool = False
+
+
+class MemoryContextRequest(RequestModel):
+    query: str = Field(min_length=1, max_length=4000)
+    entity: str | None = None
+    as_of: str | None = None
+    k: int = Field(default=8, ge=1, le=50)
+    token_budget: int = Field(default=2000, ge=64, le=12000)
+    expand: bool = True
+    high_stakes: bool = False
+    include_profile: bool = True
+    include_goals: bool = True
+    include_decisions: bool = True
+
+
+class MemoryRememberRequest(RequestModel):
+    item: WriteItem
+    current_user_message: str = Field(min_length=1, max_length=20000)
+    evidence_quote: str = Field(min_length=1, max_length=4000)
+    reason: str = Field(default="", max_length=2000)
+
+
+class MemoryCorrectRequest(RequestModel):
+    item_id: str = Field(min_length=1, max_length=200)
+    item: WriteItem
+    reason: str = Field(min_length=1, max_length=2000)
+    current_user_message: str = Field(min_length=1, max_length=20000)
+    evidence_quote: str = Field(min_length=1, max_length=4000)
+
+
+class MemoryForgetRequest(RequestModel):
+    item_id: str = Field(min_length=1, max_length=200)
+    current_user_message: str = Field(min_length=1, max_length=20000)
+    evidence_quote: str = Field(min_length=1, max_length=4000)
 
 
 class SupersedeRequest(RequestModel):
@@ -173,6 +211,83 @@ def create_app(
             )
         except (ValueError, KeyError, NotImplementedError) as exc:
             raise api_error(exc) from exc
+
+    @app.post("/v1/memory/context", response_model=MemoryContextPack, tags=["memory"])
+    async def memory_context(
+        payload: MemoryContextRequest,
+        request: Request,
+        identity: KeyIdentity = Depends(require_scope("memory:read")),
+    ) -> MemoryContextPack:
+        try:
+            return request_store(request).memory_context(
+                identity.ctx, payload.query, entity=payload.entity, as_of=payload.as_of,
+                k=payload.k, token_budget=payload.token_budget, expand=payload.expand,
+                high_stakes=payload.high_stakes, include_profile=payload.include_profile,
+                include_goals=payload.include_goals, include_decisions=payload.include_decisions,
+            )
+        except (ValueError, KeyError, NotImplementedError) as exc:
+            raise api_error(exc) from exc
+
+    @app.post("/v1/memory/remember", response_model=MemoryActionResult, tags=["memory"])
+    async def memory_remember(
+        payload: MemoryRememberRequest,
+        request: Request,
+        identity: KeyIdentity = Depends(require_scope("memory:write")),
+    ) -> MemoryActionResult:
+        decision = MemoryDecision(
+            action="remember", item=payload.item, evidence_quote=payload.evidence_quote,
+            reason=payload.reason,
+        )
+        try:
+            return apply_memory_decision(
+                request_store(request), identity.ctx, decision,
+                user_message=payload.current_user_message,
+            )
+        except (ValueError, KeyError, NotImplementedError) as exc:
+            raise api_error(exc) from exc
+
+    @app.post("/v1/memory/correct", response_model=MemoryActionResult, tags=["memory"])
+    async def memory_correct(
+        payload: MemoryCorrectRequest,
+        request: Request,
+        identity: KeyIdentity = Depends(require_scope("memory:write")),
+    ) -> MemoryActionResult:
+        decision = MemoryDecision(
+            action="correct", target_item_id=payload.item_id, item=payload.item,
+            reason=payload.reason, evidence_quote=payload.evidence_quote,
+        )
+        try:
+            return apply_memory_decision(
+                request_store(request), identity.ctx, decision,
+                user_message=payload.current_user_message,
+            )
+        except (ValueError, KeyError, NotImplementedError) as exc:
+            raise api_error(exc) from exc
+
+    @app.post("/v1/memory/forget", response_model=MemoryActionResult, tags=["memory"])
+    async def memory_forget(
+        payload: MemoryForgetRequest,
+        request: Request,
+        identity: KeyIdentity = Depends(require_scope("memory:delete")),
+    ) -> MemoryActionResult:
+        decision = MemoryDecision(
+            action="forget", target_item_id=payload.item_id,
+            evidence_quote=payload.evidence_quote, reason="User-requested forgetting",
+        )
+        try:
+            return apply_memory_decision(
+                request_store(request), identity.ctx, decision,
+                user_message=payload.current_user_message,
+            )
+        except (ValueError, KeyError, NotImplementedError) as exc:
+            raise api_error(exc) from exc
+
+    @app.get("/v1/memory/health", response_model=MemoryHealthReport, tags=["memory"])
+    async def memory_health(
+        request: Request,
+        identity: KeyIdentity = Depends(require_scope("memory:read")),
+    ) -> MemoryHealthReport:
+        return run_memory_health(request_store(request), identity.ctx)
 
     @app.post("/v1/memory/{item_id}/supersede", response_model=WriteResult, tags=["memory"])
     async def memory_supersede(
