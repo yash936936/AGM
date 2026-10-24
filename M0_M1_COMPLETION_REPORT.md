@@ -1,35 +1,40 @@
 # M0/M1 completion work — evidence report
 
-## Scope and current branch
+## Scope and branch
 
-This report describes changes on `work/m0-m1-completion`. Public `main` was not modified by this work. The branch is nine commits ahead of main at the time this report was drafted; see the branch comparison and CI run links below.
+This work is on `work/m0-m1-completion`; public `main` has not been modified. This report separates code/CI evidence from checks that require the user's local Windows checkout and from real-history/security acceptance.
 
-## Changes in this branch
+## Implemented in this branch
 
-- Updated M0 acceptance addendum to record exact public CI run evidence and keep separate gates explicit.
-- Hardened `scripts/evaluate_real_history.py` with validated scenario labels, fixture validation, configured threshold reporting, scenario coverage and zero-tolerance leak handling for tenant-isolation, deletion and revocation scenario classes.
-- Expanded `tests/test_real_history_eval.py` with negative evaluator cases for missed expected values, forbidden-value leaks, incorrect abstention, malformed JSONL, duplicate case IDs, missing forbidden sentinels in zero-tolerance cases, and tenant isolation.
-- Updated `docs/M1_KICKOFF.md`, `docs/debug.md`, `docs/status.md`, and `PHASE9_REPORT.md` to accurately report scope, evidence and remaining gates.
+- M0 acceptance addendum records CI evidence for the exact baseline commit and keeps real-history and security/privacy review as separate gates.
+- `scripts/evaluate_real_history.py` validates JSONL schema, case IDs, contexts, scenarios and operations; reports configurable case-pass, expected-value recall and abstention thresholds; emits scenario coverage and aggregate-only metrics; and blocks on forbidden-value leaks.
+- Benchmark cases can run actual `MemoryStore.supersede`, `MemoryStore.delete`, and `MemoryStore.revoke_writer` operations. The evaluator closes/reopens SQLite around operations, rebuilds views from the event log, and then queries for current, stale, and forbidden values.
+- The schema now requires a correction operation for `current_vs_stale`, a delete operation for `deletion`, and a writer-revocation operation for `revocation`. This prevents a scenario label alone from claiming mutation coverage.
+- Tests cover expected-value misses, forbidden-value leaks, wrong abstention, malformed JSONL, duplicate IDs, missing sentinels, tenant isolation, correction across replay, deletion across rebuild, revocation across rebuild, and mismatched scenario/operation combinations.
+- M0/M1 status, kickoff, debug, Phase 9 and completion documentation were updated to distinguish passing CI from open release gates.
 
-## CI evidence
+## Latest CI evidence for evaluator hardening
 
-Latest branch run: [GitHub Actions run 40124507744](https://github.com/yash936936/AGM/actions/runs/40124507744), commit `187998b20a4cd7b0d6728e0075af9750602a9fe4`.
+[GitHub Actions run 40124931082](https://github.com/yash936936/AGM/actions/runs/40124931082), commit `5122f24f1bcc7bd40ec7607f6d28bdeb28e2bffa):
 
-- Python 3.11: `168 passed, 1 warning in 12.81s`
-- Python 3.12: `168 passed, 1 warning in 8.08s`
-- Python 3.13: `168 passed, 1 warning in 14.53s`
+- Python 3.11: `174 passed, 1 warning in 12.12s`
+- Python 3.12: `174 passed, 1 warning in 13.19s`
+- Python 3.13: `174 passed, 1 warning in 14.96s`
 
-All three jobs also passed the configured repository hygiene and `git diff --check` steps. The warning is the Starlette/httpx TestClient deprecation.
+All three jobs passed the configured repository-hygiene and `git diff --check` steps. The warning is the Starlette/httpx TestClient deprecation. This run predates the next documentation-only report refresh; check CI on the final branch head before treating the branch snapshot as verified.
 
 Earlier baseline run [40118798582](https://github.com/yash936936/AGM/actions/runs/40118798582), commit `f150a1996bda6292fae295c65ce14d9faf17a06b`, reported 153 passing tests on each Python version before the branch-specific M1 evaluator tests.
 
-## What the current benchmark does and does not prove
+## What this does not prove
 
-The evaluator writes seeded memory fixtures, closes and reopens SQLite, then scores retrieved values and abstention. Scenario labels categorize cases; they do not execute deletion or writer revocation operations. The M0 acceptance unit tests separately exercise persistence, correction/history, tenant isolation, hard-delete scrub, replay, revocation, guard behavior and atomic mutation failure paths. M1 still needs end-to-end lifecycle scenarios that perform correction/delete/revoke and then query after restart/replay.
+- Synthetic fixtures validate code paths; they are not real-history evidence.
+- The default 0.95 thresholds are provisional operational defaults, not empirical production targets. Review and preregister them before running a held-out benchmark.
+- The evaluator covers correction/delete/revoke operations but does not replace separate store-level checks for authorization, transaction atomicity, physical deletion boundaries, retention, backups, or incident response.
+- The existing decay/lifecycle CLI is a read-only dry run. An explicit expiry/retention mutation policy and acceptance test remain open.
+- No consented, de-identified held-out real-history dataset was supplied; real-history evaluation is NOT RUN.
+- Production security/privacy review is NOT ESTABLISHED.
 
-The default evaluator thresholds (case pass rate, expected-value recall and abstention accuracy) are conservative operational defaults, not thresholds validated against real users. They must be reviewed and frozen before evaluating held-out data. A one-case synthetic smoke benchmark must not be described as real-history evidence.
-
-## Required regression commands on the local Windows checkout
+## Required local Windows verification
 
 From the repository root in the activated project virtual environment, run:
 
@@ -47,20 +52,8 @@ python scripts/pack.py
 git status --short
 ```
 
-Inspect the created archives and verify that no database, WAL/SHM file, credentials, `.env`, `.venv`, cache, or `.egg-info` artifact is included. The MCP smoke client must actually run rather than be skipped. Preserve the complete output and record any failures in `docs/debug.md` before considering M0/M1 complete. These commands were **NOT RUN in the current GitHub-connector execution environment**.
+Inspect both archives and verify that no database, WAL/SHM file, credentials, `.env`, `.venv`, cache, or `.egg-info` artifact is included. Confirm the MCP smoke client actually runs rather than being skipped. Preserve output and record failures in `docs/debug.md`. These commands were NOT RUN in the GitHub-connector execution environment.
 
-## Release blockers that remain
+## Release decision
 
-- Local Windows full regression and both smoke clients are not yet verified on the final branch.
-- The M1 acceptance suite needs end-to-end mutation cases for correction, deletion and revocation across close/reopen/replay.
-- Retention/expiry behavior needs an explicit implemented policy and test; the existing decay lifecycle is a read-only dry run.
-- No consented, de-identified held-out real-history dataset was supplied; real-history evaluation is NOT RUN.
-- Production security/privacy review is NOT ESTABLISHED.
-- No ZIP should be delivered until the remaining implementation and target-environment regression checks have passed.
-
-## Contract concerns and assumptions
-
-- Frozen model, REST, MCP, and CLI contracts were not intentionally changed.
-- No new dependency was added.
-- Writer revocation remains an auditable rollback retaining source events; hard delete remains the scrubbing path.
-- Default benchmark thresholds are provisional, not empirical production thresholds.
+Do not mark M0/M1 production acceptance complete or ship a ZIP until final branch-head CI passes, local Windows regression/smoke/simulation/packaging checks pass, expiry/retention policy is explicitly implemented and tested, held-out real-history evaluation passes preregistered criteria, and security/privacy review is documented.
