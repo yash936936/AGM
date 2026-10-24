@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 import re
 import sqlite3
+import json
 from typing import Any
 
 import numpy as np
@@ -157,11 +158,160 @@ def _query_features(store: Any, ctx: Ctx, query: str, rows: list[sqlite3.Row]) -
     return flat_scores, cosine, keyword_ids, raw_relevance
 
 
+def _batch_independent_corroborations(
+    conn: sqlite3.Connection,
+    rows: list[sqlite3.Row],
+) -> dict[str, int]:
+    """Compute corroboration counts for candidate rows with bounded SQL queries.
+
+    ``independent_corroborations`` remains the canonical single-row helper, but it
+    is expensive in a ranking loop: for each row it re-reads matching nodes and
+    scans the tenant's revoke/corroborate events. This function batches those reads
+    once and reproduces that helper's semantics for the supplied candidates.
+    """
+    if not rows:
+        return {}
+
+    tenant = str(rows[0]["tenant"])
+    project = str(rows[0]["project"])
+    active = conn.execute(
+        """SELECT tenant, project, entity_id, attribute, value, kind, text, writer_id
+           FROM nodes WHERE tenant = ? AND project = ? AND status = 'active'""",
+        (tenant, project),
+    ).fetchall()
+    writers_by_fact: dict[tuple[Any, ...], set[str]] = {}
+    writers_by_text: dict[tuple[Any, ...], set[str]] = {}
+    for item in active:
+        writer = str(item["writer_id"])
+        if item["entity_id"] is not None and item["value"] is not None:
+            key = (
+                str(item["tenant"]), str(item["project"]), str(item["entity_id"]),
+                item["attribute"], str(item["value"]),
+            )
+            writers_by_fact.setdefault(key, set()).add(writer)
+        else:
+            key = (
+                str(item["tenant"]), str(item["project"]),
+                str(item["kind"]), str(item["text"]),
+            )
+            writers_by_text.setdefault(key, set()).add(writer)
+
+    revoked_event_ids: set[int] = set()
+    for event in conn.execute(
+        "SELECT payload FROM events WHERE tenant = ? AND type = 'revoke_writer'",
+        (tenant,),
+    ).fetchall():
+        try:
+            payload = json.loads(event["payload"])
+        except (TypeError, json.JSONDecodeError):
+            continue
+        revoked_event_ids.update(
+            int(value) for value in payload.get("corroboration_event_ids", [])
+            if isinstance(value, int) or (isinstance(value, str) and value.isdigit())
+        )
+
+    corroborators_by_node: dict[str, set[str]] = {}
+    for event in conn.execute(
+        "SELECT id, writer_id, payload FROM events WHERE tenant = ? AND type = 'corroborate'",
+        (tenant,),
+    ).fetchall():
+        if int(event["id"]) in revoked_event_ids:
+            continue
+        try:
+            payload = json.loads(event["payload"])
+        except (TypeError, json.JSONDecodeError):
+            continue
+        node_id = payload.get("node_id")
+        if node_id:
+            corroborators_by_node.setdefault(str(node_id), set()).add(str(event["writer_id"]))
+
+    out: dict[str, int] = {}
+    for row in rows:
+        node_id = str(row["id"])
+        own_writer = str(row["writer_id"])
+        if row["entity_id"] is not None and row["value"] is not None:
+            key = (
+                str(row["tenant"]), str(row["project"]), str(row["entity_id"]),
+                row["attribute"], str(row["value"]),
+            )
+            writers = set(writers_by_fact.get(key, set()))
+        else:
+            key = (
+                str(row["tenant"]), str(row["project"]),
+                str(row["kind"]), str(row["text"]),
+            )
+            writers = set(writers_by_text.get(key, set()))
+        writers.discard(own_writer)
+        writers.update(
+            writer for writer in corroborators_by_node.get(node_id, set())
+            if writer != own_writer
+        )
+        out[node_id] = len(writers)
+    return out
+
+
+def _query_attribute_intent(query: str) -> str | None:
+    """Map explicit natural-language wording to a known fact attribute."""
+    text = query.casefold()
+    patterns = (
+        ("owner", r"\b(owner|owns|owned|ownership)\b"),
+        ("runtime", r"\b(runtime|runs|running|execute|executes)\b"),
+        ("region", r"\b(region|location|located|where)\b"),
+        ("environment", r"\b(environment|deployment|configured)\b"),
+    )
+    for attribute, pattern in patterns:
+        if re.search(pattern, text):
+            return attribute
+    return None
+
+
+def _query_hop_intent(query: str) -> int | None:
+    """Return an explicitly requested dependency depth, if the query states one."""
+    match = re.search(r"\b([12])\s+dependency\s+hops?\b", query.casefold())
+    return int(match.group(1)) if match else None
+
+
+def _mentioned_entity_ids(
+    conn: sqlite3.Connection,
+    ctx: Ctx,
+    query: str,
+    rows: list[sqlite3.Row],
+) -> set[str]:
+    """Find exact canonical-name or alias mentions among eligible entities."""
+    eligible = {str(row["entity_id"]) for row in rows if row["entity_id"]}
+    if not eligible:
+        return set()
+    names: dict[str, set[str]] = {}
+    for row in rows:
+        if row["entity_id"] and row["canonical_entity"]:
+            names.setdefault(str(row["entity_id"]), set()).add(str(row["canonical_entity"]))
+    for alias in conn.execute(
+        """SELECT ea.entity_id, ea.alias FROM entity_aliases ea
+           JOIN entities e ON e.id = ea.entity_id WHERE e.tenant = ?""",
+        (ctx.tenant_id,),
+    ).fetchall():
+        entity_id = str(alias["entity_id"])
+        if entity_id in eligible:
+            names.setdefault(entity_id, set()).add(str(alias["alias"]))
+
+    lowered = query.casefold()
+    mentioned: set[str] = set()
+    for entity_id, labels in names.items():
+        for label in labels:
+            pattern = r"(?<!\w)" + re.escape(label.casefold()) + r"(?!\w)"
+            if re.search(pattern, lowered):
+                mentioned.add(entity_id)
+                break
+    return mentioned
+
+
 def _eligible_edge_neighbor_ids(
     store: Any,
     seed_row: sqlite3.Row,
     eligible_ids: set[str],
     eligible_entity_ids: set[str],
+    *,
+    follow_outgoing_relations: bool = False,
 ) -> set[str]:
     """Return bounded one-hop graph neighbours for a seed node."""
     seed_id = str(seed_row["id"])
@@ -170,47 +320,98 @@ def _eligible_edge_neighbor_ids(
     direct = store.conn.execute(
         """SELECT CASE WHEN src = ? THEN dst ELSE src END AS other_id
            FROM edges WHERE (src = ? OR dst = ?) AND type IN ('supersedes', 'contests')
-           ORDER BY event_id DESC LIMIT ?""",
-        (seed_id, seed_id, seed_id, FAN_OUT_CAP),
+           ORDER BY event_id DESC""",
+        (seed_id, seed_id, seed_id),
     ).fetchall()
-    neighbors.update(str(row["other_id"]) for row in direct if str(row["other_id"]) in eligible_ids)
+    for relation in direct:
+        other_id = str(relation["other_id"])
+        if other_id in eligible_ids:
+            neighbors.add(other_id)
+        if len(neighbors) >= FAN_OUT_CAP:
+            return neighbors
 
     entity_id = seed_row["entity_id"]
     if entity_id:
         entity_id = str(entity_id)
-        degree = int(store.conn.execute(
-            "SELECT COUNT(*) FROM nodes WHERE entity_id = ?", (entity_id,)
-        ).fetchone()[0])
-        # Do not expand high-degree entities; the cap avoids pathological hubs.
-        if degree <= HUB_DEGREE_CAP:
-            peers = store.conn.execute(
-                """SELECT id FROM nodes WHERE entity_id = ? AND id <> ?
-                   ORDER BY event_id DESC, id ASC LIMIT ?""",
-                (entity_id, seed_id, FAN_OUT_CAP),
-            ).fetchall()
-            neighbors.update(str(row["id"]) for row in peers if str(row["id"]) in eligible_ids)
+        if not follow_outgoing_relations:
+            entity_node_ids = [
+                str(row["id"]) for row in store.conn.execute(
+                    "SELECT id FROM nodes WHERE entity_id = ? AND tenant = ? AND project = ?",
+                    (entity_id, str(seed_row["tenant"]), str(seed_row["project"])),
+                ).fetchall()
+            ]
+            eligible_degree = sum(node_id in eligible_ids for node_id in entity_node_ids)
+            # Do not expand high-degree entities; the cap avoids pathological hubs.
+            if eligible_degree <= HUB_DEGREE_CAP:
+                peers = store.conn.execute(
+                    """SELECT id FROM nodes WHERE entity_id = ? AND id <> ?
+                       AND tenant = ? AND project = ?
+                       ORDER BY event_id DESC, id ASC""",
+                    (entity_id, seed_id, str(seed_row["tenant"]), str(seed_row["project"])),
+                ).fetchall()
+                for peer in peers:
+                    peer_id = str(peer["id"])
+                    if peer_id in eligible_ids:
+                        neighbors.add(peer_id)
+                    if len(neighbors) >= FAN_OUT_CAP:
+                        break
 
-        relations = store.conn.execute(
-            """SELECT CASE WHEN src = ? THEN dst ELSE src END AS target_id
-               FROM edges WHERE (src = ? OR dst = ?) AND type = 'relates'
-               ORDER BY event_id DESC LIMIT ?""",
-            (entity_id, entity_id, entity_id, FAN_OUT_CAP),
-        ).fetchall()
+        if follow_outgoing_relations:
+            relations = store.conn.execute(
+                """SELECT e.dst AS target_id, source_node.id AS support_node_id
+                   FROM edges e
+                   JOIN nodes source_node
+                     ON source_node.event_id = e.event_id
+                    AND source_node.entity_id = e.src
+                    AND source_node.tenant = ? AND source_node.project = ?
+                   WHERE e.src = ? AND e.type = 'relates'
+                   ORDER BY e.event_id DESC""",
+                (str(seed_row["tenant"]), str(seed_row["project"]), entity_id),
+            ).fetchall()
+        else:
+            relations = store.conn.execute(
+                """SELECT CASE WHEN e.src = ? THEN e.dst ELSE e.src END AS target_id,
+                          source_node.id AS support_node_id
+                   FROM edges e
+                   JOIN nodes source_node
+                     ON source_node.event_id = e.event_id
+                    AND source_node.entity_id = e.src
+                    AND source_node.tenant = ? AND source_node.project = ?
+                   WHERE (e.src = ? OR e.dst = ?) AND e.type = 'relates'
+                   ORDER BY e.event_id DESC""",
+                (entity_id, str(seed_row["tenant"]), str(seed_row["project"]), entity_id, entity_id),
+            ).fetchall()
         for relation in relations:
+            # Ignore historical relation edges whose supporting fact is not valid
+            # under this query's eligibility/time filters.
+            if str(relation["support_node_id"]) not in eligible_ids:
+                continue
             target_id = str(relation["target_id"])
             if target_id not in eligible_entity_ids:
                 continue
-            target_degree = int(store.conn.execute(
-                "SELECT COUNT(*) FROM nodes WHERE entity_id = ?", (target_id,)
-            ).fetchone()[0])
+            target_node_ids = [
+                str(row["id"]) for row in store.conn.execute(
+                    "SELECT id FROM nodes WHERE entity_id = ? AND tenant = ? AND project = ?",
+                    (target_id, str(seed_row["tenant"]), str(seed_row["project"])),
+                ).fetchall()
+            ]
+            target_degree = sum(node_id in eligible_ids for node_id in target_node_ids)
             if target_degree > HUB_DEGREE_CAP:
                 continue
             related_nodes = store.conn.execute(
                 """SELECT id FROM nodes WHERE entity_id = ?
-                   ORDER BY event_id DESC, id ASC LIMIT ?""",
-                (target_id, FAN_OUT_CAP),
+                   AND tenant = ? AND project = ?
+                   ORDER BY event_id DESC, id ASC""",
+                (target_id, str(seed_row["tenant"]), str(seed_row["project"])),
             ).fetchall()
-            neighbors.update(str(row["id"]) for row in related_nodes if str(row["id"]) in eligible_ids)
+            for related in related_nodes:
+                related_id = str(related["id"])
+                if related_id in eligible_ids:
+                    neighbors.add(related_id)
+                if len(neighbors) >= FAN_OUT_CAP:
+                    break
+            if len(neighbors) >= FAN_OUT_CAP:
+                break
     neighbors.discard(seed_id)
     return neighbors
 
@@ -270,27 +471,50 @@ def graph_retrieve(
         best_relevance = max((relevance.get(node_id, 0.0) for node_id in ordered_seed_candidates), default=0.0)
 
     seed_limit = min(10, max(1, k // 8))
-    expansion_seeds = ordered_seed_candidates[:seed_limit]
+    directed_relation_query = bool(
+        re.search(r"\b(dependent|dependency|dependencies|downstream|reachable)\b", query.casefold())
+    )
+    mentioned_ids = _mentioned_entity_ids(store.conn, ctx, query, rows)
+    # If a query names an entity that exists in this tenant/project, anchor graph
+    # expansion there instead of allowing a high-scoring neighbouring fact to win
+    # the single-seed budget (for example, svc-14's dependency = svc-15).
+    anchored_candidates = [
+        node_id for node_id, row in row_by_id.items()
+        if row["entity_id"] is not None and str(row["entity_id"]) in mentioned_ids
+    ]
+    anchored_candidates.sort(key=lambda node_id: (-flat_scores.get(node_id, 0.0), node_id))
+    expansion_seeds = (anchored_candidates or ordered_seed_candidates)[:seed_limit]
     selected_seed_ids = set(expansion_seeds)
     seed_pool_ids = set(row_by_id) if widened else set(flat_scores)
+    if directed_relation_query and mentioned_ids:
+        # A directed downstream question is anchored to its named entity. Do not
+        # reintroduce unrelated global lexical hits (including stale former targets)
+        # into the graph candidate pool after expansion.
+        seed_pool_ids = set(anchored_candidates)
     eligible_entity_ids = {str(row["entity_id"]) for row in rows if row["entity_id"]}
     expansion_ids: set[str] = set()
+    expansion_depth: dict[str, int] = {}
     visited_ids = set(selected_seed_ids)
     frontier_ids = set(selected_seed_ids)
-    for _depth in range(min(_hops, MAX_HOPS)):
+    for depth in range(min(_hops, MAX_HOPS)):
         next_ids: set[str] = set()
         for node_id in frontier_ids:
             next_ids.update(
-                _eligible_edge_neighbor_ids(store, row_by_id[node_id], set(row_by_id), eligible_entity_ids)
+                _eligible_edge_neighbor_ids(
+                    store, row_by_id[node_id], set(row_by_id), eligible_entity_ids,
+                    follow_outgoing_relations=directed_relation_query,
+                )
             )
         next_ids.difference_update(visited_ids)
         if not next_ids:
             break
         expansion_ids.update(next_ids)
+        for node_id in next_ids:
+            expansion_depth.setdefault(node_id, depth + 1)
         visited_ids.update(next_ids)
         frontier_ids = next_ids
 
-    candidate_ids = seed_pool_ids | expansion_ids
+    candidate_ids = seed_pool_ids | expansion_ids | selected_seed_ids
     # Candidate-specific features for all rows, including graph neighbours outside the initial top 50.
     for node_id in candidate_ids:
         if node_id not in relevance:
@@ -308,11 +532,17 @@ def graph_retrieve(
             notice=_UNTRUSTED_NOTICE,
         )
 
-    ranked: list[tuple[sqlite3.Row, float, str, float]] = []
+    candidate_rows = [row_by_id[node_id] for node_id in candidate_ids]
+    corroboration_counts = _batch_independent_corroborations(store.conn, candidate_rows)
+    attribute_intent = _query_attribute_intent(query)
+    hop_intent = _query_hop_intent(query)
+    ranked: list[tuple[sqlite3.Row, float, str, float, int]] = []
     for node_id in candidate_ids:
         row = row_by_id[node_id]
         similarity = min(1.0, max(0.0, relevance.get(node_id, 0.0)))
-        conf = effective_confidence(store.conn, row)
+        conf = effective_confidence(
+            store.conn, row, corroboration_count=corroboration_counts.get(node_id, 0),
+        )
         trust = tier_weight(str(row["tier"]))
         recency = recency_score(str(row["valid_from"]))
         citation_count = int(store.conn.execute(
@@ -324,7 +554,7 @@ def graph_retrieve(
             last_used=str(row["last_used"]) if row["last_used"] else None,
             usage_count=int(row["usage_count"]),
             citation_count=citation_count,
-            corroboration_count=independent_corroborations(store.conn, row),
+            corroboration_count=corroboration_counts.get(node_id, 0),
             pinned=bool(row["pinned"]),
         )
         final_score = rank_score(
@@ -332,13 +562,25 @@ def graph_retrieve(
             recency=recency, decay_weight=decay,
         )
         via = "expand" if node_id in expansion_ids else "seed"
-        ranked.append((row, final_score, via, conf))
-    ranked.sort(key=lambda item: (-item[1], str(item[0]["id"])))
+        at_requested_depth = (
+            hop_intent is None or expansion_depth.get(node_id) == hop_intent
+        )
+        intent_priority = int(bool(
+            directed_relation_query
+            and via == "expand" and attribute_intent
+            and row["attribute"] == attribute_intent
+            and at_requested_depth
+        ))
+        # Relation-target facts matching an explicit answer slot (e.g. owner) at
+        # the requested depth precede unrelated lexical hits. Keep the normal rank
+        # score as the tie-breaker; this adds no tuned numeric score or threshold.
+        ranked.append((row, final_score, via, conf, intent_priority))
+    ranked.sort(key=lambda item: (-item[4], -item[1], str(item[0]["id"])))
     ranked = ranked[:k]
 
     now = utc_now()
     items: list[Node] = []
-    for row, score, via, confidence in ranked:
+    for row, score, via, confidence, _intent_priority in ranked:
         store.conn.execute(
             "UPDATE nodes SET usage_count = usage_count + 1, last_used = ? WHERE id = ?",
             (now, row["id"]),

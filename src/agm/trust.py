@@ -114,10 +114,18 @@ def effective_confidence(
     row: sqlite3.Row,
     *,
     now: datetime | None = None,
+    corroboration_count: int | None = None,
 ) -> float:
     """Apply the D-008 placeholder confidence formula, clipped to [0, 1]."""
     extraction_conf = float(row["confidence"])
-    corroborations = min(independent_corroborations(conn, row), 3)
+    # Graph retrieval can batch the same evidence lookup for all candidate rows.
+    # Keep the original path as the default for all existing callers.
+    raw_corroborations = (
+        independent_corroborations(conn, row)
+        if corroboration_count is None
+        else corroboration_count
+    )
+    corroborations = min(raw_corroborations, 3)
     result = (
         extraction_conf
         * tier_weight(str(row["tier"]))

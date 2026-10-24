@@ -201,3 +201,113 @@ def test_graph_expansion_supports_two_hops_but_caps_at_two(store, ctx):
 
     with pytest.raises(ValueError, match="between 1 and 2"):
         graph_retrieve(store, ctx, "Ada Lovelace biography", k=8, _hops=3)
+
+
+def test_graph_hop_intent_finds_the_exact_downstream_owner(store, ctx):
+    store.write(ctx, WriteItem(
+        kind="fact", entity="svc-a", attribute="owner", value="team-a",
+        text="svc-a owner is team-a",
+    ))
+    store.write(ctx, WriteItem(
+        kind="fact", entity="svc-b", attribute="owner", value="team-b",
+        text="svc-b owner is team-b",
+    ))
+    store.write(ctx, WriteItem(
+        kind="fact", entity="svc-c", attribute="owner", value="team-c",
+        text="svc-c owner is team-c",
+    ))
+    store.write(ctx, WriteItem(
+        kind="fact", entity="svc-a", attribute="dependency", value="svc-b",
+        text="svc-a dependency is svc-b",
+        relations=[Relation(rel="relates", target="svc-b")],
+    ))
+    store.write(ctx, WriteItem(
+        kind="fact", entity="svc-b", attribute="dependency", value="svc-c",
+        text="svc-b dependency is svc-c",
+        relations=[Relation(rel="relates", target="svc-c")],
+    ))
+
+    one_hop = store.retrieve(
+        ctx, "Who owns the service exactly 1 dependency hop downstream of svc-a?",
+        k=8, expand=True, graph_hops=2,
+    )
+    two_hops = store.retrieve(
+        ctx, "Who owns the service exactly 2 dependency hops downstream of svc-a?",
+        k=8, expand=True, graph_hops=2,
+    )
+    assert any(item.attribute == "owner" and item.value == "team-b" for item in one_hop.items)
+    assert any(item.attribute == "owner" and item.value == "team-c" for item in two_hops.items)
+
+
+def test_graph_does_not_follow_superseded_dependency_edges(store, ctx):
+    store.write(ctx, WriteItem(
+        kind="fact", entity="svc-old", attribute="owner", value="old-team",
+        text="svc-old owner is old-team",
+    ))
+    store.write(ctx, WriteItem(
+        kind="fact", entity="svc-current", attribute="owner", value="current-team",
+        text="svc-current owner is current-team",
+    ))
+    first = store.write(ctx, WriteItem(
+        kind="fact", entity="svc-root", attribute="dependency", value="svc-old",
+        text="svc-root dependency is svc-old",
+        relations=[Relation(rel="relates", target="svc-old")],
+    ))
+    corrected = store.write(ctx, WriteItem(
+        kind="fact", entity="svc-root", attribute="dependency", value="svc-current",
+        text="svc-root dependency is svc-current",
+        relations=[Relation(rel="relates", target="svc-current")],
+    ))
+    assert corrected.status == "superseded"
+    assert first.item_id != corrected.item_id
+
+    result = store.retrieve(
+        ctx, "Who owns the service exactly 1 dependency hop downstream of svc-root?",
+        k=8, expand=True, graph_hops=1,
+    )
+    assert any(item.attribute == "owner" and item.value == "current-team" for item in result.items)
+    assert not any(item.attribute == "owner" and item.value == "old-team" for item in result.items)
+
+
+def test_unresolved_catalogued_numeric_entity_id_abstains_in_flat_and_graph(store, ctx):
+    store.write(ctx, WriteItem(
+        kind="fact", entity="svc-12", attribute="owner", value="team-12",
+        text="svc-12 owner is team-12",
+    ))
+    query = "What runtime and owner are configured for svc-012?"
+    for expand in (False, True):
+        result = store.retrieve(ctx, query, k=8, expand=expand)
+        assert result.abstain is True
+        assert result.items == []
+        assert "identifier" in (result.abstain_reason or "")
+
+    exact = store.retrieve(ctx, "Who owns svc-12?", k=8, expand=False)
+    assert exact.abstain is False
+    assert any(item.value == "team-12" for item in exact.items)
+
+
+def test_batch_corroboration_counts_match_single_row_helper(store, ctx):
+    from agm.retrieve import _batch_independent_corroborations
+    from agm.trust import independent_corroborations
+
+    second_writer = Ctx(
+        tenant_id=ctx.tenant_id, writer_id="writer-independent",
+        tier="tool_verified", project=ctx.project,
+    )
+    store.write(ctx, WriteItem(
+        kind="fact", entity="build", attribute="result", value="passing",
+        text="build result is passing",
+    ))
+    store.write(second_writer, WriteItem(
+        kind="fact", entity="build", attribute="result", value="passing",
+        text="build result is passing",
+    ))
+    rows = store.conn.execute(
+        "SELECT * FROM nodes WHERE tenant = ? AND project = ?",
+        (ctx.tenant_id, ctx.project),
+    ).fetchall()
+    batch = _batch_independent_corroborations(store.conn, rows)
+    assert batch == {
+        str(row["id"]): independent_corroborations(store.conn, row)
+        for row in rows
+    }

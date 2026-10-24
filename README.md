@@ -1,6 +1,6 @@
-# AGM Phase 6
+# AGM Phase 7
 
-Adaptive Graph Memory (AGM) is a local-first, model-agnostic memory layer for AI agents. Phase 1 added the event-sourced SQLite core; Phase 2 added aliases, bounded graph retrieval, contested writes, provisional trust ranking and abstention. Phase 3 added authenticated REST endpoints, nine MCP tools, API-key scopes, pre-storage secret redaction, and quarantine of instruction-like memory writes. Phase 4 adds probation checks for high-stakes retrieval, writer revocation and rollback, and replayable cross-model handoff with readback verification. Phase 5 adds a synthetic flat-versus-graph smoke evaluation, lazy decay scoring, and a read-only lifecycle dry run. Phase 6 adds a richer deterministic synthetic evaluation to compare flat, filtered-flat, and graph retrieval without replacing the original smoke test.
+Adaptive Graph Memory (AGM) is a local-first, model-agnostic memory layer for AI agents. Phase 1 added the event-sourced SQLite core; Phase 2 added aliases, bounded graph retrieval, contested writes, provisional trust ranking and abstention. Phase 3 added authenticated REST endpoints, nine MCP tools, API-key scopes, pre-storage secret redaction, and quarantine of instruction-like memory writes. Phase 4 adds probation checks for high-stakes retrieval, writer revocation and rollback, and replayable cross-model handoff with readback verification. Phase 5 adds a synthetic flat-versus-graph smoke evaluation, lazy decay scoring, and a read-only lifecycle dry run. Phase 6 adds a richer deterministic synthetic evaluation to compare flat, filtered-flat, and graph retrieval without replacing the original smoke test. Phase 7 diagnoses multi-hop query/evaluator alignment, catalogue-backed unknown-entity abstention, and graph traversal latency without changing D-024 thresholds or generated fact histories.
 
 **Prototype warning:** confidence and ranking values are not calibrated. Services bind to loopback only. Do not expose the API or streamable MCP endpoint to another machine or the public internet without a separate security review.
 
@@ -77,6 +77,26 @@ python -m agm lifecycle --db ./agm.db --dry-run
 ```
 
 The dry run lists active, unpinned items below a provisional decay threshold. Phase 5 does not archive or delete those items.
+
+## Phase 7 retrieval diagnostics
+
+Phase 7 makes three targeted corrections identified by the Phase 6 run:
+
+- **Multi-hop alignment:** questions say exactly how many dependency edges away the target is. The graph evaluator requests depth two for the `multi_hop` family while production/default graph depth remains one. For directed downstream questions, traversal begins at the entity named in the query and follows relation edges supported by eligible current facts; it does not seed from unrelated global top-ranked nodes.
+- **Unknown service IDs:** when the catalogue already contains a numeric-ID namespace such as `svc-…`, an exact unknown/near-miss ID in that namespace is rejected before fuzzy retrieval. This does not change the shared evaluation threshold (0.25).
+- **Graph latency:** corroboration counts are batched instead of running the same corroboration query once per candidate. The graph fan-out limit is applied after eligibility filtering so superseded rows cannot crowd a current row out of the result set.
+
+D-025 logs diagnostic targets and leaves D-024's decision rule, baseline modes, generated facts/relation chain, bootstrap method, and abstention threshold intact. The saved Phase 7 result and detailed analysis are in `eval/results/20261023T184404.879694Z.json` and `PHASE7_REPORT.md`. These synthetic results remain subject to D-007 and are not evidence for or against hypotheses H1–H7.
+
+Run the same five-seed diagnostic configuration:
+
+```bash
+python -m pytest -q
+python eval/synthetic_v2.py --entities 200 --episodes 2000 --seeds 5 --k 8 --embedder hash
+python scripts/pack.py
+```
+
+The results currently available were produced in the builder environment. The final performance targets must be confirmed by running the same configuration on the actual Windows v0.5.1 checkout; do not treat cross-machine latency as a comparable benchmark.
 
 ## Phase 6 evaluation v2
 

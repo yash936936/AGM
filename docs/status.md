@@ -2,6 +2,18 @@
 
 > Updated every run. Newest entry at top.
 
+## 2026-10-23 — Phase 7 retrieval diagnostics implemented in builder snapshot; Windows verification pending
+**Current phase:** Phase 7 retrieval diagnostic patch prepared; do not replace the owner’s v0.5.1 source tree with the builder snapshot.
+**Last debug:** DBG-010, multi-hop, abstention and graph-latency diagnostics.
+**Last decision:** D-025 adds the diagnostic corrections/targets; D-024 rule and D-021 through D-023 remain unchanged.
+**Code outcome:** The multi-hop generator wording now specifies exact dependency-hop distance without changing generated fact histories; the graph evaluator requests depth two only for that family. Directed graph traversal is anchored to the explicitly mentioned source, follows supported eligible relation edges, ranks the requested target attribute at the requested depth, and avoids unrelated global seeds. Catalogue-backed unknown numeric service IDs now abstain before fuzzy retrieval, without changing the 0.25 threshold. Graph corroboration counts are batched, and edge fan-out is capped after eligibility filtering.
+**Phase 7 results:** `eval/results/20261023T184404.879694Z.json`; report: `PHASE7_REPORT.md`. Across five seeds, graph multi-hop accuracy is 100% [100, 100], all modes correctly abstain on the generated unknown IDs, graph unanswerable abstention correctness is 100%, overall graph accuracy is 94.2% [91.39, 96.8], stale-error is 0%, abstention correctness is 99.17% [97.5, 100], p50 is 94.43 ms [90.97, 97.44], p95 is 124.88 ms [112.18, 137.67], and mean expansion is 7.075 nodes. These timings are from the available builder environment, not yet a same-platform validation against the Windows baseline.
+**Validation in available builder snapshot:** `PYTHONPATH=src python -m pytest -q` — 72 passed, 1 skipped; compileall passed. The skip requires the MCP SDK, missing in this environment. The workspace used an earlier Phase 5 snapshot plus the Phase 6 overlay, so the actual v0.5.1 hardening tests and Windows-specific behavior are not validated here. The user’s latest known Windows baseline was 104 passed with REST smoke cleanup fixed.
+**Next:** apply `PHASE7_PATCH.diff` to the actual v0.5.1 checkout, resolve any patch-context conflicts without overwriting D-021 through D-023, run `git diff --check`, `python -m pytest -q`, the same five-seed evaluation, both smoke clients, and `python scripts/pack.py`. Confirm graph p50 is at least 50% below the prior Windows result (1,370 ms) and graph p95 is below 1,000 ms on the same machine. Do not claim those targets are verified until this rerun.
+
+
+> Updated every run. Newest entry at top.
+
 ## 2026-10-23 — Phase 6 evaluation v2 implemented
 **Current phase:** Phase 6 evaluation v2 implementation ready for integration onto the v0.5.1 checkout; the default synthetic run does not show graph retrieval helping under D-024.
 **Last debug:** DBG-009, seeded evaluation v2.

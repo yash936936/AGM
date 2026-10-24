@@ -82,6 +82,38 @@ def test_stale_owner_text_is_near_identical_to_current_text():
     assert SequenceMatcher(None, stale_text, current_text).ratio() >= 0.70
 
 
+def test_multi_hop_question_names_the_gold_path_depth_and_graph_finds_gold():
+    result = evaluate_seed(
+        seed=0, entities=20, episodes=0, k=8, embedder=HashEmbedder(),
+    )
+    multi_hop_questions = [
+        item for item in result["gold_manifest"] if item["family"] == "multi_hop"
+    ]
+    assert multi_hop_questions
+    assert all("exactly 1 dependency hop" in item["query"] or
+               "exactly 2 dependency hops" in item["query"]
+               for item in multi_hop_questions)
+    graph_rows = [
+        row for row in result["query_trace"]
+        if row["mode"] == "graph" and row["family"] == "multi_hop"
+    ]
+    assert len(graph_rows) == len(multi_hop_questions)
+    assert all(row["accuracy"] == 1.0 for row in graph_rows)
+    assert all(row["graph_hops"] == 2 for row in graph_rows)
+
+
+def test_unknown_entity_queries_abstain_in_all_modes():
+    result = evaluate_seed(
+        seed=0, entities=20, episodes=0, k=8, embedder=HashEmbedder(),
+    )
+    rows = [row for row in result["query_trace"] if row["family"] == "unanswerable"]
+    assert rows
+    assert all(row["accuracy"] is None for row in rows)
+    assert all(row["abstention_correctness"] == 1.0 for row in rows)
+    assert all(row["store_abstain"] is True for row in rows)
+    assert all(row["items_returned"] == 0 for row in rows)
+
+
 
 def test_graph_is_not_labelled_promising_if_flat_filter_wins():
     def metric(mean, seed_values):

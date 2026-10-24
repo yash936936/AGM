@@ -314,7 +314,10 @@ def make_questions(data: dict[str, Any], *, seed: int, entities: int) -> list[Qu
         source = names[source_index]
         questions.append(Question(
             id=f"multi_hop:{source}:{hops}", family="multi_hop",
-            query=f"Who owns the dependent service reachable from {source}?",
+            query=(
+                f"Who owns the service exactly {hops} dependency "
+                f"hop{'s' if hops != 1 else ''} downstream of {source}?"
+            ),
             gold=(("owner", values[(target, "owner")]),), known_entity=source,
         ))
 
@@ -445,9 +448,19 @@ def evaluate_seed(
                     result = store.retrieve(
                         data["ctx"], question.query, entity=entity_filter,
                         as_of=question.as_of, k=k, expand=expand,
+                        # Multi-hop cases explicitly exercise the graph layer's
+                        # supported maximum depth; all other families keep the
+                        # production default. Flat baselines remain unchanged.
+                        graph_hops=2 if expand and question.family == "multi_hop" else None,
                     )
                     elapsed_ms = (time.perf_counter() - start) * 1000.0
                     row = _query_metrics(question, result, elapsed_ms)
+                    row["query"] = question.query
+                    row["known_entity"] = question.known_entity
+                    row["graph_hops"] = (
+                        2 if mode == "graph" and question.family == "multi_hop"
+                        else (1 if mode == "graph" else None)
+                    )
                     by_family[question.family][mode].append(row)
                     query_trace.append({"mode": mode, **row})
                 print(f"  seed {seed}: {mode} finished in {time.perf_counter() - mode_start:.1f}s", flush=True)
@@ -469,7 +482,8 @@ def evaluate_seed(
             return {
                 "seed": seed,
                 "gold_manifest": [
-                    {"id": q.id, "family": q.family, "gold": [list(pair) for pair in q.gold],
+                    {"id": q.id, "family": q.family, "query": q.query,
+                     "gold": [list(pair) for pair in q.gold],
                      "known_entity": q.known_entity, "as_of": q.as_of,
                      "stale_values": [list(pair) for pair in q.stale_values]}
                     for q in questions
@@ -721,6 +735,7 @@ def main(argv: list[str] | None = None) -> int:
             "entities": args.entities, "episodes": args.episodes, "k": args.k,
             "embedder": seed_results[0]["embedder_id"],
             "abstain_threshold": ABSTAIN_THRESHOLD, "bootstrap_resamples": BOOTSTRAP_RESAMPLES,
+            "graph_hops": {"default": 1, "multi_hop_family": 2},
         },
         "decision_rule": verdicts["rule"],
         "aggregate": aggregated,
