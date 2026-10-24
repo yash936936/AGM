@@ -1,3 +1,10 @@
+## 2026-10-24 — M0 starts: restore prior fact on current-version deletion
+**Current phase:** M0 storage correctness, first focused change implemented on branch `phase9/m0-delete-restore-previous`; not yet merged or release-verified.
+**Decision:** D-028 selects restoration of the nearest previous version when deleting the sole active value of a single-valued fact. If there is no predecessor, the fact remains absent. Historical deletes and multi-valued active sets do not trigger restoration.
+**Changes:** `src/agm/store.py` adds a replayable `restore_node_id` to the delete event when applicable; `tests/test_store.py` covers live restoration, source-payload scrubbing and replay identity.
+**Validation:** NOT RUN in this session. Python tests, the complete suite, both smoke clients and Windows revalidation remain outstanding.
+**Next:** run focused deletion/replay tests, fix any failures, then continue M0 with transactional mutation boundaries, idempotency payload conflicts, temporal ordering and concurrency acceptance tests.
+
 # Status — AGM prototype
 
 > Updated every run. Newest entry at top.
