@@ -125,7 +125,7 @@ def _write_item_supported_by_evidence(item: WriteItem, evidence_quote: str) -> b
     if raw_value:
         quote = _normalise_text(evidence_quote)
         candidate = re.escape(_normalise_text(raw_value))
-        return re.search(r"(?<!\\w)" + candidate + r"(?!\\w)", quote) is not None
+        return re.search(r"(?<!\w)" + candidate + r"(?!\w)", quote) is not None
     text_terms = _significant_terms(item.text)
     return bool(text_terms.intersection(quote_terms))
 
