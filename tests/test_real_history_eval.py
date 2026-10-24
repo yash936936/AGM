@@ -7,30 +7,36 @@ import pytest
 from scripts.evaluate_real_history import evaluate, load_cases
 
 
+def _ctx(tenant="tenant-a", writer="writer-a"):
+    return {
+        "tenant_id": tenant,
+        "writer_id": writer,
+        "tier": "human_verified",
+        "project": "eval",
+    }
+
+
+def _memory(writer="writer-a", entity="service-a", attribute="owner", value="team-blue",
+            text="service-a is owned by team-blue"):
+    return {
+        **_ctx(writer=writer),
+        "item": {
+            "kind": "fact",
+            "entity": entity,
+            "attribute": attribute,
+            "value": value,
+            "text": text,
+        },
+    }
+
+
 def _case(case_id="case-1"):
     return {
         "case_id": case_id,
         "scenario": "cross_session_recall",
-        "memories": [
-            {
-                "tenant_id": "tenant-a",
-                "writer_id": "writer-a",
-                "tier": "human_verified",
-                "project": "eval",
-                "item": {
-                    "kind": "fact",
-                    "entity": "service-a",
-                    "attribute": "owner",
-                    "value": "team-blue",
-                    "text": "service-a is owned by team-blue",
-                },
-            }
-        ],
+        "memories": [_memory()],
         "query": {
-            "tenant_id": "tenant-a",
-            "writer_id": "reader-a",
-            "tier": "human_verified",
-            "project": "eval",
+            **_ctx(writer="reader-a"),
             "text": "Who owns service-a?",
             "entity": "service-a",
             "k": 5,
@@ -122,10 +128,7 @@ def test_evaluator_tenant_isolation_fixture_does_not_leak(tmp_path):
     case = _case()
     case["scenario"] = "tenant_isolation"
     case["memories"].append({
-        "tenant_id": "tenant-b",
-        "writer_id": "writer-b",
-        "tier": "human_verified",
-        "project": "eval",
+        **_ctx(tenant="tenant-b", writer="writer-b"),
         "item": {
             "kind": "fact",
             "entity": "service-a",
@@ -139,6 +142,88 @@ def test_evaluator_tenant_isolation_fixture_does_not_leak(tmp_path):
     assert report["release_blocking_violations"] == 0
     assert report["all_cases_pass"] is True
     assert report["scenario_coverage"]["tenant_isolation"]["cases"] == 1
+
+
+def test_evaluator_executes_supersede_and_replay_for_stale_value_case(tmp_path):
+    case = _case("correction-case")
+    case["scenario"] = "current_vs_stale"
+    case["memories"] = [_memory(value="team-red", text="service-a is owned by team-red")]
+    case["operations"] = [{
+        "type": "correction",
+        "context": _ctx(),
+        "target_memory_index": 0,
+        "reason": "synthetic explicit correction",
+        "item": {
+            "kind": "fact",
+            "entity": "service-a",
+            "attribute": "owner",
+            "value": "team-blue",
+            "text": "service-a is owned by team-blue",
+        },
+    }]
+    case["expected_values"] = ["team-blue"]
+    case["forbidden_values"] = ["team-red"]
+    report = evaluate(_write(tmp_path / "correction.jsonl", case))
+    assert report["all_cases_pass"] is True
+    assert report["expected_value_recall"] == 1.0
+    assert report["forbidden_value_leaks"] == 0
+    assert report["release_gate_pass"] is True
+
+
+def test_evaluator_executes_hard_delete_then_rebuilds_views(tmp_path):
+    case = _case("delete-case")
+    case["scenario"] = "deletion"
+    case["memories"] = [
+        _memory(entity="service-a", attribute="obsolete_marker", value="delete-marker-7f31",
+                text="service-a obsolete marker delete-marker-7f31"),
+    ]
+    case["operations"] = [{
+        "type": "delete",
+        "context": _ctx(writer="admin-a"),
+        "target_memory_index": 0,
+    }]
+    case["query"] = {
+        **_ctx(writer="reader-a"),
+        "text": "service-a obsolete marker delete-marker-7f31",
+        "entity": "service-a",
+        "k": 5,
+    }
+    case["expected_values"] = []
+    case["forbidden_values"] = ["delete-marker-7f31"]
+    case["expect_abstain"] = True
+    report = evaluate(_write(tmp_path / "delete.jsonl", case))
+    assert report["all_cases_pass"] is True
+    assert report["forbidden_value_leaks"] == 0
+    assert report["zero_tolerance_failures"] == 0
+    assert report["release_gate_pass"] is True
+
+
+def test_evaluator_executes_writer_revocation_then_rebuilds_views(tmp_path):
+    case = _case("revoke-case")
+    case["scenario"] = "revocation"
+    case["memories"] = [
+        _memory(writer="writer-b", entity="service-a", attribute="revocation_marker",
+                value="revoke-marker-9a62", text="service-a revocation marker revoke-marker-9a62"),
+    ]
+    case["operations"] = [{
+        "type": "revoke_writer",
+        "context": _ctx(writer="admin-a"),
+        "writer_id": "writer-b",
+    }]
+    case["query"] = {
+        **_ctx(writer="reader-a"),
+        "text": "service-a revocation marker revoke-marker-9a62",
+        "entity": "service-a",
+        "k": 5,
+    }
+    case["expected_values"] = []
+    case["forbidden_values"] = ["revoke-marker-9a62"]
+    case["expect_abstain"] = True
+    report = evaluate(_write(tmp_path / "revoke.jsonl", case))
+    assert report["all_cases_pass"] is True
+    assert report["forbidden_value_leaks"] == 0
+    assert report["zero_tolerance_failures"] == 0
+    assert report["release_gate_pass"] is True
 
 
 def test_zero_tolerance_scenarios_require_forbidden_sentinels(tmp_path):
