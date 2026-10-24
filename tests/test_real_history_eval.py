@@ -278,3 +278,46 @@ def test_mutation_scenarios_require_matching_store_operation(
     path = _write(tmp_path / f"{scenario}.jsonl", case)
     with pytest.raises(ValueError, match=expected_message):
         load_cases(path)
+
+
+def test_evaluator_executes_expiry_operation_then_rebuilds_views(tmp_path):
+    case = _case("expiry-case")
+    case["scenario"] = "expiry"
+    marker = "expiry-marker-abc-4401"
+    memory = _memory(
+        entity="service-a",
+        attribute="retention_marker",
+        value=marker,
+        text=f"service-a retention marker {marker}",
+    )
+    memory["created_at"] = "2020-01-01T00:00:00Z"
+    case["memories"] = [memory]
+    case["operations"] = [{
+        "type": "expire_before",
+        "context": _ctx(writer="retention-admin"),
+        "cutoff": "2025-01-01T00:00:00Z",
+    }]
+    case["query"] = {
+        **_ctx(writer="reader-a"),
+        "text": f"service-a retention marker {marker}",
+        "entity": "service-a",
+        "k": 5,
+    }
+    case["expected_values"] = []
+    case["forbidden_values"] = [marker]
+    case["expect_abstain"] = True
+
+    report = evaluate(_write(tmp_path / "expiry.jsonl", case))
+    assert report["all_cases_pass"] is True
+    assert report["forbidden_value_leaks"] == 0
+    assert report["zero_tolerance_failures"] == 0
+    assert report["release_gate_pass"] is True
+
+
+def test_expiry_scenario_requires_an_eligible_expire_operation(tmp_path):
+    case = _case("expiry-invalid-case")
+    case["scenario"] = "expiry"
+    case["forbidden_values"] = ["retention-marker"]
+    path = _write(tmp_path / "expiry-invalid.jsonl", case)
+    with pytest.raises(ValueError, match="requires a expire_before operation"):
+        load_cases(path)
