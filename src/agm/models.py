@@ -142,6 +142,7 @@ class ReadbackReport(ContractModel):
 
 
 MemoryDecisionAction = Literal["remember", "correct", "forget", "ignore", "ask_user"]
+MemoryForgetCategory = Literal["preferences", "goals", "commitments", "decisions", "tasks"]
 
 
 class MemoryContextItem(ContractModel):
@@ -192,6 +193,7 @@ class MemoryDecision(ContractModel):
     item: WriteItem | None = None
     target_item_id: str | None = None
     target_item_ids: list[str] = Field(default_factory=list, max_length=100)
+    target_category: MemoryForgetCategory | None = None
     evidence_quote: str | None = None
     operation_id: str | None = Field(default=None, min_length=1, max_length=200)
 
