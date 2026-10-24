@@ -92,7 +92,7 @@ class Readback:   goal: str; decisions: list[str]; open_items: list[str]
 | `memory_remember` | POST /v1/memory/remember | `apply_memory_decision(action="remember")` |
 | `memory_correct` | POST /v1/memory/correct | `supersede` through the active-memory policy |
 | `memory_forget` | POST /v1/memory/forget | atomically hard-delete the target plus connected supersede history |
-| `memory_health` | GET /v1/memory/health | read-only scoped health checks |
+| `memory_health` | GET /v1/memory/health | database-wide SQLite integrity plus tenant/project-scoped memory/index counters |
 | `memory_write` | POST /v1/memory | `write` (legacy low-level operation) |
 | `memory_retrieve` | POST /v1/memory/retrieve | `retrieve` |
 | `memory_supersede` | POST /v1/memory/{id}/supersede | `supersede` (legacy low-level operation) |
