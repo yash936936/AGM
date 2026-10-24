@@ -47,4 +47,4 @@ The workflow is documented in `docs/workflow.md`.
 
 ## Next task
 
-First, apply patch 0.5.1 and connect a real host (`examples/claude_code_mcp.md`). Then scope Phase 6 (evaluation v2). All five planned prototype phases are implemented and the integrated test suite has been verified on Windows. Remaining work is final review, archive inspection, and deciding whether to begin a separately scoped next iteration. Keep services on loopback until a separate security review is completed.
+Active Memory Loop v1 is implemented on branch `feature/active-memory-loop-v1`. Follow `docs/phases.md` for the scope and `docs/status.md` for current progress. The implementation intentionally has **not been tested yet** at the integrator's request. Do not mark it complete until the user later runs compileall, the full pytest suite, both MCP and REST smoke clients, and reviews any failures. Keep services loopback-only. The main deliverable is `src/agm/active_memory.py`, the core `MemoryStore.memory_context`/atomic `forget` operations, the new REST/MCP active-memory tools, a provider-neutral `run_active_turn`, and the corresponding docs/examples.
