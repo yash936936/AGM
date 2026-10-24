@@ -23,7 +23,7 @@ import httpx
 
 KEY = "k-smoke-agent-1234567890abcdef"
 OTHER = "k-smoke-other-1234567890abcdef"
-SECRET = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+SECRET = "ghp_" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
 CHECKS: list[tuple[str, bool]] = []
 

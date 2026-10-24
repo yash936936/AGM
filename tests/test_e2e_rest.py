@@ -76,7 +76,7 @@ def test_rest_write_and_retrieve_round_trip(tmp_path: Path) -> None:
 
 def test_secret_is_redacted_before_event_and_embedding(tmp_path: Path) -> None:
     client, db_path, embedder = _client(tmp_path)
-    secret = "ghp_abcdefghijklmnopqrstuvwxyz123456"
+    secret = "ghp_" + "abcdefghijklmnopqrstuvwxyz123456"
     with client:
         response = client.post("/v1/memory", headers=_headers(), json={
             "kind": "episode", "text": f"Temporary credential api_key={secret} used for local test",

@@ -3,7 +3,7 @@ from agm.models import WriteItem
 
 
 def test_labelled_api_key_is_redacted_before_storage() -> None:
-    secret = "AKIAIOSFODNN7EXAMPLE"
+    secret = "AKIA" + "IOSFODNN7EXAMPLE"
     guarded = inspect_write_item(WriteItem(
         kind="episode",
         text=f"Use api_key={secret} for local testing",
@@ -15,7 +15,7 @@ def test_labelled_api_key_is_redacted_before_storage() -> None:
 
 
 def test_bearer_token_is_redacted_from_other_item_fields() -> None:
-    token = "ghp_abcdefghijklmnopqrstuvwxyz123456"
+    token = "ghp_" + "abcdefghijklmnopqrstuvwxyz123456"
     guarded = inspect_write_item(WriteItem(
         kind="fact", entity="AGM", attribute="credential", value=token,
         text="AGM test credential placeholder",

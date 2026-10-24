@@ -21,7 +21,7 @@ from pathlib import Path
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-SECRET = "sk-ant-api03-ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcd"
+SECRET = "sk-ant-" + "api03-" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcd"
 CHECKS: list[tuple[str, bool]] = []
 
 

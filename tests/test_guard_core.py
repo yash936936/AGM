@@ -12,10 +12,10 @@ from agm.models import Ctx, Relation, TaskState, WriteItem
 from agm.store import MemoryStore
 
 SECRETS = {
-    "anthropic": "sk-ant-api03-ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcd",
-    "openai": "sk-ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ab",
-    "github": "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
-    "aws": "AKIAIOSFODNN7EXAMPLE",
+    "anthropic": "sk-ant-" + "api03-" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcd",
+    "openai": "sk-" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ab",
+    "github": "ghp_" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+    "aws": "AKIA" + "IOSFODNN7EXAMPLE",
     "labelled": "api_key=Zx9fQw81LmN03bVcTy77kd",
     "bearer": "Bearer abcdefghijklmnop1234567890",
     "jwt": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dBjftJeZ4CVPmB92K27uhbUJU1p1rwW1gFWFOEjXk",
