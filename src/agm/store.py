@@ -1280,20 +1280,17 @@ class MemoryStore:
 
 
     def forget(self, ctx: Ctx, item_id: str) -> dict[str, object]:
-        """Hard-delete the selected memory and its connected supersede history.
+        """Atomically hard-delete a memory and its connected supersede history.
 
         This is the user-facing forget operation. Low-level delete remains
         available for callers that intentionally remove one version only.
+        Source event payloads are scrubbed and one delete event is appended for
+        every removed version; a single transaction prevents partial chains.
         """
-        target = self.conn.execute(
-            "SELECT id FROM nodes WHERE id = ? AND tenant = ? AND project = ?",
-            (item_id, ctx.tenant_id, ctx.project),
-        ).fetchone()
-        if target is None:
-            return {"forgotten": False, "deleted_count": 0, "item_ids": []}
         rows = self.conn.execute(
             """WITH RECURSIVE versions(id) AS (
-                   SELECT ?
+                   SELECT n.id FROM nodes n
+                    WHERE n.id = ? AND n.tenant = ? AND n.project = ?
                    UNION
                    SELECT e.src FROM edges e JOIN versions v ON e.dst = v.id
                     WHERE e.type = 'supersedes'
@@ -1304,16 +1301,45 @@ class MemoryStore:
                SELECT n.id, n.event_id FROM nodes n JOIN versions v ON v.id = n.id
                 WHERE n.tenant = ? AND n.project = ?
                 ORDER BY n.event_id DESC, n.id ASC""",
-            (item_id, ctx.tenant_id, ctx.project),
+            (item_id, ctx.tenant_id, ctx.project, ctx.tenant_id, ctx.project),
         ).fetchall()
-        # Collect the chain before deleting; delete() also removes supersedes edges.
         ids = [str(row["id"]) for row in rows]
-        deleted_count = 0
-        for version_id in ids:
-            result = self.delete(ctx, version_id)
-            deleted_count += int(result.deleted)
+        if not ids:
+            return {"forgotten": False, "deleted_count": 0, "item_ids": []}
+
+        if self.conn.in_transaction:
+            self.conn.commit()
+        deleted_ids: list[str] = []
+        self.conn.execute("BEGIN IMMEDIATE")
+        try:
+            for version_id in ids:
+                row = self.conn.execute(
+                    """SELECT event_id FROM nodes
+                       WHERE id = ? AND tenant = ? AND project = ?""",
+                    (version_id, ctx.tenant_id, ctx.project),
+                ).fetchone()
+                if row is None:
+                    continue
+                source_event_id = int(row["event_id"])
+                self.conn.execute(
+                    "UPDATE events SET payload = ? WHERE id = ? AND tenant = ?",
+                    ('{"scrubbed":true}', source_event_id, ctx.tenant_id),
+                )
+                payload = {"item_id": version_id}
+                event_id, inserted = self._append(ctx, "delete", payload)
+                if not inserted:
+                    raise RuntimeError("Unexpected idempotency collision while forgetting memory history")
+                self._apply_delete_payload(payload)
+                deleted_ids.append(version_id)
+            self.conn.commit()
+        except Exception:
+            self.conn.rollback()
+            raise
+
+        # Flush the whole chain once, after its atomic commit.
+        self._checkpoint()
         return {
-            "forgotten": deleted_count > 0,
-            "deleted_count": deleted_count,
-            "item_ids": ids if deleted_count else [],
+            "forgotten": bool(deleted_ids),
+            "deleted_count": len(deleted_ids),
+            "item_ids": deleted_ids,
         }
