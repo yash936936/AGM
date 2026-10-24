@@ -2,7 +2,7 @@
 
 from .models import (
     ActiveMemoryTurnResult, ActiveTurnGeneration, Ctx, DeleteResult,
-    MemoryActionResult, MemoryContextPack, MemoryDecision, MemoryHealthReport,
+    MemoryActionResult, MemoryContextItem, MemoryContextPack, MemoryDecision, MemoryHealthReport,
     Relation, RetrieveResult, SourceSpan, WriteItem, WriteResult,
 )
 from .active_memory import (
@@ -13,7 +13,7 @@ from .store import MemoryStore
 
 __all__ = [
     "ACTIVE_MEMORY_SYSTEM_PROMPT", "ActiveMemoryTurnResult", "ActiveTurnGeneration",
-    "Ctx", "DeleteResult", "MemoryActionResult", "MemoryContextPack",
+    "Ctx", "DeleteResult", "MemoryActionResult", "MemoryContextItem", "MemoryContextPack",
     "MemoryDecision", "MemoryHealthReport", "MemoryStore", "Relation",
     "RetrieveResult", "SourceSpan", "WriteItem", "WriteResult",
     "apply_memory_decision", "build_memory_context", "memory_health", "run_active_turn",
