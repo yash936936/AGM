@@ -97,6 +97,16 @@ class DeleteResult(ContractModel):
     removed: dict[str, int]
 
 
+class ExpiryResult(ContractModel):
+    """Summary of an explicit tenant/project-scoped retention sweep."""
+
+    cutoff: str
+    scanned_nodes: int
+    expired_ids: list[str] = Field(default_factory=list)
+    skipped_pinned_ids: list[str] = Field(default_factory=list)
+    scrubbed_orphan_events: int = 0
+
+
 class RevokeResult(ContractModel):
     revoked: bool = False
     removed: int = 0

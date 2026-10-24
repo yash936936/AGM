@@ -1,4 +1,38 @@
-# Debug log — AGM prototype
+## DBG-015 — Require mutation operations for mutation scenario labels — 2026-10-25
+**Task:** Prevent benchmark cases from claiming correction, deletion, or revocation coverage through a scenario label without running the matching store operation.
+
+**Changes:** `load_cases` now requires `correction` for `current_vs_stale`, `delete` for `deletion`, and `revoke_writer` for `revocation`. Added parameterized negative tests for all three mislabeled cases. This supplements DBG-014's end-to-end synthetic operation cases and prevents false acceptance coverage.
+
+**Validation:** CI run [40124931082](https://github.com/yash936936/AGM/actions/runs/40124931082), commit `5122f24f1bcc7bd40ec7607f6d28bdeb28e2bffa`: 174 passed, 1 warning on Python 3.11 (12.12s), Python 3.12 (13.19s), and Python 3.13 (14.96s). Repository hygiene and `git diff --check` passed. The completion report refresh after this run triggers a new final-head CI run.
+
+**Still open:** Local Windows regression and smoke clients, simulation and packaging remain NOT RUN here. Retention/expiry mutation policy remains unimplemented. Real-history evaluation is NOT RUN; security/privacy review is NOT ESTABLISHED.
+
+
+## DBG-014 — M1 evaluator exercises mutation operations through replay — 2026-10-25
+**Task:** Close a release-gate gap where deletion/revocation scenario tags were only labels, not actual tested operations.
+
+**Changes:** Extended the benchmark schema with explicit `operations` supporting correction via `MemoryStore.supersede`, hard delete via `MemoryStore.delete`, and writer rollback via `MemoryStore.revoke_writer`. The evaluator closes/reopens between each operation, rebuilds views from the event log, then retrieves and scores expected/forbidden values and abstention. Missing expected values no longer fail the recall threshold when the benchmark contains no expected-value assertions; the case-pass and zero-tolerance criteria still apply.
+
+**Tests added:** An end-to-end correction test verifies the new current value is found and the old value is forbidden after replay; a hard-delete test verifies the forbidden marker remains absent after rebuild and expects abstention; a writer-revocation test verifies the revoked writer's marker remains absent after replay and expects abstention. Each test uses synthetic markers only.
+
+**Validation:** Branch CI run [40124787565](https://github.com/yash936936/AGM/actions/runs/40124787565), commit `20ea048a887ad9b31a36a7615ac12f841cdfea01`, reports `171 passed, 1 warning` on Python 3.11 (9.46s), 3.12 (13.68s), and 3.13 (15.78s). These are actual GitHub Actions test outputs, not local Windows output. The subsequent documentation update is a new tree and must receive its own CI run.
+
+**Not run:** local Windows full test suite, MCP and REST smoke clients, active-memory simulation, `eval/stale_facts.py`, package inspection and Windows working-tree hygiene. Consented real-history benchmark and security/privacy review remain not run/not established.
+
+**Contract concerns:** no frozen public API or required dependency was changed. Default evaluator thresholds remain provisional and must be preregistered for a held-out benchmark.
+
+**Task:** Reconcile the M0 matrix with actual public CI evidence and harden the M1 evaluation harness so benchmark schema, scenario coverage, threshold failures, and zero-tolerance leak cases are explicit.
+
+**Changes:** Updated `docs/M0_ACCEPTANCE_MATRIX_ADDENDUM.md` to record successful public CI jobs tied to baseline commit `f150a1996bda6292fae295c65ce14d9faf17a06b`, while preserving later-code rerun, real-history, and security/privacy review as separate gates. Hardened `scripts/evaluate_real_history.py` with named scenario validation, zero-tolerance scenarios (`tenant_isolation`, `deletion`, `revocation`), benchmark input validation, default minimum case pass rate and expected recall of 0.95, configurable thresholds, threshold failure reporting, scenario coverage, and a separate release-gate result. Expanded evaluator regression tests for missing expected values, forbidden leaks, wrong abstention, malformed fixtures, duplicate IDs, zero-tolerance sentinel requirements, and a correct tenant-isolation case. No new dependency and no frozen API/REST/MCP contract changes.
+
+**Evidence found before this task:** Public CI run [40118798582](https://github.com/yash936936/AGM/actions/runs/40118798582), baseline commit `f150a1996bda6292fae295c65ce14d9faf17a06b), had successful Python 3.11, 3.12, and 3.13 jobs: `153 passed, 1 warning` in each job (10.99s, 14.02s, and 11.89s respectively). The warning is Starlette/httpx deprecation. This predates the current M1 hardening commits.
+
+**Validation during this task:** GitHub Actions workflow runs for documentation and evaluator edits were triggered on branch `work/m0-m1-completion`. Earlier targeted test runs after the first test-file update reported successful CI; final runs for evaluator changes are pending at time of entry. No claim is made that the newest evaluator changes pass until the newest run completes and is inspected. No local Python runtime is available through this GitHub-only execution path, so local tests, both host smoke clients, simulation, packaging, and Windows-specific verification are NOT RUN here.
+
+**Not finished:** The synthetic benchmark still does not exercise actual store-level delete/revoke operations by scenario; its contract currently evaluates seeded retrieval cases and treats scenario tags as acceptance classification. Dedicated store tests in M0 cover deletion/replay/revocation separately. Real consented held-out evaluation and production privacy/security sign-off are NOT RUN/NOT ESTABLISHED. A Windows run of the full `debug.md` checklist is still required.
+
+**Contract concerns / assumptions:** Defaults of 0.95 for case pass rate, expected-value recall, and abstention accuracy are provisional operational defaults for the evaluator CLI, not established real-user quality targets. They must be preregistered/reviewed before any held-out run; command-line overrides are available. Zero-leak rules apply to the named scenario classes. No raw benchmark cases are written to aggregate reports.
+
 
 > Append-only. Every completed coding task gets an entry here, even "no
 > issues found." Newest entries at top.

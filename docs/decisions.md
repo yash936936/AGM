@@ -1,3 +1,14 @@
+## D-029 — Retention sweep is atomic and scrubs aged revoked source payloads
+**Decision:** Implement `MemoryStore.expire_before` as one outer SQLite mutation transaction using the existing `_atomic_mutation(checkpoint=True)` wrapper. Nested `delete()` calls run under savepoints, so a failed item purge rolls back the whole sweep. Select due materialized nodes from the requested tenant/project by source event `created_at`; purge older event IDs first; skip pinned items by default. After visible nodes are purged, scrub aged content-bearing source events from the same tenant/project that no longer have a materialized node (for example, source payloads retained by a prior writer revocation). Keep the compact revoke/delete events as non-content audit records. `include_pinned=True` explicitly opts pinned items into the sweep.
+**Why:** A per-item retention sweep could leave a partial purge after failure; source payloads from revoked writers would otherwise remain outside the materialized node set and never be considered by retention. An atomic sweep gives predictable replay behavior and applies the retention cutoff to those no-longer-searchable payloads too.
+**Affects:** `src/agm/store.py`, `src/agm/models.py`, `src/agm/__init__.py`, retention/replay tests and lifecycle docs. No additional dependency, REST path, MCP tool, or CLI command.
+
+## D-028 — Add explicit tenant/project-scoped retention purge
+**Decision:** Add `MemoryStore.expire_before(ctx, cutoff, *, include_pinned=False)` returning `ExpiryResult`. Select eligible memories by source event `created_at`, not `valid_from`; scope the sweep to the caller's tenant and project; skip pinned memories unless explicitly included. Use hard-delete semantics rather than writer revocation.
+**Why:** The M1 lifecycle definition calls for a real expiry/retention operation. The existing decay lifecycle only reports candidates and does not mutate stored data.
+**Affects:** `src/agm/models.py`, `src/agm/store.py`, `src/agm/__init__.py`, lifecycle tests and docs. No REST/MCP/CLI API or new dependency.
+
+
 # Decisions — AGM prototype
 
 > Append-only. Newest entries at top. Never edit or delete past entries — if a decision is reversed, log a new entry that supersedes it and reference the old ID.
