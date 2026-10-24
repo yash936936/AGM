@@ -600,7 +600,8 @@ def apply_memory_decision(
                 message="The proposed memory's key value is not directly supported by the quoted user text; nothing was stored.",
                 evidence_verified=True,
             )
-        if not item.idempotency_key and decision.operation_id:
+        if decision.operation_id:
+            # A controlled host's operation ID overrides any model-proposed item key.
             item = item.model_copy(update={"idempotency_key": _stable_idempotency_key(ctx, decision)})
         if item.idempotency_key:
             existing_event = store.conn.execute(
@@ -665,7 +666,8 @@ def apply_memory_decision(
                 message="The replacement fact's key value is not directly supported by the quoted correction; nothing was changed.",
                 evidence_verified=True,
             )
-        if not item.idempotency_key and decision.operation_id:
+        if decision.operation_id:
+            # A controlled host's operation ID overrides any model-proposed item key.
             item = item.model_copy(update={"idempotency_key": _stable_idempotency_key(ctx, decision)})
         existing_event = (
             store.conn.execute(
