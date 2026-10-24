@@ -169,14 +169,18 @@ def _correct_target_matches(store: "MemoryStore", ctx: Ctx, item_id: str, item: 
 def _forget_category_matches(attribute: str | None, quote_terms: set[str]) -> bool:
     """Allow an explicit category request to match every selected member of that category."""
     key = _attribute_key_for_forget(attribute)
-    groups = {
-        "preference": {"preference", "preferences", "prefer", "style", "styles"},
-        "goal": {"goal", "goals", "objective", "objectives", "aim", "aims"},
-        "commitment": {"commitment", "commitments", "promise", "promises"},
-        "decision": {"decision", "decisions", "choice", "choices", "architecture"},
-        "task": {"task", "tasks", "todo", "todos"},
-    }
-    return any(group_key in key and bool(terms & quote_terms) for group_key, terms in groups.items())
+    groups = [
+        (("preference", "style"), {"preference", "preferences", "prefer", "style", "styles", "writing"}),
+        (("goal", "objective"), {"goal", "goals", "objective", "objectives", "aim", "aims"}),
+        (("commitment", "promise"), {"commitment", "commitments", "promise", "promises"}),
+        (("decision", "choice", "architecture"), {"decision", "decisions", "choice", "choices", "architecture"}),
+        (("task", "todo", "next_step", "open_task"), {"task", "tasks", "todo", "todos", "next", "step"}),
+    ]
+    return any(
+        any(attribute_key in key for attribute_key in attribute_keys)
+        and bool(terms & quote_terms)
+        for attribute_keys, terms in groups
+    )
 
 
 def _attribute_key_for_forget(attribute: str | None) -> str:
