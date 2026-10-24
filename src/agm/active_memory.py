@@ -184,21 +184,21 @@ def build_memory_context(
         store.retrieve(
             ctx,
             "user profile stable preferences communication style background interests",
-            k=auxiliary_k, expand=False, high_stakes=high_stakes,
+            as_of=as_of, k=auxiliary_k, expand=False, high_stakes=high_stakes,
         ) if include_profile else None
     )
     goals_result = (
         store.retrieve(
             ctx,
             "active goal ongoing project current task commitment next step",
-            k=auxiliary_k, expand=True, high_stakes=high_stakes,
+            as_of=as_of, k=auxiliary_k, expand=True, high_stakes=high_stakes,
         ) if include_goals else None
     )
     decisions_result = (
         store.retrieve(
             ctx,
             "important project decision chosen option architecture decision rationale",
-            k=auxiliary_k, expand=False, high_stakes=high_stakes,
+            as_of=as_of, k=auxiliary_k, expand=False, high_stakes=high_stakes,
         ) if include_decisions else None
     )
 
@@ -469,11 +469,16 @@ def apply_memory_decision(
                 message="The current turn does not unambiguously request forgetting; nothing was changed.",
                 evidence_verified=True,
             )
-        result = store.delete(ctx, decision.target_item_id)
+        result = store.forget(ctx, decision.target_item_id)
+        forgotten = bool(result["forgotten"])
         return MemoryActionResult(
-            status="forgotten" if result.deleted else "not_found",
-            message="Memory deleted." if result.deleted else "The requested memory was not found in this user's scope.",
-            item_id=decision.target_item_id if result.deleted else None,
+            status="forgotten" if forgotten else "not_found",
+            message=(
+                f"Memory and its supersede history deleted ({result['deleted_count']} item(s))."
+                if forgotten else "The requested memory was not found in this user's scope."
+            ),
+            item_id=decision.target_item_id if forgotten else None,
+            deleted_count=int(result["deleted_count"]),
             evidence_verified=True,
         )
 
