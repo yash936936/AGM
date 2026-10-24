@@ -120,3 +120,27 @@ def test_context_route_requires_memory_read_scope(tmp_path):
             "query": "What should the assistant remember?",
         })
         assert response.status_code == 403
+
+
+def test_rest_batch_forget_removes_all_requested_memories(tmp_path):
+    with _client(tmp_path) as client:
+        first = client.post("/v1/memory", headers=_headers(), json={
+            "kind": "fact", "entity": "deployment", "attribute": "database",
+            "value": "SQLite", "text": "The deployment uses SQLite.",
+        })
+        second = client.post("/v1/memory", headers=_headers(), json={
+            "kind": "fact", "entity": "AGM", "attribute": "theme",
+            "value": "turquoise", "text": "AGM theme is turquoise.",
+        })
+        assert first.status_code == second.status_code == 200
+        item_ids = [first.json()["item_id"], second.json()["item_id"]]
+        response = client.post("/v1/memory/forget", headers=_headers(), json={
+            "item_ids": item_ids,
+            "current_user_message": "Please forget that the deployment uses SQLite and AGM theme is turquoise.",
+            "evidence_quote": "forget that the deployment uses SQLite and AGM theme is turquoise",
+        })
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body["status"] == "forgotten"
+        assert body["deleted_count"] == 2
+        assert set(body["item_ids"]) == set(item_ids)
