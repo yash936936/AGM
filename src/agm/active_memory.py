@@ -205,7 +205,7 @@ def _forget_target_matches(store: "MemoryStore", ctx: Ctx, item_id: str, evidenc
             literal = _normalise_text(str(row[key] or ""))
             if literal:
                 pattern = re.escape(literal)
-                if re.search(r"(?<!\\w)" + pattern + r"(?!\\w)", quote_text):
+                if re.search(r"(?<!\w)" + pattern + r"(?!\w)", quote_text):
                     return True
         value_terms = _significant_terms(str(row["value"] or ""))
         if quote_terms and value_terms and value_terms.issubset(quote_terms):
