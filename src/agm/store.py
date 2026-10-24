@@ -1290,23 +1290,22 @@ class MemoryStore:
         if self.conn.in_transaction:
             self.conn.commit()
         self.conn.execute("BEGIN IMMEDIATE")
+        deleted_ids: list[str] = []
         try:
             rows = self.conn.execute(
                 """WITH RECURSIVE versions(id) AS (
                        SELECT n.id FROM nodes n
                         WHERE n.id = ? AND n.tenant = ? AND n.project = ?
                        UNION
-                       SELECT e.src FROM edges e
-                        JOIN versions v ON e.dst = v.id
-                        JOIN nodes n ON n.id = e.src
+                       SELECT e.src FROM edges e JOIN versions v ON e.dst = v.id
+                         JOIN nodes neighbor ON neighbor.id = e.src
+                          AND neighbor.tenant = ? AND neighbor.project = ?
                         WHERE e.type = 'supersedes'
-                          AND n.tenant = ? AND n.project = ?
                        UNION
-                       SELECT e.dst FROM edges e
-                        JOIN versions v ON e.src = v.id
-                        JOIN nodes n ON n.id = e.dst
+                       SELECT e.dst FROM edges e JOIN versions v ON e.src = v.id
+                         JOIN nodes neighbor ON neighbor.id = e.dst
+                          AND neighbor.tenant = ? AND neighbor.project = ?
                         WHERE e.type = 'supersedes'
-                          AND n.tenant = ? AND n.project = ?
                    )
                    SELECT n.id, n.event_id FROM nodes n JOIN versions v ON v.id = n.id
                     WHERE n.tenant = ? AND n.project = ?
@@ -1318,11 +1317,6 @@ class MemoryStore:
                 ),
             ).fetchall()
             ids = [str(row["id"]) for row in rows]
-            if not ids:
-                self.conn.rollback()
-                return {"forgotten": False, "deleted_count": 0, "item_ids": []}
-
-            deleted_ids: list[str] = []
             for version_id in ids:
                 row = self.conn.execute(
                     """SELECT event_id FROM nodes
@@ -1337,18 +1331,19 @@ class MemoryStore:
                     ('{"scrubbed":true}', source_event_id, ctx.tenant_id),
                 )
                 payload = {"item_id": version_id}
-                event_id, inserted = self._append(ctx, "delete", payload)
+                _event_id, inserted = self._append(ctx, "delete", payload)
                 if not inserted:
                     raise RuntimeError("Unexpected idempotency collision while forgetting memory history")
                 self._apply_delete_payload(payload)
                 deleted_ids.append(version_id)
             self.conn.commit()
-        except Exception:
+        except BaseException:
             self.conn.rollback()
             raise
 
-        # Flush the whole chain once, after its atomic commit.
-        self._checkpoint()
+        if deleted_ids:
+            # Flush the whole chain once, after its atomic commit.
+            self._checkpoint()
         return {
             "forgotten": bool(deleted_ids),
             "deleted_count": len(deleted_ids),
