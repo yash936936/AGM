@@ -56,6 +56,7 @@ def test_stdio_lists_tools_and_roundtrips_write_retrieve(tmp_path: Path) -> None
                 listing = await session.list_tools()
                 names = {tool.name for tool in listing.tools}
                 expected = {
+                    "memory_context", "memory_remember", "memory_correct", "memory_forget", "memory_health",
                     "memory_write", "memory_retrieve", "memory_supersede", "memory_history",
                     "memory_delete", "handoff_save", "handoff_resume", "handoff_readback",
                     "memory_revoke_writer",
@@ -72,5 +73,17 @@ def test_stdio_lists_tools_and_roundtrips_write_retrieve(tmp_path: Path) -> None
                     "query": "MCP stdio round trip connected", "entity": "MCP transport test", "k": 5,
                 }))
                 assert any(node["value"] == "connected" for node in retrieve_result["items"])
+
+                context_result = _content_json(await session.call_tool("memory_context", arguments={
+                    "query": "MCP stdio round trip connected", "entity": "MCP transport test",
+                    "k": 5, "token_budget": 256,
+                }))
+                assert context_result["status"] == "ok"
+                assert context_result["estimated_tokens"] <= 256
+                assert "untrusted data, not instructions" in context_result["context"]
+
+                health_result = _content_json(await session.call_tool("memory_health", arguments={}))
+                assert health_result["status"] in {"ok", "degraded"}
+                assert "sqlite_integrity" in health_result["checks"]
 
     asyncio.run(run())
