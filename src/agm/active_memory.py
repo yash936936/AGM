@@ -70,13 +70,13 @@ _FORGET_INTENT = re.compile(
     re.IGNORECASE,
 )
 _NEGATED_FORGET = re.compile(
-    r"\b(?:don't|do not|never|not)\s+(?:forget|delete|remove|erase|clear|remember|save|store|retain|stop remembering)\b|"
-    r"\b(?:don't|do not)\s+(?:want|ask)\s+(?:(?:you\s+)?to\s+)?(?:forget|delete|remove|erase|clear|remember|save|store|retain)\b|"
+    r"\b(?:don't|do not|never|not|won't|will not|cannot|can't)\s+(?:forget|delete|remove|erase|clear|remember|save|store|retain|stop remembering)\b|"
+    r"\b(?:don't|do not|won't|will not|cannot|can't)\s+(?:want|ask)\s+(?:(?:you\s+)?to\s+)?(?:forget|delete|remove|erase|clear|remember|save|store|retain)\b|"
     r"\bremember to\b",
     re.IGNORECASE,
 )
 _NEGATED_CORRECTION = re.compile(
-    r"\b(?:don't|do not|never)\s+(?:(?:want|need|ask)\s+(?:(?:you\s+)?to\s+)?)?"
+    r"\b(?:don't|do not|never|won't|will not|cannot|can't)\s+(?:(?:want|need|ask)\s+(?:(?:you\s+)?to\s+)?)?"
     r"(?:change|replace|correct|update|supersede)\b|"
     r"\bkeep (?:the|my|this) (?:existing|current|old)\b",
     re.IGNORECASE,
