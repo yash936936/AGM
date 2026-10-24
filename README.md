@@ -145,34 +145,34 @@ The sample benchmark and full-scale five-seed result are saved in `eval/results/
 
 ## Active memory loop v1
 
-The active-memory workflow adds a compact context pack and a provider-neutral controller. The intended lifecycle is **retrieve before generation → answer using untrusted evidence → apply a conservative post-turn memory decision**. The core exposes \`MemoryStore.memory_context(...)\`, \`run_active_turn(...)\`, \`ACTIVE_MEMORY_SYSTEM_PROMPT\`, and policy helpers. Five high-level MCP tools were added without renaming the nine existing tools: \`memory_context\`, \`memory_remember\`, \`memory_correct\`, \`memory_forget\`, and \`memory_health\`. Existing \`memory_history\` remains the history surface.
+The active-memory workflow adds a compact context pack and a provider-neutral controller. The intended lifecycle is **retrieve before generation → answer using untrusted evidence → apply a conservative post-turn memory decision**. The core exposes `MemoryStore.memory_context(...)`, `run_active_turn(...)`, `ACTIVE_MEMORY_SYSTEM_PROMPT`, and policy helpers. Five high-level MCP tools were added without renaming the nine existing tools: `memory_context`, `memory_remember`, `memory_correct`, `memory_forget`, and `memory_health`. Existing `memory_history` remains the history surface.
 
 Run the offline controller against your local memory database:
 
-\`\`\`bash
+```bash
 python examples/active_memory_loop.py \
   --db ./phase8-memory.db \
   --tenant phase8-demo \
   --project phase8 \
   --query "Who owns billing-api?" \
   --token-budget 1000
-\`\`\`
+```
 
-This is an offline sequencing demo: it exercises retrieval, passes the context pack to a deterministic callback, and executes the post-turn policy. It makes **no LLM request**. A provider adapter should implement a callback accepting \`(user_message, MemoryContextPack)\` and return \`ActiveTurnGeneration(answer=..., memory_decision=...)\`. The controller provides the ordering; provider-specific generation remains outside AGM's storage core.
+This is an offline sequencing demo: it exercises retrieval, passes the context pack to a deterministic callback, and executes the post-turn policy. It makes **no LLM request**. A provider adapter should implement a callback accepting `(user_message, MemoryContextPack)` and return `ActiveTurnGeneration(answer=..., memory_decision=...)`. The controller provides the ordering; provider-specific generation remains outside AGM's storage core.
 
 For the structured context pack, use explicit attribute conventions where possible:
-- Profile/preferences: \`profile\`, \`preference\`, \`communication_preference\`, \`writing_style\`, \`background\`, and related attributes.
-- Active work: \`goal\`, \`active_goal\`, \`commitment\`, \`next_step\`, \`open_task\`, and related attributes.
-- Decisions: \`decision\`, \`project_decision\`, \`technical_decision\`, or \`architecture_decision\`.
+- Profile/preferences: `profile`, `preference`, `communication_preference`, `writing_style`, `background`, and related attributes.
+- Active work: `goal`, `active_goal`, `commitment`, `next_step`, `open_task`, and related attributes.
+- Decisions: `decision`, `project_decision`, `technical_decision`, or `architecture_decision`.
 
 The context text is bounded by a transparent character-count estimate (characters/4), not a model-specific tokenizer. Each memory retains its ID, trust tier, confidence and validity metadata in the structured response. Retrieved content remains data, never instructions.
 
-The high-level remember/correct/forget operations require an evidence quote matching the current message passed to the policy. Corrections additionally require correction-intent language. Forgetting requires an explicit non-negated request and hard-deletes the target plus its connected supersede-history chain. The existing low-level \`memory_delete\` still deletes just one selected item version.
+The high-level remember/correct/forget operations require an evidence quote matching the current message passed to the policy. Corrections additionally require correction-intent language. Forgetting requires an explicit non-negated request and hard-deletes the target plus its connected supersede-history chain. The existing low-level `memory_delete` still deletes just one selected item version.
 
-**Native connector limitation:** an MCP server cannot guarantee that every message in consumer Claude or ChatGPT automatically invokes memory. The source quote and current-message fields in native MCP calls are model-supplied. The quote gate is most meaningful in \`run_active_turn\` when an application-controlled host passes the actual user message. This feature does not relax the local/loopback-only deployment rule.
+**Native connector limitation:** an MCP server cannot guarantee that every message in consumer Claude or ChatGPT automatically invokes memory. The source quote and current-message fields in native MCP calls are model-supplied. The quote gate is most meaningful in `run_active_turn` when an application-controlled host passes the actual user message. This feature does not relax the local/loopback-only deployment rule.
 
 Equivalent REST surfaces:
-\`POST /v1/memory/context\`, \`POST /v1/memory/remember\`, \`POST /v1/memory/correct\`, \`POST /v1/memory/forget\`, and \`GET /v1/memory/health\`. All use the existing API-key scopes; no new dependency was added.
+`POST /v1/memory/context`, `POST /v1/memory/remember`, `POST /v1/memory/correct`, `POST /v1/memory/forget`, and `GET /v1/memory/health`. All use the existing API-key scopes; no new dependency was added.
 
 ## Tests and smoke check
 
