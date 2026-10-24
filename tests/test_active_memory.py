@@ -706,3 +706,21 @@ def test_batch_forget_is_all_or_nothing_when_one_target_is_missing(tmp_path):
         assert store.conn.execute(
             "SELECT COUNT(*) FROM nodes WHERE id = ?", (saved.item_id,)
         ).fetchone()[0] == 1
+
+
+def test_batch_forget_deduplicates_overlapping_supersede_chains(tmp_path):
+    with MemoryStore(str(tmp_path / "forget-batch-overlap.db")) as store:
+        ctx = _ctx()
+        old = store.write(ctx, WriteItem(
+            kind="fact", entity="AGM", attribute="database", value="SQLite",
+            text="AGM uses SQLite.",
+        ))
+        new = store.write(ctx, WriteItem(
+            kind="fact", entity="AGM", attribute="database", value="PostgreSQL",
+            text="AGM uses PostgreSQL.",
+        ))
+        assert old.item_id and new.item_id
+        result = store.forget_many(ctx, [old.item_id, new.item_id, old.item_id])
+        assert result["forgotten"] is True
+        assert result["deleted_count"] == 2
+        assert set(result["item_ids"]) == {old.item_id, new.item_id}
