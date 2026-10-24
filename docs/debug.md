@@ -3,6 +3,12 @@
 > Append-only. Every completed coding task gets an entry here, even "no
 > issues found." Newest entries at top.
 
+## DBG-013 — Active Memory Loop v1 safety and report pass — 2026-10-24
+**Task:** Complete implementation review refinements and prepare for a separate test cycle.
+**Changes after DBG-012:** Added compact `MemoryContextItem` metadata so memory text appears once in the context string instead of being duplicated in each category. Tightened remember/correct actions to require key-value terms in the quoted message; corrections must resolve to the selected active fact's same entity/attribute and use target-scoped idempotency on retries. Forget checks that its quote matches the selected memory or connected version history; forgetting is now implemented as a tenant/project-scoped recursive traversal plus one atomic event-scrub/delete transaction and one WAL checkpoint. Added tests for mismatch/negative intents, unrelated target prevention, correction retry idempotency, and replay after forgetting a complete version chain. Updated system instructions and docs.
+**Validation:** **NOT RUN — intentionally deferred until the full implementation is finished.** No compile/test/smoke commands were executed. No runtime claim is made.
+**Open for later test/review:** Exercise SQLite recursive CTE and transaction behavior on Windows' SQLite version; verify context category recall and the character budget; verify all new MCP tools register; verify REST scope/error parity; verify forget replay, disk scrubbing, negative-intent and wrong-target guards; run both existing smoke clients and the full repository suite.
+
 ## DBG-012 — Active Memory Loop v1 implementation — 2026-10-24
 **Task:** Implement the ordered active-memory path: retrieve a compact context before generation, use memory as evidence while answering, and apply a conservative memory action after the turn.
 **Changes:** Added `src/agm/active_memory.py` with context assembly, category conventions, bounded context text, scoped read-only health checks, evidence-checked memory decisions, deterministic idempotency keys and the provider-neutral `run_active_turn` controller. Added `MemoryStore.memory_context`, a scoped hard-delete operation for a fact and its connected supersede-history chain, result models, REST endpoints, five new MCP tools, an offline controller example, a system prompt, and active-memory tests/docs. Legacy MCP tool names and local-only service binding remain intact.
