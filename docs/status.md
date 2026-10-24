@@ -2,6 +2,11 @@
 
 > Updated every run. Newest entry at top.
 
+## 2026-10-24 — Active Memory Loop v1 with batch forgetting; validation pending
+**Latest addition:** `memory_forget` can now accept one target or up to 100 explicitly named targets. Every requested item must match the quoted forget intent and be visible in the same tenant/project. Core deletion unions the targets' supersede histories and commits atomically; if a target is absent/out of scope, no deletion occurs. REST/MCP, tests and user-facing docs are updated. D-033 / DBG-017 record the contract.
+**Validation:** **NOT RUN.** No compile, unit, integration or smoke commands have been executed.
+**Next:** Finish static implementation review, then wait for the user's go-ahead to run the focused active-memory checks, full pytest suite, MCP/REST smoke clients and offline controller. Do not connect a native host or expose a remote endpoint before that validation.
+
 ## 2026-10-24 — Active Memory Loop v1 implementation prepared; runtime validation pending
 **Latest implementation change:** Shared core input caps now protect memory-context retrieval and post-turn mutation regardless of whether calls arrive through REST, MCP or direct library use. Added regression coverage for over-limit inputs and recorded D-032. The context-pack notice retains the canonical `untrusted data, not instructions` wording consumed by existing hosts.
 **Decision/debug log:** D-027 through D-032; DBG-016.
