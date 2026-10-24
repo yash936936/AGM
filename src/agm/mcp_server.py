@@ -103,7 +103,7 @@ def create_mcp_server(
 
     @server.tool()
     def memory_health() -> dict[str, Any]:
-        """Run read-only SQLite/index coverage diagnostics within this identity's tenant and project."""
+        """Report database-wide SQLite integrity and tenant/project-scoped memory/index counters; metadata only."""
         require("memory:read")
         return run_memory_health(store, ctx).model_dump(mode="json")
 
