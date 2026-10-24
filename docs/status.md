@@ -2,6 +2,12 @@
 
 > Updated every run. Newest entry at top.
 
+## 2026-10-24 — Active Memory Loop v1 code review refinements; tests pending
+**Final review update:** Added explicit host-operation-ID authority over any model-supplied operation ID or `WriteItem.idempotency_key`; remember/correct derive retry keys only when a stable operation ID is supplied. Added unit/API test cases for that rule, clarified D-027/D-028 idempotency wording by D-031, and updated implementation docs. Eligible contested counterparty facts are included in context only after tenant/project, temporal, status and high-stakes checks. Health wording distinguishes database-wide SQLite integrity from tenant/project-scoped memory/index counters.
+**Decisions/debug:** D-027 through D-031; DBG-015.
+**Validation:** **NOT RUN.** No compile, unit, integration or smoke test has been executed. The container cannot resolve GitHub for exporting a local patch; the feature branch is the available deliverable.
+**Next:** Integrate carefully onto the actual Windows checkout without removing local Gemini work. Then run compileall, active-memory-focused tests, full pytest, MCP/REST smoke clients and the offline controller. Do not mark complete until results are reviewed. Keep services loopback-only.
+
 ## 2026-10-24 — Active Memory Loop v1 implementation review refined; runtime testing pending
 **Current work:** The implementation is on `feature/active-memory-loop-v1`; no test commands have been run.
 **Final refinements:** Conflict context now attempts to include the opposing contested fact only when it is visible in the same tenant/project, active/contested, valid at `as_of`, and allowed by the high-stakes probation gate. Health reporting is documented accurately: SQLite integrity is database-wide; item/index counters are tenant/project-scoped. Retry idempotency now requires an explicit stable `operation_id` from a controlled host; native MCP must not invent one.
