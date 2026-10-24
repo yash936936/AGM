@@ -614,3 +614,13 @@ def test_context_text_includes_writer_and_source_span_provenance(tmp_path):
         assert "writer=active-memory-test" in pack.context
         assert f"source_episode={episode.item_id}" in pack.context
         assert "source_span=4:42" in pack.context
+
+
+def test_context_string_discloses_primary_abstention(tmp_path):
+    with MemoryStore(str(tmp_path / "context-abstention.db")) as store:
+        pack = store.memory_context(
+            _ctx(), "Find the owner of an absent service.", token_budget=256,
+        )
+        assert pack.abstain is True
+        assert "Query-specific retrieval abstained" in pack.context
+        assert "Auxiliary profile/goals/decisions do not establish an unsupported answer." in pack.context
