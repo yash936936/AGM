@@ -612,6 +612,10 @@ def apply_memory_decision(
         raise ValueError("memory decision reason must not exceed 2000 characters")
     if decision.target_item_id is not None and len(decision.target_item_id) > 200:
         raise ValueError("target item ID must not exceed 200 characters")
+    if len(decision.target_item_ids) > 100:
+        raise ValueError("at most 100 target item IDs may be forgotten in one operation")
+    if any(not item_id.strip() or len(item_id) > 200 for item_id in decision.target_item_ids):
+        raise ValueError("target item IDs must contain 1..200 characters")
     if decision.operation_id is not None and (
         not decision.operation_id.strip() or len(decision.operation_id) > 200
     ):
@@ -799,10 +803,14 @@ def apply_memory_decision(
         )
 
     if decision.action == "forget":
-        if not decision.target_item_id:
+        target_ids = list(dict.fromkeys(
+            ([decision.target_item_id] if decision.target_item_id else [])
+            + decision.target_item_ids
+        ))
+        if not target_ids:
             return MemoryActionResult(
                 status="confirmation_required",
-                message="A forget request needs a specific memory ID; nothing was changed.",
+                message="A forget request needs at least one specific memory ID; nothing was changed.",
                 evidence_verified=True,
             )
         if _NEGATED_FORGET.search(user_message) or not _FORGET_INTENT.search(user_message):
@@ -811,21 +819,32 @@ def apply_memory_decision(
                 message="The current turn does not unambiguously request forgetting; nothing was changed.",
                 evidence_verified=True,
             )
-        if not _forget_target_matches(store, ctx, decision.target_item_id, decision.evidence_quote or ""):
+        if any(
+            not _forget_target_matches(store, ctx, target_id, decision.evidence_quote or "")
+            for target_id in target_ids
+        ):
             return MemoryActionResult(
                 status="confirmation_required",
-                message="The selected memory does not clearly match the user's quoted forget request; nothing was changed.",
+                message="At least one selected memory does not clearly match the user's quoted forget request; nothing was changed.",
                 evidence_verified=True,
             )
-        result = store.forget(ctx, decision.target_item_id)
+        result = store.forget_many(ctx, target_ids)
         forgotten = bool(result["forgotten"])
+        missing_ids = result.get("missing_item_ids", [])
+        if missing_ids:
+            return MemoryActionResult(
+                status="not_found",
+                message="At least one requested memory was not found in this user's scope; no memories were changed.",
+                evidence_verified=True,
+            )
         return MemoryActionResult(
             status="forgotten" if forgotten else "not_found",
             message=(
-                f"Memory and its supersede history deleted ({result['deleted_count']} item(s))."
-                if forgotten else "The requested memory was not found in this user's scope."
+                f"Memory target(s) and connected supersede history deleted ({result['deleted_count']} item(s))."
+                if forgotten else "The requested memories were not found in this user's scope."
             ),
-            item_id=decision.target_item_id if forgotten else None,
+            item_id=target_ids[0] if len(target_ids) == 1 and forgotten else None,
+            item_ids=list(result["item_ids"]) if forgotten else [],
             deleted_count=int(result["deleted_count"]),
             evidence_verified=True,
         )
