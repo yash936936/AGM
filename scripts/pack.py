@@ -27,6 +27,16 @@ PHASE6_OVERLAY_FILES = [
 # overwriting the owner's D-021–D-023 hardening work with the older builder snapshot.
 PHASE7_OVERLAY_FILES = ["PHASE7_PATCH.diff", "PHASE7_REPORT.md"]
 
+# Phase 9 packages the active-memory context, policy, controller, and tests as an overlay.
+PHASE9_OVERLAY_FILES = [
+    "PHASE9_REPORT.md", "PHASE9_STEP1_REPORT.md", "README.md", "scripts/pack.py",
+    "docs/active_memory.md", "docs/decisions.md", "docs/debug.md", "docs/status.md",
+    "src/agm/__init__.py", "src/agm/active_memory.py",
+    "src/agm/active_memory_policy.py", "src/agm/turn_loop.py",
+    "tests/test_active_memory.py", "tests/test_active_memory_policy.py", "tests/test_turn_loop.py",
+    "eval/active_memory_simulation.py",
+]
+
 # Phase 8 remains patch-based: new diagnostics/agent/evaluation files are added
 # with a unified diff, while report/results/sample traces are separate artifacts.
 PHASE8_OVERLAY_FILES = [
@@ -62,7 +72,7 @@ OVERLAY_FILES = [
 
 
 def latest_phase() -> int:
-    for phase in (8, 7, 6, 5, 4, 3, 2, 1):
+    for phase in (9, 8, 7, 6, 5, 4, 3, 2, 1):
         if (ROOT / f"PHASE{phase}_REPORT.md").is_file():
             return phase
     raise SystemExit("A PHASEN_REPORT.md must exist before packaging")
