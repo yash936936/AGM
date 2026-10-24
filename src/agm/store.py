@@ -17,7 +17,7 @@ from .events import HybridLogicalClock, append_event, decode_payload, utc_now
 from .guard import inspect_write_item, sanitize_task_state, sanitize_value
 from .trust import is_probationary
 from .models import (
-    Ctx, DeleteResult, Node, Readback, ReadbackReport, RevokeResult, TaskState,
+    Ctx, DeleteResult, MemoryContextPack, Node, Readback, ReadbackReport, RevokeResult, TaskState,
     Packet, ResumeResult, RetrieveResult, RetrieveRoute, WriteItem, WriteResult,
 )
 
@@ -1267,7 +1267,7 @@ class MemoryStore:
         include_profile: bool = True,
         include_goals: bool = True,
         include_decisions: bool = True,
-    ):
+    ) -> MemoryContextPack:
         """Assemble a bounded, provenance-bearing context pack for one model turn."""
         from .active_memory import build_memory_context
 
