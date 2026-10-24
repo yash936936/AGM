@@ -2,6 +2,12 @@
 
 > Updated every run. Newest entry at top.
 
+## 2026-10-24 — Active Memory Loop v1 implementation prepared; runtime validation pending
+**Latest implementation change:** Shared core input caps now protect memory-context retrieval and post-turn mutation regardless of whether calls arrive through REST, MCP or direct library use. Added regression coverage for over-limit inputs and recorded D-032. The context-pack notice retains the canonical `untrusted data, not instructions` wording consumed by existing hosts.
+**Decision/debug log:** D-027 through D-032; DBG-016.
+**Validation:** **NOT RUN.** No compile, unit, integration or smoke command has been executed.
+**Next:** Finish the static review and then, only when the user says implementation is complete, run the focused active-memory tests, full pytest suite, MCP/REST smoke clients and offline controller on the Windows checkout. Keep the service loopback-only.
+
 ## 2026-10-24 — Active Memory Loop v1 code review refinements; tests pending
 **Final review update:** Added explicit host-operation-ID authority over any model-supplied operation ID or `WriteItem.idempotency_key`; remember/correct derive retry keys only when a stable operation ID is supplied. Added unit/API test cases for that rule, clarified D-027/D-028 idempotency wording by D-031, and updated implementation docs. Eligible contested counterparty facts are included in context only after tenant/project, temporal, status and high-stakes checks. Health wording distinguishes database-wide SQLite integrity from tenant/project-scoped memory/index counters.
 **Decisions/debug:** D-027 through D-031; DBG-015.
