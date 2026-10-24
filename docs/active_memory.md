@@ -52,6 +52,23 @@ writes, corrections, history calls, or deletions itself. This makes the order
 testable without depending on a provider or granting model output direct storage
 authority.
 
+## Run the offline controller example
+
+From the repository root, install the package and run the host-independent demo:
+
+```bash
+python -m pip install -e ".[dev]"
+python examples/active_memory_turn_demo.py --db ./active-memory-demo.db --tenant local-dev --project default --query "What should I work on next?" --profile-query "user preferences" --goal-query "active goals"
+```
+
+This creates/uses a local SQLite database and demonstrates retrieval-before-callback orchestration without calling an LLM. To create the clean Phase 9 source and overlay archives from a checkout, run:
+
+```bash
+python scripts/pack.py
+```
+
+The packer creates dist/agm-phase9.zip (full source snapshot without databases/cache files) and dist/agm-phase9-overlay.zip (Phase 9 change overlay).
+
 ## Implementation validation status
 
 Tests and smoke clients are intentionally not run during this implementation
