@@ -191,6 +191,7 @@ class MemoryDecision(ContractModel):
     reason: str = ""
     item: WriteItem | None = None
     target_item_id: str | None = None
+    target_item_ids: list[str] = Field(default_factory=list, max_length=100)
     evidence_quote: str | None = None
     operation_id: str | None = Field(default=None, min_length=1, max_length=200)
 
@@ -203,6 +204,7 @@ class MemoryActionResult(ContractModel):
     ]
     message: str
     item_id: str | None = None
+    item_ids: list[str] = Field(default_factory=list)
     superseded_id: str | None = None
     redactions: int = 0
     deleted_count: int = 0
