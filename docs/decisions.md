@@ -3,6 +3,12 @@
 **Why:** A per-item retention sweep could leave a partial purge after failure; source payloads from revoked writers would otherwise remain outside the materialized node set and never be considered by retention. An atomic sweep gives predictable replay behavior and applies the retention cutoff to those no-longer-searchable payloads too.
 **Affects:** `src/agm/store.py`, `src/agm/models.py`, `src/agm/__init__.py`, retention/replay tests and lifecycle docs. No additional dependency, REST path, MCP tool, or CLI command.
 
+## D-028 — Add explicit tenant/project-scoped retention purge
+**Decision:** Add `MemoryStore.expire_before(ctx, cutoff, *, include_pinned=False)` returning `ExpiryResult`. Select eligible memories by source event `created_at`, not `valid_from`; scope the sweep to the caller's tenant and project; skip pinned memories unless explicitly included. Use hard-delete semantics rather than writer revocation.
+**Why:** The M1 lifecycle definition calls for a real expiry/retention operation. The existing decay lifecycle only reports candidates and does not mutate stored data.
+**Affects:** `src/agm/models.py`, `src/agm/store.py`, `src/agm/__init__.py`, lifecycle tests and docs. No REST/MCP/CLI API or new dependency.
+
+
 # Decisions — AGM prototype
 
 > Append-only. Newest entries at top. Never edit or delete past entries — if a decision is reversed, log a new entry that supersedes it and reference the old ID.
