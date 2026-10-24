@@ -1,6 +1,6 @@
-# AGM Phase 7
+# AGM Phase 8
 
-Adaptive Graph Memory (AGM) is a local-first, model-agnostic memory layer for AI agents. Phase 1 added the event-sourced SQLite core; Phase 2 added aliases, bounded graph retrieval, contested writes, provisional trust ranking and abstention. Phase 3 added authenticated REST endpoints, nine MCP tools, API-key scopes, pre-storage secret redaction, and quarantine of instruction-like memory writes. Phase 4 adds probation checks for high-stakes retrieval, writer revocation and rollback, and replayable cross-model handoff with readback verification. Phase 5 adds a synthetic flat-versus-graph smoke evaluation, lazy decay scoring, and a read-only lifecycle dry run. Phase 6 adds a richer deterministic synthetic evaluation to compare flat, filtered-flat, and graph retrieval without replacing the original smoke test. Phase 7 diagnoses multi-hop query/evaluator alignment, catalogue-backed unknown-entity abstention, and graph traversal latency without changing D-024 thresholds or generated fact histories.
+Adaptive Graph Memory (AGM) is a local-first, model-agnostic memory layer for AI agents. Phase 1 added the event-sourced SQLite core; Phase 2 added aliases, bounded graph retrieval, contested writes, provisional trust ranking and abstention. Phase 3 added authenticated REST endpoints, nine MCP tools, API-key scopes, pre-storage secret redaction, and quarantine of instruction-like memory writes. Phase 4 adds probation checks for high-stakes retrieval, writer revocation and rollback, and replayable cross-model handoff with readback verification. Phase 5 adds a synthetic flat-versus-graph smoke evaluation, lazy decay scoring, and a read-only lifecycle dry run. Phase 6 adds a richer deterministic synthetic evaluation to compare flat, filtered-flat, and graph retrieval without replacing the original smoke test. Phase 7 diagnosed multi-hop query/evaluator alignment, catalogue-backed unknown-entity abstention, and graph traversal latency. Phase 8 investigates temporal retrieval and entity-centric ranking, adds a mixed-context sample corpus, runs a flat-versus-graph size/context matrix, and introduces a privacy-aware Memory Doctor plus an agent demo. Neither phase changes D-024 thresholds or tunes the Phase 6 generator to force a positive result.
 
 **Prototype warning:** confidence and ranking values are not calibrated. Services bind to loopback only. Do not expose the API or streamable MCP endpoint to another machine or the public internet without a separate security review.
 
@@ -107,6 +107,41 @@ python eval/synthetic_v2.py --entities 200 --episodes 2000 --seeds 5 --k 8 --emb
 ```
 
 `--seed` changes the first seed; `--seeds N` runs N consecutive seeds starting there. `--embedder st` lazily imports the optional `sentence-transformers` package and may need a model download; it is not a hard dependency. `docs/decisions.md` records the pre-declared rule before Phase 6 results. Flat wins and non-improvements must be reported; do not tune the generator after inspecting the output. The synthetic evaluation is not evidence for or against H1–H7 (D-007).
+
+
+## Phase 8 — temporal and entity-centric retrieval, benchmark matrix, Memory Doctor
+
+Phase 8 adds a 44-record sample memory corpus spanning current and corrected facts, dependencies, procedures, incident notes, and one instruction-like item that should be quarantined by the existing core guard.
+
+Create an isolated sample database and inspect the import decisions:
+
+```bash
+python scripts/ingest_phase8_sample.py --db ./phase8-memory.db --log logs/phase8-ingest.jsonl
+```
+
+Run the read-only structural audit and flat/graph diagnostic probes. The log is append-only JSONL; by default it records identifiers, hashes, metadata, score/valid-time/route/abstention details, SQL statement counts and normalized SQL shapes, plus a bounded event-payload hash tail. Add `--include-content` only when you intentionally want guard-redacted snippets in local logs.
+
+```bash
+python -m agm doctor --db ./phase8-memory.db --tenant phase8-demo --project phase8 --log logs/memory-doctor.jsonl
+```
+
+To run a retrieval-augmented agent loop without an LLM first:
+
+```bash
+python examples/phase8_agent_demo.py --db ./phase8-memory.db --tenant phase8-demo --project phase8 --mode graph --query 'Who owns billing-api?' --provider offline --log logs/phase8-agent.jsonl
+```
+
+The offline provider validates retrieval and instrumentation only; it does not simulate or claim model reasoning. For an optional real OpenAI Responses API call, install the optional SDK (`python -m pip install openai`), set `OPENAI_API_KEY` and `OPENAI_MODEL` in the local environment, then select `--provider openai`. Do not place credentials in command arguments or logs. Review the prompt and use synthetic/sample data before any real sensitive memory is sent to a model.
+
+Run the flat-versus-graph matrix over memory sizes and context densities:
+
+```bash
+python eval/phase8_benchmark.py --sizes 25 60 --contexts sparse balanced dense --seeds 0 1 --k 8
+```
+
+The committed diagnostic matrix uses sizes 12, 25, and 50 entities; sparse/balanced/dense context means 0/1/4 free-form episodes per entity; seeds 0, 1, and 2; `k=8`; the hash embedder; and the original 0.25 abstention rule. It reports family and overall accuracy, stale error, abstention correctness, p50/p95, returned items, graph expansion, ingest time, and per-query evidence/scores. This smaller matrix is exploratory and is not a replacement for D-024's five-seed three-mode decision protocol.
+
+The sample benchmark and full-scale five-seed result are saved in `eval/results/phase8-benchmark-20261024T110135.355459Z.json` and `eval/results/phase8-synthetic-200x2000-5seeds-20261024T110557.327133Z.json`. The corpus and all figures are synthetic; D-007 remains in force.
 
 ## Tests and smoke check
 

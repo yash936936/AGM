@@ -109,6 +109,59 @@ def _serve_mcp(args: argparse.Namespace) -> int:
         raise SystemExit(str(exc)) from exc
 
 
+def _doctor(args: argparse.Namespace) -> int:
+    from .diagnostics import run_doctor
+
+    ctx = Ctx(
+        tenant_id=args.tenant,
+        writer_id=args.writer,
+        tier="trusted_agent",
+        project=args.project,
+    )
+    queries = None
+    if args.query:
+        queries = [
+            {
+                "id": f"custom-{index + 1}",
+                "family": "custom",
+                "query": query,
+                "entity": args.entity,
+                "as_of": args.as_of,
+                "gold": [],
+            }
+            for index, query in enumerate(args.query)
+        ]
+    with MemoryStore(args.db) as store:
+        report = run_doctor(
+            store,
+            ctx,
+            queries=queries,
+            modes=args.mode,
+            k=args.k,
+            log_path=args.log,
+            include_content=args.include_content,
+            tail_events=args.tail_events,
+        )
+    print(f"Memory Doctor: {report['status']} (structural audit: {report['audit_status']})")
+    print(f"Scope: tenant={args.tenant}, project={args.project}")
+    print(f"Retrieval probes: {report['probe_count']}")
+    for row in report["queries"]:
+        accuracy = "n/a" if row["correctness"] is None else f"{100 * row['correctness']:.1f}%"
+        print(
+            f"  {row['mode']:5s} {row['family']:16s} {row['probe_id']}: "
+            f"correctness={accuracy}, results={row['result_count']}, "
+            f"abstain={row['harness_abstain']}, latency={row['elapsed_ms']:.2f} ms, "
+            f"SQL={row['sql_statement_count']}"
+        )
+        for diagnosis in row["diagnosis"]:
+            print(f"    DIAGNOSIS: {diagnosis}")
+    for finding in report["findings"]:
+        print(f"[{finding['severity']}] {finding['code']}: {finding['message']}")
+    print(f"Full JSONL trace: {args.log}")
+    has_errors = any(row["severity"] == "ERROR" for row in report["findings"])
+    return 1 if has_errors else 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="agm", description="Adaptive Graph Memory, Phase 5")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -132,6 +185,20 @@ def main(argv: list[str] | None = None) -> int:
     lifecycle.add_argument("--tenant", default=None, help="optional tenant filter")
     lifecycle.add_argument("--project", default=None, help="optional project filter")
 
+    doctor = subparsers.add_parser("doctor", help="audit memory consistency and trace flat/graph retrieval")
+    doctor.add_argument("--db", required=True, metavar="PATH", help="SQLite path to inspect")
+    doctor.add_argument("--tenant", required=True, help="tenant scope to inspect")
+    doctor.add_argument("--project", default="default", help="project scope (default: default)")
+    doctor.add_argument("--writer", default="memory-doctor", help="diagnostic identity")
+    doctor.add_argument("--query", action="append", help="custom query; repeat to trace multiple queries")
+    doctor.add_argument("--entity", default=None, help="optional entity scope for all custom queries")
+    doctor.add_argument("--as-of", default=None, help="optional ISO timestamp for temporal custom queries")
+    doctor.add_argument("--mode", choices=("flat", "graph"), action="append", help="retrieval mode; default runs both")
+    doctor.add_argument("--k", type=int, default=8, help="max retrieved items (default: 8)")
+    doctor.add_argument("--log", default="logs/memory-doctor.jsonl", help="append-only JSONL trace path")
+    doctor.add_argument("--include-content", action="store_true", help="include secret-redacted query/content snippets in local logs")
+    doctor.add_argument("--tail-events", type=int, default=20, help="number of recent tenant events to include (0 disables; default: 20)")
+
     mcp = subparsers.add_parser("serve-mcp", help="run the local MCP server")
     mcp.add_argument("--transport", choices=("stdio", "streamable-http"), default="stdio")
     mcp.add_argument("--db", default=None, metavar="PATH", help="SQLite path (default: AGM_DB_PATH or ./agm.db)")
@@ -151,6 +218,8 @@ def main(argv: list[str] | None = None) -> int:
         return _lifecycle(args)
     if args.command == "serve-api":
         return _serve_api(args)
+    if args.command == "doctor":
+        return _doctor(args)
     if args.command == "serve-mcp":
         if args.transport == "streamable-http":
             ensure_loopback_host(args.host)

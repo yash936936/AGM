@@ -27,6 +27,16 @@ PHASE6_OVERLAY_FILES = [
 # overwriting the owner's D-021–D-023 hardening work with the older builder snapshot.
 PHASE7_OVERLAY_FILES = ["PHASE7_PATCH.diff", "PHASE7_REPORT.md"]
 
+# Phase 8 remains patch-based: new diagnostics/agent/evaluation files are added
+# with a unified diff, while report/results/sample traces are separate artifacts.
+PHASE8_OVERLAY_FILES = [
+    "PHASE8_PATCH.diff", "PHASE8_REPORT.md",
+    "eval/results/phase8-benchmark-20261024T110135.355459Z.json",
+    "eval/results/phase8-synthetic-200x2000-5seeds-20261024T110557.327133Z.json",
+    "logs/phase8-sample-ingest.jsonl", "logs/phase8-sample-doctor.jsonl",
+    "logs/phase8-sample-agent-flat.jsonl", "logs/phase8-sample-agent-graph.jsonl",
+]
+
 # Kept complete for packaging older phases and for the full project ZIP on a checkout
 # containing the current source tree.
 OVERLAY_FILES = [
@@ -52,7 +62,7 @@ OVERLAY_FILES = [
 
 
 def latest_phase() -> int:
-    for phase in (7, 6, 5, 4, 3, 2, 1):
+    for phase in (8, 7, 6, 5, 4, 3, 2, 1):
         if (ROOT / f"PHASE{phase}_REPORT.md").is_file():
             return phase
     raise SystemExit("A PHASEN_REPORT.md must exist before packaging")
@@ -89,7 +99,9 @@ def main() -> int:
             if included(path):
                 archive.write(path, (Path("agm") / path.relative_to(ROOT)).as_posix())
 
-    if phase == 7:
+    if phase == 8:
+        overlay_files = list(PHASE8_OVERLAY_FILES)
+    elif phase == 7:
         overlay_files = list(PHASE7_OVERLAY_FILES)
         results_dir = ROOT / "eval" / "results"
         if results_dir.exists():

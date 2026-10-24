@@ -31,6 +31,10 @@ _STOP_WORDS = {
     "you", "your",
 }
 _TOKEN_RE = re.compile(r"[^\w]+", flags=re.UNICODE)
+_ENTITY_SUMMARY_RE = re.compile(
+    r"\b(what is known about|tell me about|summari[sz]e|list (?:all )?(?:facts|details)|everything about)\b",
+    flags=re.IGNORECASE,
+)
 
 
 def _minmax(value: float, values: list[float]) -> float:
@@ -475,6 +479,14 @@ def graph_retrieve(
         re.search(r"\b(dependent|dependency|dependencies|downstream|reachable)\b", query.casefold())
     )
     mentioned_ids = _mentioned_entity_ids(store.conn, ctx, query, rows)
+    target_entity_ids = set(mentioned_ids)
+    if entity is not None:
+        # `_eligible_rows` has already enforced the requested entity scope. Treat
+        # that explicit filter as an entity anchor even when the query omits its name.
+        target_entity_ids.update(
+            str(row["entity_id"]) for row in rows if row["entity_id"] is not None
+        )
+    entity_summary_query = bool(_ENTITY_SUMMARY_RE.search(query))
     # If a query names an entity that exists in this tenant/project, anchor graph
     # expansion there instead of allowing a high-scoring neighbouring fact to win
     # the single-seed budget (for example, svc-14's dependency = svc-15).
@@ -515,12 +527,34 @@ def graph_retrieve(
         frontier_ids = next_ids
 
     candidate_ids = seed_pool_ids | expansion_ids | selected_seed_ids
+    attribute_intent = _query_attribute_intent(query)
+    hop_intent = _query_hop_intent(query)
     # Candidate-specific features for all rows, including graph neighbours outside the initial top 50.
     for node_id in candidate_ids:
         if node_id not in relevance:
             relevance[node_id] = 0.0
     candidate_best_relevance = max((relevance.get(node_id, 0.0) for node_id in candidate_ids), default=0.0)
-    if candidate_best_relevance < ABSTAIN_THRESHOLD:
+    # A canonical entity mention in an entity-summary query is grounded metadata
+    # evidence. Generic wording ("what is known about X?") may have low lexical
+    # overlap with the stored fact text, so do not discard these exact entity facts
+    # solely because the language-only relevance score is below the shared threshold.
+    exact_entity_summary_evidence = bool(
+        entity_summary_query and any(
+            row["entity_id"] is not None
+            and str(row["entity_id"]) in target_entity_ids
+            and row["kind"] == "fact"
+            for row in rows
+        )
+    )
+    exact_temporal_evidence = bool(
+        as_of is not None and attribute_intent is not None and any(
+            row["entity_id"] is not None
+            and str(row["entity_id"]) in target_entity_ids
+            and row["attribute"] == attribute_intent
+            for row in rows
+        )
+    )
+    if candidate_best_relevance < ABSTAIN_THRESHOLD and not (exact_entity_summary_evidence or exact_temporal_evidence):
         return RetrieveResult(
             items=[],
             route=RetrieveRoute(
@@ -534,9 +568,7 @@ def graph_retrieve(
 
     candidate_rows = [row_by_id[node_id] for node_id in candidate_ids]
     corroboration_counts = _batch_independent_corroborations(store.conn, candidate_rows)
-    attribute_intent = _query_attribute_intent(query)
-    hop_intent = _query_hop_intent(query)
-    ranked: list[tuple[sqlite3.Row, float, str, float, int]] = []
+    ranked: list[tuple[sqlite3.Row, float, str, float, int, int, int, int]] = []
     for node_id in candidate_ids:
         row = row_by_id[node_id]
         similarity = min(1.0, max(0.0, relevance.get(node_id, 0.0)))
@@ -574,13 +606,40 @@ def graph_retrieve(
         # Relation-target facts matching an explicit answer slot (e.g. owner) at
         # the requested depth precede unrelated lexical hits. Keep the normal rank
         # score as the tie-breaker; this adds no tuned numeric score or threshold.
-        ranked.append((row, final_score, via, conf, intent_priority))
-    ranked.sort(key=lambda item: (-item[4], -item[1], str(item[0]["id"])))
+        temporal_priority = int(
+            as_of is not None
+            and row["entity_id"] is not None
+            and str(row["entity_id"]) in target_entity_ids
+            and attribute_intent is not None
+            and row["attribute"] == attribute_intent
+        )
+        # An entity-summary question asks for a set of facts on the named entity,
+        # not a globally relevant document. Put those direct facts before similar
+        # records from other entities so top-k truncation preserves entity coverage.
+        entity_priority = int(
+            entity_summary_query
+            and row["entity_id"] is not None
+            and str(row["entity_id"]) in target_entity_ids
+            and row["kind"] == "fact"
+        )
+        attribute_priority = int(
+            attribute_intent is not None
+            and row["entity_id"] is not None
+            and str(row["entity_id"]) in target_entity_ids
+            and row["attribute"] == attribute_intent
+        )
+        ranked.append((
+            row, final_score, via, conf, intent_priority,
+            temporal_priority, entity_priority, attribute_priority,
+        ))
+    ranked.sort(key=lambda item: (
+        -item[4], -item[5], -item[6], -item[7], -item[1], str(item[0]["id"]),
+    ))
     ranked = ranked[:k]
 
     now = utc_now()
     items: list[Node] = []
-    for row, score, via, confidence, _intent_priority in ranked:
+    for row, score, via, confidence, _intent_priority, _temporal_priority, _entity_priority, _attribute_priority in ranked:
         store.conn.execute(
             "UPDATE nodes SET usage_count = usage_count + 1, last_used = ? WHERE id = ?",
             (now, row["id"]),
