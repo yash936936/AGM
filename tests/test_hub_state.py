@@ -38,8 +38,9 @@ def test_session_limit_and_label_are_validated(tmp_path):
     with MemoryStore(str(tmp_path / "hub-session-validation.db")) as store:
         with pytest.raises(ValueError, match="label"):
             create_session(store.conn, _ctx(), "x" * 121)
-        with pytest.raises(ValueError, match="limit"):
-            list_sessions(store.conn, _ctx(), limit=0)
+        for invalid in (0, -1, 201, True, 1.5, "2"):
+            with pytest.raises(ValueError, match="limit"):
+                list_sessions(store.conn, _ctx(), limit=invalid)
 
 
 def test_connection_registry_is_scoped_and_stores_metadata_only(tmp_path):
@@ -94,3 +95,34 @@ def test_connection_diagnostics_fail_closed_for_unreachable_loopback(tmp_path):
         assert isinstance(result["latency_ms"], float)
         with pytest.raises(KeyError, match="connection not found"):
             probe_connection(store.conn, _ctx(tenant="foreign"), str(created["id"]))
+
+
+def test_session_and_connection_records_are_isolated_by_project_and_writer(tmp_path):
+    with MemoryStore(str(tmp_path / "hub-full-scope.db")) as store:
+        owner = _ctx()
+        other_project = _ctx(project="project-b")
+        other_writer = _ctx(writer="writer-b")
+        session = create_session(store.conn, owner, "private session")
+        connection = create_connection(
+            store.conn, owner, name="private agent", endpoint="http://127.0.0.1:8765",
+        )
+
+        assert list_sessions(store.conn, other_project) == []
+        assert list_sessions(store.conn, other_writer) == []
+        assert close_session(store.conn, other_project, session["id"]) is False
+        assert close_session(store.conn, other_writer, session["id"]) is False
+        assert list_connections(store.conn, other_project) == []
+        assert list_connections(store.conn, other_writer) == []
+        assert delete_connection(store.conn, other_project, connection["id"]) is False
+        assert delete_connection(store.conn, other_writer, connection["id"]) is False
+        assert list_sessions(store.conn, owner)[0]["status"] == "active"
+        assert list_connections(store.conn, owner)[0]["id"] == connection["id"]
+
+
+def test_connection_scopes_reject_string_instead_of_iterating_characters(tmp_path):
+    with MemoryStore(str(tmp_path / "hub-connection-scope-type.db")) as store:
+        with pytest.raises(ValueError, match="scopes"):
+            create_connection(
+                store.conn, _ctx(), name="invalid-scope-type",
+                endpoint="http://127.0.0.1:8765", scopes="memory:read",
+            )
