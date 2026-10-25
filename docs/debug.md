@@ -1,3 +1,15 @@
+## DBG-051 — Expiry rollback when final orphan scrub fails — 2026-10-25
+
+**Task:** Exercise the other late-failure boundary of `expire_before`: the sweep has already deleted an eligible live item, then fails while scrubbing a revoked-writer orphan event.
+
+**Test added:** `test_expiry_rolls_back_deletes_when_orphan_scrub_fails` uses an SQLite trigger to abort the source-payload scrub. It verifies the earlier live-item deletion is rolled back, the orphan remains absent due to the prior revocation, both source payloads and event count remain unchanged, the transaction closes, and reopen/rebuild preserves the expected state.
+
+**Merged baseline:** PR [#29](https://github.com/yash936936/AGM/pull/29), merge commit `85b8c55555866fa67ad1008b073b28429e73a798`; exact-head CI run [40219869374](https://github.com/yash936936/AGM/actions/runs/40219869374) passed all six Linux/Windows Python 3.11–3.13 jobs.
+
+**Validation:** Candidate branch `test/m0-orphan-scrub-rollback`; exact-head CI pending. Local tests NOT RUN in this remote editing environment. M0 remains IN PROGRESS; real-history evaluation and independent security/privacy review remain open.
+
+---
+
 ## DBG-050 — Multi-item expiry sweep rollback regression — 2026-10-25
 
 **Task:** Extend atomicity coverage beyond a single expired item. A one-item test can prove rollback of that item's nested mutation but cannot prove that earlier deletes in the same sweep are restored if a later delete fails.
