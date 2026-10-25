@@ -186,3 +186,40 @@ def test_admin_revoke_route_rolls_back_writer_items(tmp_path: Path) -> None:
         assert response.json() == {"revoked": True, "removed": 1}
     with MemoryStore(str(db_path)) as verify_store:
         assert verify_store.conn.execute("SELECT 1 FROM nodes WHERE id = ?", (added.item_id,)).fetchone() is None
+
+
+def test_session_routes_enforce_read_write_scopes(tmp_path: Path) -> None:
+    client, _, _ = _client(tmp_path, scopes=["memory:read"])
+    with client:
+        listed = client.get("/v1/sessions", headers=_headers())
+        assert listed.status_code == 200, listed.text
+        created = client.post("/v1/sessions", headers=_headers(), json={"label": "blocked"})
+        assert created.status_code == 403
+        closed = client.post("/v1/sessions/s_unknown/close", headers=_headers())
+        assert closed.status_code == 403
+
+
+def test_connection_routes_require_admin_scope(tmp_path: Path) -> None:
+    client, _, _ = _client(tmp_path, scopes=["memory:read", "memory:write"])
+    with client:
+        created = client.post("/v1/connections", headers=_headers(), json={
+            "name": "local-agent", "endpoint": "http://127.0.0.1:8765",
+        })
+        listed = client.get("/v1/connections", headers=_headers())
+        assert created.status_code == 403
+        assert listed.status_code == 403
+
+
+def test_admin_scope_can_create_and_list_metadata_only_connection(tmp_path: Path) -> None:
+    client, _, _ = _client(tmp_path, scopes=["admin"])
+    with client:
+        created = client.post("/v1/connections", headers=_headers(), json={
+            "name": "local-agent", "endpoint": "http://127.0.0.1:8765",
+            "scopes": ["memory:read"],
+        })
+        assert created.status_code == 200, created.text
+        listed = client.get("/v1/connections", headers=_headers())
+        assert listed.status_code == 200, listed.text
+        assert listed.json()[0]["id"] == created.json()["id"]
+        assert "token" not in str(listed.json()).lower()
+        assert "password" not in str(listed.json()).lower()

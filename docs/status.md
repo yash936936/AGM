@@ -132,3 +132,7 @@ Run [40213224547](https://github.com/yash936936/AGM/actions/runs/40213224547) co
 ## 2026-10-25 — M1 session/connection scope acceptance expanded
 
 The corrected export fixture candidate passed all six Linux/Windows Python 3.11–3.13 jobs in [CI run 40213472988](https://github.com/yash936936/AGM/actions/runs/40213472988), including hygiene, whitespace, tests and wheel inspection. Follow-on work adds project/writer isolation tests for sessions and connections and strict integer validation for session-list limits. Current implementation/test commits are `8eeca08ca33499217f6e1a3c582051576a6bd4e7` and `42e3e638d8f051893c5a70ae26daba833be2f8c0`; the subsequent documentation commits are not validation. Exact-head CI remains required. M1 stays PARTIAL / VERIFY; M0 stays IN PROGRESS.
+
+## 2026-10-25 — REST authorization acceptance added
+
+Session/connection scope changes passed all six Linux/Windows Python 3.11–3.13 jobs in [run 40214097156](https://github.com/yash936936/AGM/actions/runs/40214097156); PR #18 merged. New REST-level tests now cover session read/write permissions and admin-only connection management, including metadata-only connection listing (test commit `2085ba3b76652636152b3f4dccb627a426e7b123`). These new tests are not yet validated by exact-head CI. M0 remains IN PROGRESS and M1 remains PARTIAL / VERIFY; real-history and independent security/privacy gates remain open.
