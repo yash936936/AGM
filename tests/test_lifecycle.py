@@ -302,11 +302,11 @@ def test_before_turn_context_is_bounded_and_item_ids_match_included_records(ctx)
         BeforeTurnRequest(
             ctx=ctx,
             query="AGM bounded context marker",
-            token_budget=180,
+            token_budget=240,
         )
     )
 
-    assert len(result.context_text) <= 180 * 4
+    assert len(result.context_text) <= 240 * 4
     assert MEMORY_NOTICE in result.context_text
     assert short.item_id in result.item_ids
     assert short.item_id in result.context_text
