@@ -5,7 +5,7 @@
 - `context.md`, `docs/status.md`, `docs/debug.md`: document the acceptance gap and validation state.
 
 ## What the test proves
-The generated graph snapshot remains marked as a snapshot and has identical nodes, edges, and digest after materialized views are rebuilt from the event log.
+The generated graph snapshot remains marked as a snapshot and has identical nodes, a non-empty node-to-node `derived_from` edge, and digest after materialized views are rebuilt from the event log.
 
 ## Validation
 - Local tests: NOT RUN in this remote editing environment.
