@@ -8,6 +8,10 @@ AGM is a model-agnostic memory layer for AI agents, based on `Adaptive_Graph_Mem
 
 ## Latest implementation audit
 
+PR #31 merged at `7d44e3fdea3a7cf87319b92efd52ebcca0bb7129`. Exact-head CI run [40221085442](https://github.com/yash936936/AGM/actions/runs/40221085442) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. Graph snapshots now exclude quarantined nodes and cannot include their content through edges.
+
+Current M1 follow-up: `fix/m1-bounded-before-turn-context` routes `MemoryLifecycle.before_turn()` through the shared token-budgeted context packer and adds strict limits validation. Exact-head CI pending. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY until the full acceptance matrix is reviewed. Local Windows smoke clients, held-out real-history evaluation, and independent security/privacy review are still not established here.
+
 PR #30 merged at `409e5136b5af626b14349417ccdc7a2b8bc6c209`. Exact-head CI run [40220628800](https://github.com/yash936936/AGM/actions/runs/40220628800) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. Its trigger is scoped to the revoked orphan source event, proving failure occurs in the final orphan-scrub phase after an earlier live-item delete; the full sweep rolls back.
 
 Current M1 follow-up: branch `fix/m1-snapshot-quarantine-filter` prevents graph snapshots from exposing quarantined nodes and adds a regression test. Exact-head CI pending. Local tests are not run in this remote editing environment. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY until its complete acceptance matrix is reviewed. Held-out consented real-history evaluation remains NOT RUN and independent security/privacy review remains NOT ESTABLISHED.

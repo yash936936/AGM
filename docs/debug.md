@@ -1,3 +1,13 @@
+## DBG-053 — Bound the lifecycle before-turn memory context — 2026-10-25
+
+**Finding:** `MemoryLifecycle.before_turn()` previously formatted all retrieved nodes into `context_text` without a character/token budget, despite the M1 context contract requiring bounded evidence. Its `top_k` validation also accepted booleans and non-integer values until deeper layers handled them.
+
+**Change:** Reuse `active_memory.prepare_turn_context()` as the single budgeted renderer; add `token_budget` to `BeforeTurnRequest`; strictly validate positive integer limits; and add tests for budget enforcement, omission of an oversized record, and exact correspondence between returned IDs and context contents.
+
+**Validation:** Branch `fix/m1-bounded-before-turn-context`; exact-head CI pending. Local tests NOT RUN in this remote editing environment. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY.
+
+---
+
 ## DBG-052 — Quarantined content must not appear in graph snapshots — 2026-10-25
 
 **Finding:** `graph_snapshot()` scoped nodes by tenant/project but did not filter `status='quarantined'`. This could expose instruction-like content that ordinary retrieval and Obsidian export intentionally suppress.
