@@ -1,3 +1,13 @@
+## 2026-10-25 — Benchmark runner merged; operation and load metrics extended
+
+**Merged:** [PR #13](https://github.com/yash936936/AGM/pull/13) added paired flat-vs-graph evaluation. [PR #14](https://github.com/yash936936/AGM/pull/14) added operation-level timings and removed the input dataset filename from aggregate output.
+
+**Current increment:** `work/benchmark-rss-concurrency` adds a best-effort cross-platform process peak RSS metric and opt-in concurrent retrieval load measurements (p50/p95/p99, throughput, errors, elapsed time). The report protocol advances to `paired_flat_vs_graph_v3`.
+
+**Verification:** PR #14 exact-head GitHub Actions passed all six Linux/Windows Python 3.11–3.13 jobs in [run 40210191011](https://github.com/yash936936/AGM/actions/runs/40210191011). The current increment still requires its own exact-head CI.
+
+**Still blocked:** No consented, de-identified held-out dataset was supplied, so real-history results remain NOT RUN. Independent security/privacy review remains NOT ESTABLISHED. A standalone keyword baseline remains NOT RUN. Do not claim production readiness.
+
 ## 2026-10-25 — Paired retrieval benchmark runner merged; operation metrics follow-up in progress
 
 **PR:** [#13](https://github.com/yash936936/AGM/pull/13), merged. Follow-up branch: `work/benchmark-operation-metrics`.
