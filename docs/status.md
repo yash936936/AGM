@@ -1,3 +1,15 @@
+## 2026-10-25 — M0 orphan-scrub failure rollback candidate
+
+**Branch:** `test/m0-orphan-scrub-rollback`.
+
+**Coverage added:** The expiry sweep deletes an aged live item and then encounters a forced SQLite trigger failure while scrubbing an aged revoked-writer orphan payload. The regression checks that the earlier live-item deletion, both source payloads, event count, and transaction state are rolled back; reopening and rebuilding views must preserve the live item and keep the revoked orphan absent.
+
+**Merged baseline:** PR [#29](https://github.com/yash936936/AGM/pull/29), merge commit `85b8c55555866fa67ad1008b073b28429e73a798`; exact-head CI run [40219869374](https://github.com/yash936936/AGM/actions/runs/40219869374) passed all six Linux/Windows Python 3.11–3.13 jobs.
+
+**Validation:** New candidate CI pending; local tests NOT RUN in this remote editing environment. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY; held-out real-history evaluation and independent security/privacy review remain open.
+
+---
+
 ## 2026-10-25 — Multi-item expiry sweep atomicity regression in review
 
 **Candidate branch:** `test/m0-multi-item-expiry-rollback`.

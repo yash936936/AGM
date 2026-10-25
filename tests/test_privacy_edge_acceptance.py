@@ -364,3 +364,99 @@ def test_expiry_rolls_back_prior_items_when_later_nested_delete_fails(tmp_path, 
         for marker in markers:
             texts = _texts(reopened, ctx, marker)
             assert any(marker in text for text in texts), texts
+
+
+
+def test_expiry_rolls_back_deletes_when_orphan_scrub_fails(tmp_path):
+    import sqlite3
+
+    import pytest
+
+    path = str(tmp_path / "expiry-orphan-scrub-rollback.db")
+    owner = Ctx(
+        tenant_id="expiry-scrub-rollback-tenant",
+        writer_id="expiry-scrub-rollback-owner",
+        tier="human_verified",
+        project="expiry-scrub-rollback-project",
+    )
+    revoked_writer = Ctx(
+        tenant_id=owner.tenant_id,
+        writer_id="expiry-scrub-rollback-revoked",
+        tier="human_verified",
+        project=owner.project,
+    )
+    live_marker = "expiry_orphan_scrub_rollback_live_4a72"
+    orphan_marker = "expiry_orphan_scrub_rollback_orphan_7c19"
+    cutoff = "2025-01-01T00:00:00+00:00"
+
+    with MemoryStore(path) as store:
+        live = _write_marker(store, owner, live_marker)
+        orphan = _write_marker(store, revoked_writer, orphan_marker)
+        source_ids = {}
+        for item in (live, orphan):
+            source_ids[item.item_id] = store.conn.execute(
+                "SELECT event_id FROM nodes WHERE id = ?", (item.item_id,)
+            ).fetchone()["event_id"]
+            store.conn.execute(
+                "UPDATE events SET created_at = ? WHERE id = ?",
+                ("2024-12-31T23:59:59+00:00", source_ids[item.item_id]),
+            )
+        store.conn.commit()
+
+        revoked = store.revoke_writer(revoked_writer, revoked_writer.writer_id)
+        assert revoked.revoked
+        assert store.conn.execute(
+            "SELECT COUNT(*) FROM nodes WHERE id = ?", (orphan.item_id,)
+        ).fetchone()[0] == 0
+
+        original_live_payload = store.conn.execute(
+            "SELECT payload FROM events WHERE id = ?", (source_ids[live.item_id],)
+        ).fetchone()["payload"]
+        original_orphan_payload = store.conn.execute(
+            "SELECT payload FROM events WHERE id = ?", (source_ids[orphan.item_id],)
+        ).fetchone()["payload"]
+        original_event_count = store.conn.execute(
+            "SELECT COUNT(*) FROM events"
+        ).fetchone()[0]
+
+        # Force the failure in the final orphan-scrub phase, after the sweep
+        # has already run its nested delete for the live item.
+        # Scope the trigger to the revoked orphan's source event. The live
+        # item's own delete scrubs its source payload earlier in the sweep.
+        orphan_event_id = source_ids[orphan.item_id]
+        store.conn.execute(
+            f"""CREATE TRIGGER fail_expiry_orphan_scrub
+                BEFORE UPDATE OF payload ON events
+                WHEN OLD.id = {int(orphan_event_id)}
+                 AND NEW.payload = '{{"scrubbed":true}}'
+                BEGIN SELECT RAISE(ABORT, 'injected orphan scrub failure'); END"""
+        )
+        store.conn.commit()
+
+        with pytest.raises(sqlite3.IntegrityError, match="injected orphan scrub failure"):
+            store.expire_before(owner, cutoff)
+
+        assert store.conn.execute(
+            "SELECT status FROM nodes WHERE id = ?", (live.item_id,)
+        ).fetchone()["status"] == "active"
+        assert store.conn.execute(
+            "SELECT COUNT(*) FROM nodes WHERE id = ?", (orphan.item_id,)
+        ).fetchone()[0] == 0
+        assert store.conn.execute(
+            "SELECT payload FROM events WHERE id = ?", (source_ids[live.item_id],)
+        ).fetchone()["payload"] == original_live_payload
+        assert store.conn.execute(
+            "SELECT payload FROM events WHERE id = ?", (source_ids[orphan.item_id],)
+        ).fetchone()["payload"] == original_orphan_payload
+        assert store.conn.execute(
+            "SELECT COUNT(*) FROM events"
+        ).fetchone()[0] == original_event_count
+        assert not store.conn.in_transaction
+
+        store.conn.execute("DROP TRIGGER fail_expiry_orphan_scrub")
+        store.conn.commit()
+
+    with MemoryStore(path) as reopened:
+        reopened.rebuild_views()
+        assert any(live_marker in text for text in _texts(reopened, owner, live_marker))
+        assert not any(orphan_marker in text for text in _texts(reopened, owner, orphan_marker))
