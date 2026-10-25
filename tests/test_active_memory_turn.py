@@ -52,6 +52,38 @@ def test_execution_requires_authorization_scope_and_confirmation(store, ctx):
     assert store.conn.execute("SELECT COUNT(*) FROM events").fetchone()[0] == 0
 
 
+def test_action_specific_scopes_and_history_does_not_require_mutation_confirmation(store, ctx):
+    proposal = MemoryProposal(action="write", evidence_quote="I prefer Python", entity="user", attribute="preference", value="Python")
+    with pytest.raises(PermissionError, match="memory:write"):
+        execute_authorized_memory_proposal(
+            store, ctx, proposal, current_user_message="I prefer Python",
+            scopes=frozenset({"memory:read"}), authorized=True, confirmed=True,
+        )
+
+    stored = store.write(ctx, WriteItem(kind="fact", entity="user", attribute="editor", value="Vim", text="My editor is Vim"))
+    history_proposal = MemoryProposal(action="history", entity="user", attribute="editor")
+    with pytest.raises(PermissionError, match="memory:read"):
+        execute_authorized_memory_proposal(
+            store, ctx, history_proposal, current_user_message="What did I tell you about my editor?",
+            scopes=frozenset({"memory:write"}), authorized=True,
+        )
+    history = execute_authorized_memory_proposal(
+        store, ctx, history_proposal, current_user_message="What did I tell you about my editor?",
+        scopes=frozenset({"memory:read"}), authorized=True, confirmed=False,
+    )
+    assert any(node.id == stored.item_id for node in history)
+
+
+def test_executor_rechecks_current_message_policy_before_mutating(store, ctx):
+    proposal = MemoryProposal(action="write", evidence_quote="I prefer Python", entity="user", attribute="preference", value="Python")
+    with pytest.raises(ValueError, match="Proposal rejected"):
+        execute_authorized_memory_proposal(
+            store, ctx, proposal, current_user_message="Tell me a joke",
+            scopes=frozenset({"memory:write"}), authorized=True, confirmed=True,
+        )
+    assert store.conn.execute("SELECT COUNT(*) FROM events").fetchone()[0] == 0
+
+
 def test_authorized_write_correction_history_delete_survive_replay_and_reopen(tmp_path, ctx):
     db = str(tmp_path / "authorized-lifecycle.db")
     scopes = frozenset({"memory:write", "memory:read", "memory:delete"})
