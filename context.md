@@ -73,3 +73,8 @@ PR #19's exact-head CI passed all six matrix jobs and it was merged. The next ac
 ## Latest validated candidate — 2026-10-25
 
 PR #20 was merged at `d4eff63b74c0ed37cdf52c1b71c7b951a26d4547` after exact-head CI run [40214773052](https://github.com/yash936936/AGM/actions/runs/40214773052) passed all six Linux/Windows Python 3.11–3.13 jobs. The added REST identity-isolation and session-list query validation tests are validated for that commit. Continue with the consolidated remaining M0/M1 code audit, but preserve the release blockers: held-out real-history evaluation is NOT RUN and independent security/privacy review is NOT ESTABLISHED. Never label AGM production-ready while those gates are open.
+## Current candidate — consolidated M1 timeline boundary fix
+
+Branch `fix/m1-timeline-project-limit` addresses a newly identified local-hub timeline bug: the SQL query applied its tenant-wide LIMIT before filtering project scope, so a busy sibling project could starve the requested project's timeline. The query now applies project filtering before LIMIT, preserving the legacy-event fallback rule for default-project events. A regression test creates eight newer sibling-project events and asserts the requested project's event remains visible at limit=1.
+
+This candidate is not yet accepted: local execution is unavailable in this environment, and exact-head CI/package/hygiene evidence must be checked before merge. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY. Held-out consented real-history evaluation remains NOT RUN and independent security/privacy review remains NOT ESTABLISHED.
