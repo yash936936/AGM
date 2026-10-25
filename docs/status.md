@@ -1,3 +1,15 @@
+## 2026-10-25 — fast-track audit and exact-head CI blocker
+
+**Review branch:** `debug/revocation-replay-fasttrack-review`; public `main` was not changed by this review. Baseline main head: `fb732d2e49bc99205cd14964a9d0ba01163bfbb0`.
+
+**ZIP disposition:** The ZIP is a partial plan/test overlay whose assumptions conflict with the current roadmap and decision log. It was not applied wholesale. The repo-aligned plan is `prompts/fasttrack_debug_plan_revised.md` on the review branch.
+
+**Highest-priority issue:** Main's latest Actions run [40189884890](https://github.com/yash936936/AGM/actions/runs/40189884890) fails on Python 3.11, 3.12 and 3.13. The failing cutoff-revocation test shows an item reappearing after database reopen and `rebuild_views()`. All three jobs reported `1 failed, 189 passed, 1 warning`; hygiene and whitespace checks passed. This is still unresolved and is the first coding gate.
+
+**Verification actually performed:** Reviewed current repository entry point, agent rules, roadmap, status, decisions, debug log, store implementation, acceptance test, and CI job output remotely. Created review branch and committed the revised plan plus this audit log. No local code/test execution was available here. Local Windows tests, smoke clients, evaluation, packaging, and final archive inspection are NOT RUN.
+
+**Next:** Fix the revocation replay regression with the smallest contract-preserving change, then validate the retention implementation against D-028/D-029 and audit actual M0 gaps. Build M1 features only after a source/test inventory and scope decision.
+
 ## 2026-10-25 — M1 end-to-end mutation benchmark cases added; release gates remain open
 **Branch:** work/m0-m1-completion. Public main remains unchanged.
 
