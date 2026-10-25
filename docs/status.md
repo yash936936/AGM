@@ -1,3 +1,13 @@
+## 2026-10-25 — M0 retention orphan-scrub scope acceptance merged
+
+**Merged:** PR [#26](https://github.com/yash936936/AGM/pull/26), merge commit `f68aa2878e662ee7cb46099612aef27d60cfb4d1`.
+
+**Validation:** Exact-head CI run [40217991980](https://github.com/yash936936/AGM/actions/runs/40217991980) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. The regression covers tenant/project scope for orphan source-payload scrubbing after writer revocation, idempotent repeated expiry, and isolation after reopen/rebuild. Local tests were not run in this remote editing environment.
+
+**Remaining gates:** M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY. Held-out consented real-history evaluation is NOT RUN and independent security/privacy review is NOT ESTABLISHED.
+
+---
+
 ## 2026-10-25 — M0 retention orphan-scrub scope acceptance in review
 
 **Candidate branch:** `test/m0-retention-orphan-scope`.
