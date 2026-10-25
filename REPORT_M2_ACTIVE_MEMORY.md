@@ -14,9 +14,10 @@
 ## Validation evidence
 
 - Current candidate commit `d1717bf5e33442c0937a90ab09ae1fe95350f3ac`: GitHub Actions run [40228560284](https://github.com/yash936936/AGM/actions/runs/40228560284) completed successfully across all six Ubuntu/Windows Python 3.11–3.13 jobs.
+- Follow-up guardrail tests merged in PR #47 at `4641796ef1a7ac6b3dfbac6abb33e04c63fb2f70`. Exact-head CI run [40229139385](https://github.com/yash936936/AGM/actions/runs/40229139385) passed all six Ubuntu/Windows Python 3.11–3.13 jobs, including tests, REST/MCP smoke clients, hygiene, whitespace, and package inspection.
 - The successful run included the full test suite, repository hygiene, patch whitespace, REST integration smoke client, MCP fresh-session smoke client, and wheel/package inspection.
 - Local focused pytest was not run because cloning the repository failed due to unavailable GitHub DNS/network access in that environment. CI is the available test evidence.
-- Library/REST/MCP execution parity for the newly added proposal-execution seam remains **NOT VERIFIED**. The new seam is currently library-only; REST and MCP still expose their existing direct store operations. Do not interpret passing adapter smoke tests as parity coverage for proposal policy, host confirmation, or the new executor.
+- Decision D-037 explicitly defines the new proposal executor as **library-only** for this iteration. REST and MCP retain their frozen direct-store contracts; their passing smoke tests do not prove parity for proposal policy, host confirmation, or the new executor. Exposing the executor through either adapter requires a separate contract decision and cross-surface tests.
 
 ## Acceptance checklist
 
@@ -28,7 +29,7 @@
 - [x] Test authored for cross-tenant isolation.
 - [x] Current-head full test suite and six-job CI matrix pass.
 - [x] Current-head REST/MCP smoke clients, hygiene, whitespace, and package inspection pass.
-- [ ] Library/REST/MCP execution parity is tested, or the library-only boundary is formally accepted.
+- [x] Library-only boundary is formally documented in D-037; REST/MCP proposal-execution parity is intentionally not claimed.
 - [ ] Code review accepts the authorization contract and test evidence.
 
 ## Limitations and release gates
