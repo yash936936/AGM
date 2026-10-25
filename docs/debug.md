@@ -1,3 +1,15 @@
+## DBG-062 — M2 active-turn orchestration candidate — 2026-10-26
+
+**Implementation:** Added `src/agm/active_memory_turn.py` with `begin_active_memory_turn()` and `review_active_memory_proposals()`. Preparation delegates to existing bounded, tenant-scoped context retrieval. Proposal review delegates to the current policy evaluator and returns eligible and rejected decisions separately. No store is passed to proposal review, so it cannot persist mutations.
+
+**Tests added (NOT RUN):** `test_begin_turn_prepares_context_without_mutating_event_log`, `test_review_separates_eligible_proposals_from_rejected_ones`, `test_review_does_not_need_store_and_cannot_mutate_it`, and `test_begin_turn_rejects_invalid_context_budget`.
+
+**Validation:** Focused pytest NOT RUN; full pytest NOT RUN; REST smoke NOT RUN; MCP smoke NOT RUN; hygiene/whitespace/package inspection NOT RUN; exact-head CI pending.
+
+**Limitations:** This is an additive library orchestration seam, not autonomous execution. Host authorization and existing scoped APIs remain mandatory. M2 is not accepted. All three external release gates remain OPEN / PENDING.
+
+---
+
 ## DBG-061 — M2 kickoff and external release gates marked pending — 2026-10-26
 
 **Documentation change:** Marked held-out real-history evaluation, independent security/privacy review, and third-party host integration **OPEN / PENDING**, with the evidence required to close each gate. Started M2 planning in `docs/acceptance/m2_active_memory_execution_brief.md`.
