@@ -1,3 +1,13 @@
+## 2026-10-25 — M0 retention orphan-scrub scope acceptance in review
+
+**Candidate branch:** `test/m0-retention-orphan-scope`.
+
+**Coverage added:** Create aged source events in the target tenant/project, a sibling project, and a sibling tenant; revoke the target writer to create an orphan source event; run expiry twice; assert only the target project source payload is scrubbed and the decision survives view rebuild/reopen. The regression uses synthetic marker strings only.
+
+**Validation:** NOT RUN locally in this remote editing environment. Exact-head Linux/Windows Python 3.11–3.13 CI, package inspection, repository hygiene, and whitespace checks are required before acceptance. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY. Held-out real-history evaluation remains NOT RUN and independent security/privacy review remains NOT ESTABLISHED.
+
+---
+
 ## 2026-10-25 — Connection validation merged; post-merge test cleanup in review
 
 **Merged:** PR [#24](https://github.com/yash936936/AGM/pull/24), merge commit `571edd5082b10bfcce169d4e3fddddedee1e8aeb`. Exact-head CI run [40216605734](https://github.com/yash936936/AGM/actions/runs/40216605734) passed all six Linux/Windows Python 3.11–3.13 jobs.

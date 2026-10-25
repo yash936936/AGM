@@ -8,9 +8,9 @@ AGM is a model-agnostic memory layer for AI agents, based on `Adaptive_Graph_Mem
 
 ## Latest implementation audit
 
-PR #25 merged at `42632cc6a6a4490c29270f92b1b84b91e5b5746d`. Its exact-head GitHub Actions run [40217157531](https://github.com/yash936936/AGM/actions/runs/40217157531) passed all six Ubuntu/Windows Python 3.11–3.13 jobs, including tests, repository hygiene, patch whitespace, and wheel/package inspection. PR #25 removes duplicate parameterized connection scope/timeout test definitions while preserving the cases. Local tests were not run in this remote editing environment.
+PR #25 merged at `42632cc6a6a4490c29270f92b1b84b91e5b5746d`; exact-head CI run [40217157531](https://github.com/yash936936/AGM/actions/runs/40217157531) passed all six Ubuntu/Windows Python 3.11–3.13 jobs, including tests, repository hygiene, patch whitespace, and wheel/package inspection. The duplicate connection-validation test definitions were removed while retaining their cases. Local tests were not run in this remote editing environment.
 
-PR #23 merged the revoked-pinned retention fix, and PR #24 merged strict connection-scope and diagnostic-timeout validation; both passed their six-job exact-head CI matrices. M0 remains IN PROGRESS and M1 remains PARTIAL / VERIFY. Held-out consented real-history evaluation is NOT RUN, and independent security/privacy review is NOT ESTABLISHED. Do not claim production readiness while those release gates remain open.
+PR #23's revoked-pinned retention fix and PR #24's strict connection-scope/timeout validation also passed their six-job exact-head CI matrices. Current audit focus: M0 retention orphan-scrub isolation after writer revocation and replay. The new acceptance test is pending exact-head CI. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY. Held-out consented real-history evaluation is NOT RUN and independent security/privacy review is NOT ESTABLISHED.
 ## Roles
 
 - **Supervisor:** owns the docs, frozen contracts, phase briefs and code review.
