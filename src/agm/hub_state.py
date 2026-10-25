@@ -72,7 +72,7 @@ def create_session(conn, ctx: Ctx, label: str = "") -> dict[str, str]:
         """INSERT INTO agm_sessions
            (id, tenant, project, writer_id, label, status, created_at, updated_at, closed_at)
            VALUES (?, ?, ?, ?, ?, 'active', ?, ?, NULL)""",
-        (session_id, *_scope(ctx)[:1], ctx.project, ctx.writer_id, safe_label, now, now, None),
+        (session_id, ctx.tenant_id, ctx.project, ctx.writer_id, safe_label, now, now),
     )
     conn.commit()
     return {"id": session_id, "label": safe_label, "status": "active", "created_at": now, "updated_at": now}
