@@ -6,6 +6,7 @@ bearer tokens. REST health probes are restricted to loopback endpoints.
 from __future__ import annotations
 
 import json
+import math
 import socket
 import time
 import urllib.error
@@ -141,7 +142,14 @@ def create_connection(
     if not safe_name or len(safe_name) > 100:
         raise ValueError("connection name must contain 1 to 100 characters")
     safe_endpoint = _validate_loopback_endpoint(endpoint)
-    requested_scopes = sorted(set(scopes or ["memory:read"]))
+    if scopes is None:
+        requested_scopes = ["memory:read"]
+    elif not isinstance(scopes, list) or not scopes or any(
+        not isinstance(scope, str) for scope in scopes
+    ):
+        raise ValueError("connection scopes must be a non-empty list of strings")
+    else:
+        requested_scopes = sorted(set(scopes))
     allowed = {"memory:read", "memory:write", "memory:delete"}
     if not requested_scopes or any(scope not in allowed for scope in requested_scopes):
         raise ValueError("connection scopes must be a non-empty subset of memory:read/write/delete")
@@ -182,6 +190,8 @@ def list_connections(conn, ctx: Ctx) -> list[dict[str, object]]:
 
 
 def test_connection(conn, ctx: Ctx, connection_id: str, *, timeout: float = 1.5) -> dict[str, object]:
+    if isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or not math.isfinite(timeout) or timeout <= 0:
+        raise ValueError("timeout must be a finite positive number")
     ensure_hub_schema(conn)
     row = conn.execute(
         """SELECT endpoint FROM agm_connections
