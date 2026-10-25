@@ -1,3 +1,13 @@
+## DBG-056 — Verify graph snapshot and edge reproducibility after view rebuild — 2026-10-26
+
+**Finding:** Existing local-hub tests checked repeated snapshot determinism but not equivalence after `rebuild_views()`. Initial fixture lacked a node-to-node edge, so equality alone would not verify edge replay.
+
+**Change:** Add a `derived_from` edge by attaching a fact to an existing episode with a source span; assert the edge is present before and after view rebuild and that the full snapshot including digest is unchanged.
+
+**Validation:** Initial CI run [40224342633](https://github.com/yash936936/AGM/actions/runs/40224342633) passed all six jobs on the pre-review-strengthening head. Latest-head CI pending. Local tests NOT RUN. M1 remains PARTIAL / VERIFY.
+
+---
+
 ## DBG-056 — Verify graph snapshot reproducibility after view rebuild — 2026-10-26
 
 **Finding:** Existing local-hub tests checked repeated snapshot determinism but not whether a snapshot remains identical after rebuilding materialized views from the event log, an explicit M1 acceptance requirement.
