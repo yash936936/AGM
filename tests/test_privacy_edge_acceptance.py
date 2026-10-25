@@ -260,13 +260,22 @@ def test_expiry_rolls_back_entire_sweep_when_nested_delete_fails(tmp_path, monke
             "SELECT COUNT(*) FROM events"
         ).fetchone()[0]
 
-        def fail_delete(_payload):
-            raise RuntimeError("injected nested delete failure")
+        original_apply_delete = store._apply_delete_payload
+        applied_payloads = []
 
-        monkeypatch.setattr(store, "_apply_delete_payload", fail_delete)
-        with pytest.raises(RuntimeError, match="injected nested delete failure"):
+        def apply_then_fail(payload):
+            # Let the real handler mutate the derived views, then fail inside
+            # the surrounding expiry transaction to exercise rollback after
+            # a partial nested mutation.
+            original_apply_delete(payload)
+            applied_payloads.append(payload)
+            raise RuntimeError("injected post-mutation delete failure")
+
+        monkeypatch.setattr(store, "_apply_delete_payload", apply_then_fail)
+        with pytest.raises(RuntimeError, match="injected post-mutation delete failure"):
             store.expire_before(ctx, cutoff)
 
+        assert applied_payloads, "failure must occur after the real delete handler mutates views"
         assert store.conn.execute(
             "SELECT payload FROM events WHERE id = ?", (source_event_id,)
         ).fetchone()["payload"] == original_payload
