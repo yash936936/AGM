@@ -29,11 +29,14 @@
 
 **Next:** implement and test remaining M0 gaps, then update the acceptance matrix with evidence tied to the resulting candidate commit. Do not merge or claim production readiness while mandatory gates are open.
 
-## 2026-10-25 — Revocation replay cutoff acceptance
-**Branch:** `fix/revocation-replay-cutoff-acceptance`. Pull request: https://github.com/yash936936/AGM/pull/7. Public `main` is unchanged.
+## 2026-10-25 — Revocation replay cutoff regression
 
-**Change:** Added a replay pass that reapplies persisted `revoke_writer` tombstones after source-event replay, plus edge acceptance tests for cutoff revocation across reopen/rebuild and tenant isolation for deletion/revocation.
+**Original PR:** https://github.com/yash936936/AGM/pull/7 was merged despite failing acceptance CI. This is recorded as a process error; do not infer correctness from the merge.
 
-**Validation:** NOT RUN against this PR branch. The user's local focused test reproduced a regression before the patch: a post-cutoff node was absent live but reappeared after `rebuild_views()`. A malformed downloaded diff prevented the subsequent local test run. Run `python -m pytest -q tests/test_privacy_edge_acceptance.py`, then `python -m pytest -q` and `git diff --check` before merge.
+**Failure evidence:** GitHub Actions run 40188540997 failed on Python 3.11, 3.12 and 3.13. The cutoff test found that a post-cutoff node reappeared after reopen/rebuild. The original replay-pass change did not resolve it.
 
-**Release status:** This PR is not verified or production-ready until the focused and full test suites pass. Do not merge based on the patch alone.
+**Corrective branch:** `fix/revocation-replay-corrective`, latest candidate commit `4001f746d62d70a0062f8a5ac9992d4003e47c00`. The candidate enforces stored tombstone IDs after replay and also re-derives matching source nodes from each revocation event's tenant, writer and `since` cutoff. This is a candidate fix, not yet validated.
+
+**Validation:** NOT RUN at this candidate head. Required next: focused edge acceptance tests, full pytest suite, `git diff --check`, and CI on the exact branch head. Do not merge this corrective branch or claim the issue fixed until all pass.
+
+**Release status:** Revocation replay correctness remains unresolved; production readiness is not established.

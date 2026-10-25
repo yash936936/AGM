@@ -1315,10 +1315,39 @@ class MemoryStore:
         revoke_rows = self.conn.execute(
             "SELECT * FROM events WHERE type = 'revoke_writer' ORDER BY id ASC"
         ).fetchall()
+        revoked_node_ids: set[str] = set()
         for revoke_row in revoke_rows:
             revoke_payload = decode_payload(revoke_row)
-            if not revoke_payload.get("scrubbed"):
-                self._apply_revoke_payload(revoke_payload)
+            if revoke_payload.get("scrubbed"):
+                continue
+            self._apply_revoke_payload(revoke_payload)
+            revoked_node_ids.update(str(node_id) for node_id in revoke_payload.get("node_ids", []))
+
+            # Re-derive the cutoff from the immutable revocation contract as well
+            # as its stored IDs. This protects replay if a source event was
+            # materialized under an ID that was absent from an older tombstone.
+            tenant_id = str(revoke_payload.get("tenant_id", ""))
+            writer_id = str(revoke_payload.get("writer_id", ""))
+            since = revoke_payload.get("since")
+            since_key = _iso_key(str(since)) if since is not None else None
+            source_rows = self.conn.execute(
+                """SELECT n.id, ev.created_at FROM nodes n
+                   JOIN events ev ON ev.id = n.event_id
+                   WHERE n.tenant = ? AND n.writer_id = ?""",
+                (tenant_id, writer_id),
+            ).fetchall()
+            for source_row in source_rows:
+                if since_key is None or _iso_key(str(source_row["created_at"])) >= since_key:
+                    revoked_node_ids.add(str(source_row["id"]))
+
+        # Revocation is a final-state constraint on the materialized view. Apply
+        # the collected tombstones after all event handlers have run so no
+        # replayed source/derived event can reintroduce a revoked node.
+        for node_id in revoked_node_ids:
+            self.conn.execute("DELETE FROM nodes_fts WHERE node_id = ?", (node_id,))
+            self.conn.execute("DELETE FROM embeddings WHERE node_id = ?", (node_id,))
+            self.conn.execute("DELETE FROM edges WHERE src = ? OR dst = ?", (node_id, node_id))
+            self.conn.execute("DELETE FROM nodes WHERE id = ?", (node_id,))
 
     @_atomic_mutation(checkpoint=True)
     def revoke_writer(self, ctx: Ctx, writer_id: str, since: str | None = None) -> RevokeResult:
