@@ -1,3 +1,22 @@
+## 2026-10-26 — M1 lifecycle context review follow-up in progress
+
+**Finding:** PR #32's bounded before-turn lifecycle change passed exact-head CI run [40221564276](https://github.com/yash936936/AGM/actions/runs/40221564276), all six Ubuntu/Windows Python 3.11–3.13 jobs. Review then identified that adding `token_budget` in the middle of `BeforeTurnRequest` shifted existing positional arguments, shared context rendering dropped source provenance, and raw memory text could forge a closing memory-record delimiter.
+
+**Candidate:** `fix/m1-lifecycle-context-review-findings` appends `token_budget` to preserve the old positional signature, includes provenance in the shared renderer, flattens newlines and escapes angle-bracket delimiters in untrusted values, and adds regression tests.
+
+**CI feedback:** Initial follow-up run [40222469817](https://github.com/yash936936/AGM/actions/runs/40222469817) found two test-fixture issues: the 180-token budget became too small after provenance was restored, and the boundary test passed literal backslash-n characters rather than line breaks. The budget is now 240 and the boundary test uses actual newlines. Latest-head run [40222677766](https://github.com/yash936936/AGM/actions/runs/40222677766) is queued.
+
+**Validation:** NOT RUN locally in this remote editing environment. Exact-head CI and review are pending. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY. Held-out consented real-history evaluation and independent security/privacy review remain open.
+
+---
+
+## 2026-10-26 — M1 lifecycle context review follow-up in progress
+
+**Finding:** PR #32's bounded before-turn lifecycle change passed exact-head CI run [40221564276](https://github.com/yash936936/AGM/actions/runs/40221564276), all six Ubuntu/Windows Python 3.11–3.13 jobs. Review then identified that adding `token_budget` in the middle of `BeforeTurnRequest` shifted existing positional arguments, shared context rendering dropped source provenance, and raw memory text could forge a closing `<memory_records>` delimiter.
+
+**Candidate:** `fix/m1-lifecycle-context-review-findings` appends `token_budget` to preserve the old positional signature, includes provenance in the shared renderer, flattens newlines and escapes angle-bracket delimiters in untrusted values, and adds regression tests.
+
+**Validation:** NOT RUN locally in this remote editing environment. Exact-head CI and review are pending. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY. Held-out consented real-history evaluation and independent security/privacy review remain open.
 ## 2026-10-26 — M1 lifecycle review follow-up in progress
 
 **Finding:** Post-merge review of PR #32 identified three issues: adding `token_budget` in the middle of the dataclass fields breaks existing positional callers; shared context rendering drops `Node.provenance`; and multiline memory text can imitate a closing `</memory_records>` boundary.
