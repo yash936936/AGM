@@ -1,3 +1,13 @@
+## DBG-054 — Fix lifecycle context compatibility and trust-boundary regressions — 2026-10-26
+
+**Finding:** Review of merged PR #32 found three regressions: `token_budget` was inserted before existing dataclass fields and broke positional callers; shared bounded rendering omitted stored provenance; and memory text with newlines / `</memory_records>` could break the record framing.
+
+**Change:** Append the new field after all prior fields, include provenance in `_render_item`, normalize untrusted field values to one line, escape angle-bracket delimiters, and test positional compatibility, provenance retention and boundary escaping.
+
+**Validation:** Prior PR #32 exact-head CI run [40221564276](https://github.com/yash936936/AGM/actions/runs/40221564276) passed all six matrix jobs. New follow-up tests NOT RUN locally; follow-up exact-head CI pending. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY.
+
+---
+
 ## DBG-053 — Bound the lifecycle before-turn memory context — 2026-10-25
 
 **Finding:** `MemoryLifecycle.before_turn()` previously formatted all retrieved nodes into `context_text` without a character/token budget, despite the M1 context contract requiring bounded evidence. Its `top_k` validation also accepted booleans and non-integer values until deeper layers handled them.
