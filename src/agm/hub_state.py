@@ -80,8 +80,8 @@ def create_session(conn, ctx: Ctx, label: str = "") -> dict[str, str]:
 
 def list_sessions(conn, ctx: Ctx, *, limit: int = 50) -> list[dict[str, str | None]]:
     ensure_hub_schema(conn)
-    if not 1 <= limit <= 200:
-        raise ValueError("limit must be between 1 and 200")
+    if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 200:
+        raise ValueError("limit must be an integer between 1 and 200")
     rows = conn.execute(
         """SELECT id, label, status, created_at, updated_at, closed_at
            FROM agm_sessions WHERE tenant = ? AND project = ? AND writer_id = ?
