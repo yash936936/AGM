@@ -1,3 +1,13 @@
+## DBG-056 — Revoked pinned source retention across replay — 2026-10-26
+
+**Finding:** The retention implementation preserves revoked pinned source events by checking the original write payload's `item.pin` flag when no materialized node remains. Existing tests covered ordinary pinned nodes and explicit pinned expiry, but did not prove the revoked-orphan case across replay.
+
+**Regression added:** `test_revoked_pinned_source_survives_default_expiry_and_replay` verifies default expiry preserves the content marker, `rebuild_views()` does not restore a revoked node or erase the payload, explicit `include_pinned=True` scrubs the source payload, and the revocation audit event remains after reopening/rebuilding.
+
+**Validation:** Exact-head CI pending. This synthetic regression does not close the full M0 acceptance matrix or external security/privacy review.
+
+---
+
 ## DBG-055 — Obsidian export source-span provenance merged — 2026-10-26
 
 **Merged:** PR [#37](https://github.com/yash936936/AGM/pull/37), merge commit `f19aa818a00dc9995077721fc108c08d295362a7`.

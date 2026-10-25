@@ -1,3 +1,10 @@
+
+
+## 2026-10-26 — M0/M1 closure PRs prepared
+
+M0 candidate branch `acceptance/m0-retention-replay-closure` adds a regression proving that a revoked pinned source payload survives default retention and replay, and is scrubbed only when `include_pinned=True`. Exact-head CI is pending; do not mark M0 closed until the complete acceptance suite passes and evidence is reviewed.
+
+M1 candidate branch `acceptance/m1-cross-session-lifecycle-closure` adds a fresh-store/rebuild regression for cross-session recall, correction history, hard deletion, and no resurfacing after replay. Exact-head CI is pending. Local Windows smoke-client execution, held-out consented real-history evaluation, and independent security/privacy review cannot be claimed from repository CI and remain open release gates.
 # Context — Adaptive Graph Memory (AGM) prototype
 
 > Entry point. Read this file first at the start of a session, then check `docs/status.md` before changing code.

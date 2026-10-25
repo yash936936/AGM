@@ -352,3 +352,53 @@ def test_expiry_preserves_revoked_pinned_source_until_explicit_opt_in(tmp_path):
         assert marker not in " ".join(
             str(row[0]) for row in store.conn.execute("SELECT payload FROM events")
         )
+
+
+def test_revoked_pinned_source_survives_default_expiry_and_replay(tmp_path):
+    """A revoked pinned write remains retained unless expiry explicitly opts in."""
+    db = tmp_path / "retention-revoked-pinned.db"
+    writer = _ctx(writer="pinned-writer")
+    admin = _ctx(writer="retention-admin")
+    marker = "REVOKED-PINNED-RETENTION-6F42"
+
+    with MemoryStore(str(db)) as store:
+        item = store.write(writer, WriteItem(
+            kind="episode", text=f"Revoked pinned retention marker {marker}", pin=True,
+        ))
+        _backdate_event(store, item.item_id, OLD_CREATED_AT)
+        assert store.revoke_writer(admin, writer.writer_id).revoked
+
+        default_result = store.expire_before(admin, CUTOFF)
+        assert default_result.scrubbed_orphan_events == 0
+        payloads = " ".join(
+            str(row[0]) for row in store.conn.execute("SELECT payload FROM events")
+        )
+        assert marker in payloads
+
+        store.rebuild_views()
+        assert store.conn.execute(
+            "SELECT 1 FROM nodes WHERE id = ?", (item.item_id,)
+        ).fetchone() is None
+        payloads_after_replay = " ".join(
+            str(row[0]) for row in store.conn.execute("SELECT payload FROM events")
+        )
+        assert marker in payloads_after_replay
+
+        explicit_result = store.expire_before(admin, CUTOFF, include_pinned=True)
+        assert explicit_result.scrubbed_orphan_events >= 1
+        final_payloads = " ".join(
+            str(row[0]) for row in store.conn.execute("SELECT payload FROM events")
+        )
+        assert marker not in final_payloads
+        assert store.conn.execute(
+            "SELECT COUNT(*) FROM events WHERE type = 'revoke_writer'"
+        ).fetchone()[0] == 1
+
+    with MemoryStore(str(db)) as reopened:
+        reopened.rebuild_views()
+        assert reopened.conn.execute(
+            "SELECT 1 FROM nodes WHERE id = ?", (item.item_id,)
+        ).fetchone() is None
+        assert marker not in " ".join(
+            str(row[0]) for row in reopened.conn.execute("SELECT payload FROM events")
+        )
