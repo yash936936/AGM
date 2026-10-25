@@ -216,3 +216,14 @@
 **Validation:** NOT RUN for the candidate correction. Run `python -m pytest -q tests/test_privacy_edge_acceptance.py`, then `python -m pytest -q`, `git diff --check`, and exact-head CI. If the cutoff test still fails, inspect the persisted revoke payload and post-replay node/event IDs before attempting another code change.
 
 **Process note:** PR #7 was merged despite failing CI, contrary to the project's no-merge-before-acceptance rule. Do not merge the corrective PR until validation passes.
+
+## DBG-033 — Retention orphan-scrub scope regression
+
+**Task:** Add a regression for the privacy boundary of `MemoryStore.expire_before` when source payloads belong to revoked writers and no longer have materialized nodes.
+
+**Change:** Added a test with aged revoked source events in the current tenant/project, another project in the same tenant, and another tenant. The test requires expiry to scrub only the current tenant/project's orphan payloads and verifies that replay does not restore scrubbed content.
+
+**Validation:** Test and full suite NOT RUN locally in this environment. Commit `ee81976c701e90c633b577a09aa7f6a26d762e14` has no visible CI status yet. The test must pass on exact-head CI before this acceptance check is considered verified.
+
+**Related evidence:** User-reported Windows run: 213 passed, one Starlette/httpx deprecation warning; peak RSS 60,682,240 bytes; five concurrent repetitions with zero errors. These are user-supplied results, not independently rerun here.
+
