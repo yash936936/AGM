@@ -1,3 +1,15 @@
+## 2026-10-26 — M2 authorized execution candidate
+
+**Status:** IMPLEMENTATION CANDIDATE / NOT ACCEPTED. Added `execute_authorized_memory_proposal()` to connect policy review to existing scoped store methods for write, correction, history, and deletion. It re-evaluates policy, checks the required scope, requires host authorization, and requires confirmation for mutations.
+
+**Regression coverage authored:** explicit authorization/scope/confirmation denial; write, correction, history, delete; rebuild/reopen and deleted-payload scrubbing; tenant isolation. These tests and the implementation have not yet passed current-head CI.
+
+**Validation evidence:** Prior candidate commit `5dcf7d86818f9a4c3bd9a7c8350235934ac92340` passed all six CI jobs in [run 40227572306](https://github.com/yash936936/AGM/actions/runs/40227572306), but that run predates these changes and is not evidence for the current head. Local execution was blocked because GitHub DNS/network access was unavailable. Current-head CI and adapter parity remain pending. See `REPORT_M2_ACTIVE_MEMORY.md`.
+
+**External gates:** Held-out real-history evaluation, independent security/privacy review, and third-party host integration remain **OPEN / PENDING**.
+
+---
+
 ## 2026-10-26 — M2 active-turn orchestration candidate
 
 **Status:** IMPLEMENTED CANDIDATE / NOT ACCEPTED. Added `src/agm/active_memory_turn.py` for read-only pre-answer context preparation and proposal review. Eligible proposals are surfaced for host review only; this code does not persist them or grant mutation authorization.
