@@ -1,3 +1,13 @@
+## 2026-10-25 — Post-mutation expiry rollback acceptance merged
+
+**Merged:** PR [#28](https://github.com/yash936936/AGM/pull/28), merge commit `9db3fbaf9dc3a039f2198b6c61e9340619df7f9b`.
+
+**Validation:** Exact-head CI run [40219212770](https://github.com/yash936936/AGM/actions/runs/40219212770) passed all six Linux/Windows Python 3.11–3.13 jobs, including the full test suite, repository hygiene, whitespace checks, and wheel/package inspection. The regression invokes the real nested delete handler and then injects failure, exercising rollback after the handler's view mutation; it verifies payload/event count, active node state, transaction closure, and retrieval after reopen/rebuild.
+
+**Limits:** Local tests NOT RUN in this remote editing environment. This is synthetic failure-injection coverage, not independent security/privacy review. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY. Held-out consented real-history evaluation remains NOT RUN and independent security/privacy review remains NOT ESTABLISHED.
+
+---
+
 ## 2026-10-25 — Expiry rollback regression strengthened after review
 
 **Merged baseline:** PR [#27](https://github.com/yash936936/AGM/pull/27) merged at `2a9a003b7bfa4bf162661e420a692e155b7b1719`; exact-head CI run [40218590007](https://github.com/yash936936/AGM/actions/runs/40218590007) passed all six Linux/Windows Python 3.11–3.13 jobs.
