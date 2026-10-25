@@ -1,12 +1,12 @@
-## 2026-10-25 — Paired retrieval benchmark runner added
+## 2026-10-25 — Paired retrieval benchmark runner merged; operation metrics follow-up in progress
 
-**PR:** [pending review](https://github.com/yash936936/AGM/pull/new/work/release-gates-benchmark-runner).
+**PR:** [#13](https://github.com/yash936936/AGM/pull/13), merged. Follow-up branch: `work/benchmark-operation-metrics`.
 
 **Change:** Added `eval/benchmark_runner.py` to compare flat and graph retrieval on the same labelled JSONL cases, reporting retrieval/end-to-end latency percentiles, recall/pass rates, abstention accuracy, forbidden-value leakage, cases/second and SQLite file size. Default output omits case IDs and raw memory content. The existing evaluator now captures retrieval-call latency and database file size.
 
-**Verification:** Base commit `f7def22501b12693488354ea8e37a1476e6f67a7` passed all six Ubuntu/Windows Python 3.11–3.13 jobs in [run 40202107198](https://github.com/yash936936/AGM/actions/runs/40202107198). New code/tests have NOT RUN locally because this environment cannot resolve GitHub for cloning; candidate exact-head CI must pass before merge.
+**Verification:** User-reported local checks on the merged candidate: wheel build succeeded; package inspection passed (28 entries, 23 Python modules); full suite `208 passed, 1 warning`; repository hygiene passed (155 tracked paths); `git diff --check` passed; working tree clean. Follow-up changes on this branch still require exact-head CI.
 
-**Still blocked:** No consented, de-identified held-out dataset was supplied, so real-history results remain NOT RUN. Independent security/privacy review remains NOT ESTABLISHED. Process RSS, concurrent-load throughput and a standalone keyword baseline are not measured by this increment. Do not claim production readiness.
+**Still blocked:** No consented, de-identified held-out dataset was supplied, so real-history results remain NOT RUN. Independent security/privacy review remains NOT ESTABLISHED. Peak process RSS, concurrent-load throughput and a standalone keyword baseline are not yet measured. Do not claim production readiness.
 
 ## 2026-10-25 — M1 owner/session/connection increment in review
 
