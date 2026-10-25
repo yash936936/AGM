@@ -1,3 +1,13 @@
+## 2026-10-26 — M1 graph snapshot rebuild acceptance in progress
+
+**Finding:** Existing tests proved deterministic repeated graph snapshots, but did not explicitly prove that the snapshot is reproducible after rebuilding materialized views from the event log.
+
+**Change:** Branch `test/m1-graph-snapshot-rebuild-acceptance` captures a scoped snapshot, invokes `MemoryStore.rebuild_views()`, and asserts the rebuilt snapshot is byte-for-byte equivalent as a data structure and still marked `snapshot=True`.
+
+**Validation:** Local tests NOT RUN in this remote editing environment. Exact-head CI and review pending. M1 remains PARTIAL / VERIFY; M0 remains IN PROGRESS. Held-out real-history evaluation and independent security/privacy review remain open.
+
+---
+
 ## 2026-10-26 — M1 Obsidian export provenance merged
 
 **Merged:** PR [#37](https://github.com/yash936936/AGM/pull/37), merge commit `f19aa818a00dc9995077721fc108c08d295362a7`.
