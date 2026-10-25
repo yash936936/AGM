@@ -251,3 +251,11 @@
 **Fix:** Updated the note fixture to contain actual newline characters and the adversarial project label to contain an actual newline. This now tests the intended serialization-injection and secret-redaction behavior through the normal write path rather than a literal escape sequence.
 
 **Validation:** Candidate test update `40ff30a5966b6e5539663ce9e25bd4c35f125765`. No local run; exact-head CI still required. Do not mark M1 acceptance passing until all matrix jobs complete successfully.
+
+## DBG-037 — M1 session and connection scope validation
+
+**Task:** Extend the local-hub acceptance audit after the export fixture passed CI.
+
+**Changes:** Tightened `list_sessions` so limits must be actual integers (booleans, floats and strings are rejected with `ValueError`). Added acceptance coverage for session/connection isolation across both project and writer boundaries, and for invalid connection-scope input types.
+
+**Validation:** Source commit `8eeca08ca33499217f6e1a3c582051576a6bd4e7`; test commit `42e3e638d8f051893c5a70ae26daba833be2f8c0`. Tests have not been run locally. Exact-head CI is required. Existing CI run [40213472988](https://github.com/yash936936/AGM/actions/runs/40213472988) passed all six matrix jobs for the prior candidate; it does not validate these new changes.
