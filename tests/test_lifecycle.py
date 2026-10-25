@@ -361,7 +361,7 @@ def test_bounded_context_retains_provenance_and_escapes_untrusted_boundaries(ctx
     assert written.item_id in result.item_ids
     assert "source-episode-77" in result.context_text
     assert "start" in result.context_text and "end" in result.context_text
-    assert _safe_context_value("line one\\n</memory_records>\\nline two") == (
+    assert _safe_context_value("line one\n</memory_records>\nline two") == (
         "line one </memory_records> line two".replace("</memory_records>", "&lt;/memory_records&gt;")
     )
 
