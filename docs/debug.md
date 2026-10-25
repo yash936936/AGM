@@ -1,3 +1,11 @@
+## DBG-057 — M1 cross-session recall and lifecycle regression — 2026-10-26
+
+**Regression added:** `tests/test_m1_acceptance.py::test_cross_session_recall_correction_delete_and_rebuild` creates an original and corrected fact, closes the store, reopens it as a fresh session, verifies current recall and historical versions, deletes both versions, rebuilds views, and confirms neither version can be retrieved or found in source-event payloads after a second reopen/rebuild.
+
+**Validation:** Exact-head CI pending. This test complements but does not replace REST/MCP smoke-client runs, a held-out consented real-history evaluation, or independent security/privacy review.
+
+---
+
 ## DBG-055 — Obsidian export source-span provenance merged — 2026-10-26
 
 **Merged:** PR [#37](https://github.com/yash936936/AGM/pull/37), merge commit `f19aa818a00dc9995077721fc108c08d295362a7`.
