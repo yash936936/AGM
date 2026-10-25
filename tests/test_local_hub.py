@@ -94,3 +94,22 @@ def test_obsidian_export_is_deterministic_and_escapes_frontmatter(tmp_path):
         assert "topsecretvalue123" not in first_content
         assert "[REDACTED]" in first_content
 
+def test_timeline_limit_is_applied_after_project_filtering(tmp_path):
+    ctx = _ctx(project="busy-tenant-project-a", writer="shared-writer")
+    sibling = _ctx(project="busy-tenant-project-b", writer="shared-writer")
+    with MemoryStore(str(tmp_path / "timeline-project-limit.db")) as store:
+        store.write(ctx, WriteItem(kind="episode", text="Project A event that must remain visible"))
+        local_event_id = store.conn.execute(
+            "SELECT id FROM events WHERE tenant = ? AND json_extract(payload, '$.ctx.project') = ? "
+            "ORDER BY id DESC LIMIT 1",
+            (ctx.tenant_id, ctx.project),
+        ).fetchone()["id"]
+        for index in range(8):
+            store.write(sibling, WriteItem(kind="episode", text=f"Sibling project event {index}"))
+
+        rows = timeline(store, ctx, limit=1)
+
+        assert len(rows) == 1
+        assert rows[0]["event_id"] == local_event_id
+        assert rows[0]["tenant_id"] == ctx.tenant_id
+

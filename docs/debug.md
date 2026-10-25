@@ -281,3 +281,14 @@
 **Evidence:** Exact-head workflow [40214773052](https://github.com/yash936936/AGM/actions/runs/40214773052) passed all six Ubuntu/Windows Python 3.11–3.13 jobs, including test suite, repository hygiene, whitespace and wheel/package inspection. PR #20 merged as `d4eff63b74c0ed37cdf52c1b71c7b951a26d4547`.
 
 **Accepted for this commit:** REST session/connection isolation across tenant, project and writer identities, plus invalid session-list limit query handling. This is code-level acceptance evidence only; it does not close the broader M1 lifecycle audit, M0 release audit, held-out real-history evaluation, or independent security/privacy review.
+## DBG-041 — Timeline project filter must precede limit
+
+**Task:** Continue the consolidated M0/M1 audit after the REST identity-boundary tests merged.
+
+**Finding:** `src/agm/local_hub.py::timeline` queried the newest `limit` events for a tenant and then filtered them by project in Python. Newer events in a sibling project could consume the entire page, causing the requested project's timeline to appear empty or incomplete. This violated expected project-scoped pagination.
+
+**Fix candidate:** Branch `fix/m1-timeline-project-limit`, commits `d9b034804ca4065af8bc5b028f609790e6e75f3c` (SQL scoping fix) and `9992182f1551f64c67c1f1fcec2e95d0899695ec` (regression test). Project filtering now occurs in SQL before LIMIT; events without `ctx.project` retain the existing default-project/originating-writer compatibility behavior. The regression writes one local event followed by eight newer events in another project and checks that `timeline(..., limit=1)` still returns the local event.
+
+**Validation:** NOT RUN locally. Exact-head CI, focused `tests/test_local_hub.py`, full pytest suite, wheel/package inspection, repository hygiene and `git diff --check` remain required. Do not merge until exact-head CI passes.
+
+**Release status:** M0 remains IN PROGRESS, M1 remains PARTIAL / VERIFY. Real-history evaluation is NOT RUN and independent security/privacy review is NOT ESTABLISHED.

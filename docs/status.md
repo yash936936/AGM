@@ -144,3 +144,14 @@ PR #19 passed all six Linux/Windows Python 3.11–3.13 jobs in [run 40214468957]
 ## 2026-10-25 — REST identity-isolation candidate validated and merged
 
 PR #20 passed exact-head CI [run 40214773052](https://github.com/yash936936/AGM/actions/runs/40214773052): all six Ubuntu/Windows Python 3.11–3.13 jobs passed tests, repository hygiene, whitespace checks and wheel/package inspection. Merged commit: `d4eff63b74c0ed37cdf52c1b71c7b951a26d4547`. This validates the added REST tests for tenant/project/writer isolation and invalid session-list limits on that candidate. M0 remains IN PROGRESS and M1 remains PARTIAL / VERIFY. Held-out consented real-history evaluation remains NOT RUN; independent security/privacy review remains NOT ESTABLISHED.
+## 2026-10-25 — M1 timeline project-limit starvation regression
+
+**Branch:** `fix/m1-timeline-project-limit`.
+
+**Audit finding:** `timeline()` selected the newest N events for the entire tenant and only then filtered by project in Python. A high-volume sibling project could consume the limit and hide all events for the caller's project. This is a correctness/availability bug in the local-hub timeline, despite the existing scope checks.
+
+**Change:** Move project scoping into the SQL predicate before LIMIT, retaining the legacy-event rule (events without project metadata are only visible to their originating writer for the default project). Added a regression with eight newer sibling-project events and `limit=1`.
+
+**Validation:** Local tests NOT RUN in this environment. Exact-head GitHub Actions, full suite, package inspection, repository hygiene and whitespace checks are pending. Do not merge or treat M1 timeline acceptance as passed until these checks complete.
+
+**Milestone disposition:** M0 IN PROGRESS; M1 PARTIAL / VERIFY; M2–M4 NOT ACCEPTED. Held-out real-history evaluation NOT RUN; independent security/privacy review NOT ESTABLISHED.
