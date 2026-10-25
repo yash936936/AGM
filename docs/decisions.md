@@ -1,3 +1,15 @@
+## D-036 — Explicitly authorized active-memory proposal execution
+
+**Decision:** Extend the additive active-turn library seam with an explicit executor for write, correction, history, and delete proposals. The executor re-evaluates the current-message policy, checks action-specific scopes, requires a host authorization signal, requires confirmation for mutations, and delegates to existing tenant-scoped MemoryStore methods.
+
+**Why:** Proposal review alone does not connect the lifecycle to an execution path. Keeping the executor explicit preserves the boundary between proposal eligibility and host authorization.
+
+**Limits:** The authorization flag and scope set are trusted inputs from the host, not authentication by themselves. Callers must derive them from the actual authenticated identity and pass the matching scoped Ctx. REST/MCP contracts are unchanged; parity of this new library executor with adapter execution paths must be tested or intentionally documented. Current-head tests and CI remain pending.
+
+**Affects:** src/agm/active_memory_turn.py, active-turn tests and M2 report. No new dependency or persisted schema change.
+
+---
+
 ## D-035 — Keep active-turn orchestration read-only until host authorization
 
 **Decision:** Add a small Python orchestration seam that combines pre-answer context preparation with during/after-turn proposal review, but does not execute writes, corrections, or deletion. Eligible proposals remain subject to host authorization and existing scoped core/API methods.
