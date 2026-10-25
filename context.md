@@ -1,3 +1,8 @@
+
+
+## 2026-10-26 — M1 cross-session lifecycle acceptance candidate
+
+Branch `acceptance/m1-cross-session-lifecycle-closure` adds an integration regression that writes and corrects a fact, opens a fresh store, verifies current recall and retained history, deletes both versions, and confirms neither content nor results resurface after rebuild/reopen. Exact-head CI is pending. Local Windows REST/MCP smoke clients, held-out consented real-history evaluation, and independent security/privacy review remain unverified external gates.
 # Context — Adaptive Graph Memory (AGM) prototype
 
 > Entry point. Read this file first at the start of a session, then check `docs/status.md` before changing code.
