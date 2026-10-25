@@ -136,3 +136,7 @@ The corrected export fixture candidate passed all six Linux/Windows Python 3.11�
 ## 2026-10-25 — REST authorization acceptance added
 
 Session/connection scope changes passed all six Linux/Windows Python 3.11–3.13 jobs in [run 40214097156](https://github.com/yash936936/AGM/actions/runs/40214097156); PR #18 merged. New REST-level tests now cover session read/write permissions and admin-only connection management, including metadata-only connection listing (test commit `2085ba3b76652636152b3f4dccb627a426e7b123`). These new tests are not yet validated by exact-head CI. M0 remains IN PROGRESS and M1 remains PARTIAL / VERIFY; real-history and independent security/privacy gates remain open.
+
+## 2026-10-25 — REST identity isolation coverage added
+
+PR #19 passed all six Linux/Windows Python 3.11–3.13 jobs in [run 40214468957](https://github.com/yash936936/AGM/actions/runs/40214468957) and merged. Follow-up acceptance tests now exercise session/connection isolation across tenant, project and writer identities plus REST query validation for session-list limits. Test commit `613d96fcc453f6979eec16c9a68beb5e7d3c0f77`; exact-head CI is pending/not yet visible. M0 remains IN PROGRESS, M1 remains PARTIAL / VERIFY, and held-out real-history plus independent security/privacy review remain open.
