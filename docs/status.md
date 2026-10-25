@@ -1,5 +1,15 @@
 ## 2026-10-26 — M1 graph snapshot rebuild acceptance in progress
 
+**Finding:** Existing tests proved deterministic repeated graph snapshots, but did not explicitly prove that the snapshot is reproducible after rebuilding materialized views from the event log. Review also noted that a fixture without a node-to-node edge could not prove edge reproducibility.
+
+**Change:** Branch `test/m1-graph-snapshot-rebuild-acceptance` captures a scoped snapshot with a `derived_from` node-to-node edge, invokes `MemoryStore.rebuild_views()`, and asserts the full snapshot and digest remain equal and the edge remains present.
+
+**Validation:** Initial exact-head CI run [40224342633](https://github.com/yash936936/AGM/actions/runs/40224342633) passed all six jobs before the review-strengthening commit. New exact-head CI pending. Local tests NOT RUN. M1 remains PARTIAL / VERIFY; M0 remains IN PROGRESS.
+
+---
+
+## 2026-10-26 — M1 graph snapshot rebuild acceptance in progress
+
 **Finding:** Existing tests proved deterministic repeated graph snapshots, but did not explicitly prove that the snapshot is reproducible after rebuilding materialized views from the event log.
 
 **Change:** Branch `test/m1-graph-snapshot-rebuild-acceptance` captures a scoped snapshot, invokes `MemoryStore.rebuild_views()`, and asserts the rebuilt snapshot is byte-for-byte equivalent as a data structure and still marked `snapshot=True`.
