@@ -291,3 +291,76 @@ def test_expiry_rolls_back_entire_sweep_when_nested_delete_fails(tmp_path, monke
         reopened.rebuild_views()
         texts = _texts(reopened, ctx, marker)
         assert any(marker in text for text in texts), texts
+
+
+def test_expiry_rolls_back_prior_items_when_later_nested_delete_fails(tmp_path, monkeypatch):
+    import pytest
+
+    path = str(tmp_path / "expiry-multi-item-rollback.db")
+    ctx = Ctx(
+        tenant_id="expiry-multi-tenant",
+        writer_id="expiry-multi-writer",
+        tier="human_verified",
+        project="expiry-multi-project",
+    )
+    markers = (
+        "expiry_multi_rollback_first_marker_38a1",
+        "expiry_multi_rollback_second_marker_91c4",
+    )
+    cutoff = "2025-01-01T00:00:00+00:00"
+
+    with MemoryStore(path) as store:
+        saved = [_write_marker(store, ctx, marker) for marker in markers]
+        source_event_ids = []
+        for item in saved:
+            source_event_id = store.conn.execute(
+                "SELECT event_id FROM nodes WHERE id = ?", (item.item_id,)
+            ).fetchone()["event_id"]
+            source_event_ids.append(source_event_id)
+            store.conn.execute(
+                "UPDATE events SET created_at = ? WHERE id = ?",
+                ("2024-12-31T23:59:59+00:00", source_event_id),
+            )
+        store.conn.commit()
+
+        original_payloads = {
+            event_id: store.conn.execute(
+                "SELECT payload FROM events WHERE id = ?", (event_id,)
+            ).fetchone()["payload"]
+            for event_id in source_event_ids
+        }
+        original_event_count = store.conn.execute(
+            "SELECT COUNT(*) FROM events"
+        ).fetchone()[0]
+        original_apply_delete = store._apply_delete_payload
+        applied = []
+
+        def apply_twice_then_fail(payload):
+            original_apply_delete(payload)
+            applied.append(payload)
+            if len(applied) == 2:
+                raise RuntimeError("injected second-item post-mutation failure")
+
+        monkeypatch.setattr(store, "_apply_delete_payload", apply_twice_then_fail)
+        with pytest.raises(RuntimeError, match="injected second-item post-mutation failure"):
+            store.expire_before(ctx, cutoff)
+
+        assert len(applied) == 2, "failure must occur after the second nested delete mutation"
+        for event_id, original_payload in original_payloads.items():
+            assert store.conn.execute(
+                "SELECT payload FROM events WHERE id = ?", (event_id,)
+            ).fetchone()["payload"] == original_payload
+        assert store.conn.execute(
+            "SELECT COUNT(*) FROM events"
+        ).fetchone()[0] == original_event_count
+        for item in saved:
+            assert store.conn.execute(
+                "SELECT status FROM nodes WHERE id = ?", (item.item_id,)
+            ).fetchone()["status"] == "active"
+        assert not store.conn.in_transaction
+
+    with MemoryStore(path) as reopened:
+        reopened.rebuild_views()
+        for marker in markers:
+            texts = _texts(reopened, ctx, marker)
+            assert any(marker in text for text in texts), texts

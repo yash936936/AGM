@@ -8,9 +8,9 @@ AGM is a model-agnostic memory layer for AI agents, based on `Adaptive_Graph_Mem
 
 ## Latest implementation audit
 
-PR #28 merged at `9db3fbaf9dc3a039f2198b6c61e9340619df7f9b`. Exact-head CI run [40219212770](https://github.com/yash936936/AGM/actions/runs/40219212770) passed all six Ubuntu/Windows Python 3.11–3.13 jobs, including tests, repository hygiene, whitespace checks, and wheel/package inspection. The expiry rollback regression now calls the real nested delete handler before injecting a failure, exercising rollback after derived-view mutation; it also verifies source payload/event count and active node state, transaction closure, and retrieval after reopen/rebuild. The prior PR #27 baseline passed all six jobs in run [40218590007](https://github.com/yash936936/AGM/actions/runs/40218590007).
+PR #28 merged at `9db3fbaf9dc3a039f2198b6c61e9340619df7f9b`. Exact-head CI run [40219212770](https://github.com/yash936936/AGM/actions/runs/40219212770) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. Its regression invokes the real nested delete handler before injecting a failure and verifies rollback after derived-view mutation, source payload/event count, active node state, transaction closure, and retrieval after reopen/rebuild.
 
-M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY. Local tests are not run in this remote editing environment. Held-out consented real-history evaluation is NOT RUN, and independent security/privacy review is NOT ESTABLISHED. Do not claim production readiness while these gates remain open.
+Current follow-up candidate: verify whole-sweep atomicity across multiple aged items, with the injected failure occurring after the second nested delete has mutated views. Branch `test/m0-multi-item-expiry-rollback`; exact-head CI pending. Local tests are not run in this remote editing environment. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY. Held-out consented real-history evaluation is NOT RUN, and independent security/privacy review is NOT ESTABLISHED.
 ## Roles
 
 - **Supervisor:** owns the docs, frozen contracts, phase briefs and code review.
