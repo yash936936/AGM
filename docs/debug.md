@@ -1,4 +1,6 @@
 ## DBG-023 — RSS API fix, repeatable load runs, synthetic acceptance suite, and keyword baseline — 2026-10-25
+**CI follow-up:** Initial run [40211567298](https://github.com/yash936936/AGM/actions/runs/40211567298) found a lexical-baseline test failure: the tokenization regex matched a literal backslash sequence, yielding zero recall. Corrected the regex on the latest branch head. The follow-up exact-head matrix is [run 40211660005](https://github.com/yash936936/AGM/actions/runs/40211660005), currently queued; do not consider this increment verified until it completes.
+
 
 **Task:** Continue benchmark hardening after the first successful Windows synthetic smoke run reported `process_peak_rss_bytes: null`.
 
