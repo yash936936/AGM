@@ -6,6 +6,10 @@
 
 AGM is a model-agnostic memory layer for AI agents, based on `Adaptive_Graph_Memory_Draft_v5.md`. Its source of truth is an append-only event log with rebuildable SQLite views. The user has verified all five implementation phases on Windows. Version 0.5.1 adds supervisor hardening: the guard now lives in the core (D-021). The user's last Windows run was 61 passed at 0.5.0; the supervisor's run of 0.5.1 is 97 passed on Linux, Windows rerun pending. REST/MCP adapters, API-key authentication, guardrails, trust probation, revocation, handoff/readback, synthetic flat-vs-graph evaluation, lazy decay and read-only lifecycle dry run are implemented. Confidence and evaluation metrics remain provisional; the synthetic evaluation is not evidence for or against H1–H7.
 
+## Latest implementation audit
+
+PR #23 merged the revoked-pinned retention fix; its exact-head CI passed all six Linux/Windows Python 3.11–3.13 jobs. PR #24 merged strict connection-scope and diagnostic-timeout validation; exact-head CI also passed all six jobs. Post-merge review found the PR #24 parameterized test block duplicated; branch `chore/post-merge-audit-cleanup` removes the duplicate and requires its own exact-head CI before acceptance. M0 remains IN PROGRESS and M1 remains PARTIAL / VERIFY. Held-out real-history evaluation and independent security/privacy review remain open.
+
 ## Roles
 
 - **Supervisor:** owns the docs, frozen contracts, phase briefs and code review.

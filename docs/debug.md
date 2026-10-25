@@ -1,3 +1,11 @@
+## DBG-044 — Post-merge audit: connection validation CI and duplicate test cleanup — 2026-10-25
+
+**Merged change:** PR [#24](https://github.com/yash936936/AGM/pull/24), merge commit `571edd5082b10bfcce169d4e3fddddedee1e8aeb`, rejects explicit empty/malformed connection scopes and non-finite/non-positive diagnostic timeouts. Exact-head GitHub Actions run [40216605734](https://github.com/yash936936/AGM/actions/runs/40216605734) passed all six Ubuntu/Windows Python 3.11–3.13 jobs, including tests, repository hygiene, whitespace and wheel/package inspection.
+
+**Post-merge audit finding:** The validation test block was accidentally appended twice, defining duplicate test names. Removed the duplicate block in branch `chore/post-merge-audit-cleanup`; the original parameterized coverage remains once. This cleanup itself is unverified until exact-head CI passes. Local tests were NOT RUN in this environment.
+
+---
+
 ## DBG-043 — Validate connection scopes and diagnostic timeouts — 2026-10-25
 
 **Finding:** `create_connection()` used a truthiness fallback for scopes, so an explicitly empty scope list silently became `memory:read` instead of failing closed. Non-list/unhashable scope values could leak `TypeError`. `test_connection()` accepted invalid timeout values, which could escape as inconsistent runtime exceptions.
