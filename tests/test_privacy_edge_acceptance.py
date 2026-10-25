@@ -227,3 +227,58 @@ def test_expiry_scrubs_revoked_orphans_only_in_requested_tenant_project_after_re
         assert any(markers["sibling_tenant"] in text for text in _texts(
             reopened, sibling_tenant, markers["sibling_tenant"]
         ))
+
+
+
+def test_expiry_rolls_back_entire_sweep_when_nested_delete_fails(tmp_path, monkeypatch):
+    import pytest
+
+    path = str(tmp_path / "expiry-atomic-rollback.db")
+    ctx = Ctx(
+        tenant_id="expiry-atomic-tenant",
+        writer_id="expiry-atomic-writer",
+        tier="human_verified",
+        project="expiry-atomic-project",
+    )
+    marker = "expiry_atomic_rollback_marker_6bd1"
+    cutoff = "2025-01-01T00:00:00+00:00"
+
+    with MemoryStore(path) as store:
+        saved = _write_marker(store, ctx, marker)
+        source_event_id = store.conn.execute(
+            "SELECT event_id FROM nodes WHERE id = ?", (saved.item_id,)
+        ).fetchone()["event_id"]
+        store.conn.execute(
+            "UPDATE events SET created_at = ? WHERE id = ?",
+            ("2024-12-31T23:59:59+00:00", source_event_id),
+        )
+        store.conn.commit()
+        original_payload = store.conn.execute(
+            "SELECT payload FROM events WHERE id = ?", (source_event_id,)
+        ).fetchone()["payload"]
+        original_event_count = store.conn.execute(
+            "SELECT COUNT(*) FROM events"
+        ).fetchone()[0]
+
+        def fail_delete(_payload):
+            raise RuntimeError("injected nested delete failure")
+
+        monkeypatch.setattr(store, "_apply_delete_payload", fail_delete)
+        with pytest.raises(RuntimeError, match="injected nested delete failure"):
+            store.expire_before(ctx, cutoff)
+
+        assert store.conn.execute(
+            "SELECT payload FROM events WHERE id = ?", (source_event_id,)
+        ).fetchone()["payload"] == original_payload
+        assert store.conn.execute(
+            "SELECT COUNT(*) FROM events"
+        ).fetchone()[0] == original_event_count
+        assert store.conn.execute(
+            "SELECT status FROM nodes WHERE id = ?", (saved.item_id,)
+        ).fetchone()["status"] == "active"
+        assert not store.conn.in_transaction
+
+    with MemoryStore(path) as reopened:
+        reopened.rebuild_views()
+        texts = _texts(reopened, ctx, marker)
+        assert any(marker in text for text in texts), texts
