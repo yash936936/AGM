@@ -124,3 +124,7 @@
 ## 2026-10-25 — M1 local-hub CI assertion fixes
 
 GitHub Actions run [40213071743](https://github.com/yash936936/AGM/actions/runs/40213071743) failed two newly added local-hub tests on Ubuntu Python 3.11–3.13: one referenced a nonexistent `WriteResult.event_id`; the other over-specified JSON string escaping in exported frontmatter. Both test assertions were corrected in commit `d8e8c7acff925d70d3167bb40f40b548bc3288e9`. The full suite was otherwise 214 passed in the Python 3.11 job. This fix is not accepted until exact-head CI passes across the Linux/Windows Python 3.11–3.13 matrix. M0 remains IN PROGRESS, M1 remains PARTIAL / VERIFY; real-history evaluation and independent security/privacy review remain open release gates.
+
+## 2026-10-25 — Follow-up on remaining local-hub export failure
+
+Run [40213224547](https://github.com/yash936936/AGM/actions/runs/40213224547) confirmed the timeline test fix and reported one remaining export-test failure: the fixture used literal backslash+n sequences, so the password label did not have the intended token boundary. The fixture now uses actual line breaks for both the note and adversarial project metadata (test commit `40ff30a5966b6e5539663ce9e25bd4c35f125765`). Exact-head CI must pass before accepting this change; M1 remains PARTIAL / VERIFY and M0 remains IN PROGRESS.
