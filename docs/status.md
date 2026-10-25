@@ -28,3 +28,12 @@
 **M0–M4 disposition:** M0 remains in progress pending retention-contract review and exact-head CI/package inspection. M1 is partial and must be audited against the owner login, agent connection/session, timeline, graph snapshot and Obsidian export requirements. M2, M3 and M4 are not accepted until their own integration and operational acceptance gates pass. Real-history acceptance remains NOT RUN because no eligible dataset is available; independent security/privacy review remains NOT ESTABLISHED.
 
 **Next:** implement and test remaining M0 gaps, then update the acceptance matrix with evidence tied to the resulting candidate commit. Do not merge or claim production readiness while mandatory gates are open.
+
+## 2026-10-25 — Revocation replay cutoff acceptance
+**Branch:** `fix/revocation-replay-cutoff-acceptance`. Pull request: https://github.com/yash936936/AGM/pull/7. Public `main` is unchanged.
+
+**Change:** Added a replay pass that reapplies persisted `revoke_writer` tombstones after source-event replay, plus edge acceptance tests for cutoff revocation across reopen/rebuild and tenant isolation for deletion/revocation.
+
+**Validation:** NOT RUN against this PR branch. The user's local focused test reproduced a regression before the patch: a post-cutoff node was absent live but reappeared after `rebuild_views()`. A malformed downloaded diff prevented the subsequent local test run. Run `python -m pytest -q tests/test_privacy_edge_acceptance.py`, then `python -m pytest -q` and `git diff --check` before merge.
+
+**Release status:** This PR is not verified or production-ready until the focused and full test suites pass. Do not merge based on the patch alone.
