@@ -90,15 +90,15 @@ def graph_snapshot(store: MemoryStore, ctx: Ctx) -> dict[str, Any]:
     nodes = store.conn.execute(
         """SELECT id, kind, text, entity_id, attribute, value, valid_from, valid_to,
                   confidence, writer_id, tier, status, version, event_id
-           FROM nodes WHERE tenant = ? AND project = ?
+           FROM nodes WHERE tenant = ? AND project = ? AND status != 'quarantined'
            ORDER BY id ASC""",
         (ctx.tenant_id, ctx.project),
     ).fetchall()
     node_ids = {str(row["id"]) for row in nodes}
     edges = store.conn.execute(
         """SELECT src, dst, type, event_id FROM edges
-           WHERE src IN (SELECT id FROM nodes WHERE tenant = ? AND project = ?)
-              OR dst IN (SELECT id FROM nodes WHERE tenant = ? AND project = ?)
+           WHERE src IN (SELECT id FROM nodes WHERE tenant = ? AND project = ? AND status != 'quarantined')
+              OR dst IN (SELECT id FROM nodes WHERE tenant = ? AND project = ? AND status != 'quarantined')
            ORDER BY src, dst, type, event_id""",
         (ctx.tenant_id, ctx.project, ctx.tenant_id, ctx.project),
     ).fetchall()
