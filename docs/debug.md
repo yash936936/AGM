@@ -281,3 +281,10 @@
 **Evidence:** Exact-head workflow [40214773052](https://github.com/yash936936/AGM/actions/runs/40214773052) passed all six Ubuntu/Windows Python 3.11–3.13 jobs, including test suite, repository hygiene, whitespace and wheel/package inspection. PR #20 merged as `d4eff63b74c0ed37cdf52c1b71c7b951a26d4547`.
 
 **Accepted for this commit:** REST session/connection isolation across tenant, project and writer identities, plus invalid session-list limit query handling. This is code-level acceptance evidence only; it does not close the broader M1 lifecycle audit, M0 release audit, held-out real-history evaluation, or independent security/privacy review.
+## DBG-042 — Default retention must preserve revoked pinned source payloads
+
+**Finding:** `expire_before()` used materialized pinned node IDs to protect pinned content during orphan-event scrubbing. Revocation removes those nodes, so an aged pinned source event could be scrubbed by a default sweep despite the documented retain-pinned-by-default policy.
+
+**Candidate fix:** Branch `fix/retention-preserve-revoked-pins`, source commit `8510588245185a43b6a5cfd2e5d5897aff5b10ef`, regression commit `83f51e7af207b441c3b609c916f28211759cac63`. The orphan-event path now checks the stored source item's `pin` flag and skips pinned payloads unless `include_pinned=True`. The regression revokes a pinned writer, runs default expiry and replay, then verifies explicit opt-in can scrub the payload.
+
+**Validation:** NOT RUN locally. Exact-head CI and packaging/hygiene checks required before merge. M0 remains IN PROGRESS; do not treat this fix as accepted until evidence passes.
