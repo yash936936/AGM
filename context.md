@@ -58,3 +58,8 @@ The latest M1 local-hub test commit initially failed exact-head CI because two a
 ## Current follow-up — M1 session/connection scope
 
 Latest validated baseline is CI run [40213472988](https://github.com/yash936936/AGM/actions/runs/40213472988), which passed all six matrix jobs before the latest M1 changes. The current candidate adds strict session-list limit type validation and tests session/connection isolation across project and writer scope. See `docs/debug.md` DBG-037. Check exact-head CI before accepting these additions; do not merge while checks are pending or failing.
+
+
+## Current follow-up — REST authorization matrix
+
+CI run [40214097156](https://github.com/yash936936/AGM/actions/runs/40214097156) passed the previous session/connection scope candidate and PR #18 was merged. The next candidate adds REST-level tests for session read/write scopes and admin-only connection management. See `docs/debug.md` DBG-038. Validate exact-head CI before further M1 implementation or marking these tests accepted.
