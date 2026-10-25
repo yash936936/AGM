@@ -181,3 +181,10 @@
 
 ---
 **Next:** Return to [`context.md`](../context.md) before starting a new task — it routes you to the right file for what you are about to do.
+## D-033 — Preserve pinned content in retention orphan scrubbing — 2026-10-25
+
+**Decision:** The default `expire_before(..., include_pinned=False)` policy applies to content-bearing source events that no longer have materialized nodes as well as visible nodes. When an orphan source event records `item.pin == true`, retain its payload under the default policy even if the writer was revoked. Scrub it only when the caller explicitly opts into `include_pinned=True`.
+
+**Why:** Writer revocation removes materialized nodes while retaining source events for audit. The retention scrub path must not accidentally bypass the pinned-memory policy merely because the node is no longer present.
+
+**Affects:** `src/agm/store.py`, retention regression tests and lifecycle documentation. No new dependency or public API change.
