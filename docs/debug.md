@@ -1,3 +1,10 @@
+## DBG-018 — Local hub views and export increment — 2026-10-25
+**Branch:** `feat/m0-m1-completion`; PR #10.
+**Changed:** Added `src/agm/local_hub.py` for project-scoped timeline metadata, deterministic graph snapshots, and guarded Obsidian Markdown export; added `tests/test_local_hub.py` for scope, payload minimization, deterministic snapshots, secret redaction and copy semantics. Added D-030 and `M0_M1_IMPLEMENTATION_REVIEW.md`.
+**Review limits:** This is not full M1. Owner authentication/bootstrap, session lifecycle, connection registry and actual connection diagnostics are not implemented by this increment. M0 exact-head acceptance and real-history/security review remain open.
+**Tests:** Local pytest NOT RUN: this execution environment could not resolve GitHub for cloning. GitHub Actions run 40192632664 was triggered by PR #10; result must be checked before reporting CI status. Do not report tests as passing until that run completes.
+**Next:** Inspect exact-head CI output; fix any regression; continue remaining owner/session/connection M1 work and M0 acceptance gates.
+
 ## DBG-017 — Fast-track plan reconciled with current repository — 2026-10-25
 **Task:** Inspect the supplied fasttrack.zip against context.md, AGENTS.md, current roadmap/status/decisions, and GitHub CI; revise the plan before code changes.
 
