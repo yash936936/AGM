@@ -1,3 +1,11 @@
+## 2026-10-26 — External-gate tracking documentation CI verified
+
+**PR:** [#42](https://github.com/yash936936/AGM/pull/42), merged at `0d1b60bd3d27e8422c0fd31f3714d03a17fadc61`.
+**Exact-head CI:** [Run 40226444920](https://github.com/yash936936/AGM/actions/runs/40226444920) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. Each job completed pytest, REST and MCP fresh-session smoke clients, repository hygiene, whitespace checks, and wheel/package inspection.
+**Scope:** Documentation-only status tracking. This validates the repository workflow at the PR head; it does not close the held-out real-history evaluation, independent security/privacy review, or real third-party host integration gates. All three remain OPEN.
+
+---
+
 ## 2026-10-26 — External release-gate protocols merged
 
 **PR:** [#41](https://github.com/yash936936/AGM/pull/41), merge commit `73b56aa7b9a98cbe185c3d27c736667cb42e9d5a`.
