@@ -29,10 +29,23 @@ def _limit(value: int, *, maximum: int = 500) -> int:
 def timeline(store: MemoryStore, ctx: Ctx, *, limit: int = 100) -> list[dict[str, Any]]:
     """Return tenant-scoped event metadata, newest first, without memory payload text."""
     limit = _limit(limit)
+    # Filter by project before LIMIT. Applying LIMIT to the tenant-wide stream
+    # first lets a busy sibling project starve this project's timeline.
+    # Legacy events without ctx.project retain the documented writer/default rule.
     rows = store.conn.execute(
         """SELECT id, tenant, writer_id, tier, type, created_at, payload
-           FROM events WHERE tenant = ? ORDER BY id DESC LIMIT ?""",
-        (ctx.tenant_id, limit),
+           FROM events
+           WHERE tenant = ?
+             AND (
+                 json_extract(payload, '$.ctx.project') = ?
+                 OR (
+                     json_extract(payload, '$.ctx.project') IS NULL
+                     AND writer_id = ?
+                     AND ? = 'default'
+                 )
+             )
+           ORDER BY id DESC LIMIT ?""",
+        (ctx.tenant_id, ctx.project, ctx.writer_id, ctx.project, limit),
     ).fetchall()
     result: list[dict[str, Any]] = []
     for row in rows:
