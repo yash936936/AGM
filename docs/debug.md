@@ -1,3 +1,13 @@
+## DBG-023 — RSS API fix, repeatable load runs, synthetic acceptance suite, and keyword baseline — 2026-10-25
+
+**Task:** Continue benchmark hardening after the first successful Windows synthetic smoke run reported `process_peak_rss_bytes: null`.
+
+**Changed:** The Windows RSS query now loads Kernel32/PSAPI explicitly and declares ctypes argument/return types for the process handle and memory-counter structure. Added `--repetitions` (1–50) to rerun the complete benchmark and retain each run's concurrent latency percentiles, throughput and errors alongside across-run percentile summaries. Added a 10-case labelled synthetic suite for recall/relevance, abstention, correction, deletion, revocation, expiry and tenant isolation. Added a transparent token-overlap lexical baseline to paired reports and as `python -m eval.keyword_baseline`.
+
+**Tests added:** Windows CI requires a non-null positive RSS result; tests cover keyword lifecycle handling, repeated-run aggregation and suite scenario coverage.
+
+**Validation:** Exact-head CI is pending. No local test results are claimed from this remote editing step. Run the synthetic suite on the target Windows checkout and inspect the RSS field. If it remains null, preserve that as an unavailable metric and investigate the platform API separately. Held-out real-history evaluation and independent security/privacy review remain NOT RUN / NOT ESTABLISHED.
+
 ## DBG-022 — Peak RSS and concurrent retrieval load measurements — 2026-10-25
 
 **Task:** Continue performance instrumentation after PR #14.
