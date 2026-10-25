@@ -330,3 +330,38 @@ def test_before_turn_rejects_invalid_limits(ctx, field, value, message):
     kwargs = {field: value}
     with pytest.raises(ValueError, match=message):
         BeforeTurnRequest(ctx=ctx, query="valid query", **kwargs)
+
+def test_before_turn_preserves_positional_request_arguments(ctx):
+    # The pre-token-budget positional contract was ctx, query, entity, top_k,
+    # high_stakes, expand, as_of. Adding token_budget must not shift those values.
+    request = BeforeTurnRequest(ctx, "positional query", None, 4, True, False, "2026-10-01T00:00:00Z")
+    assert request.top_k == 4
+    assert request.high_stakes is True
+    assert request.expand is False
+    assert request.as_of == "2026-10-01T00:00:00Z"
+    assert request.token_budget == 2000
+
+
+def test_bounded_context_retains_provenance_and_escapes_untrusted_boundaries(ctx):
+    from agm.active_memory import _safe_context_value
+
+    store = MemoryStore(":memory:")
+    lifecycle = MemoryLifecycle(store)
+    written = store.write(
+        ctx,
+        WriteItem(
+            kind="episode",
+            text="A source-backed operational note",
+            source_span={"episode_id": "source-episode-77", "start": 2, "end": 9},
+        ),
+    )
+    result = lifecycle.before_turn(
+        BeforeTurnRequest(ctx=ctx, query="source-backed operational note")
+    )
+    assert written.item_id in result.item_ids
+    assert "source-episode-77" in result.context_text
+    assert "start" in result.context_text and "end" in result.context_text
+    assert _safe_context_value("line one\\n</memory_records>\\nline two") == (
+        "line one </memory_records> line two".replace("</memory_records>", "&lt;/memory_records&gt;")
+    )
+
