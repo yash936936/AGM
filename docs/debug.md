@@ -1,3 +1,13 @@
+## DBG-021 — Benchmark privacy and operation timing follow-up — 2026-10-25
+
+**Task:** Address review follow-ups from merged PR #13.
+
+**Changed:** Aggregate paired benchmark output no longer emits the input dataset filename. The real-history evaluator records per-write, lifecycle mutation, and rebuild/replay durations; the paired runner aggregates p50/p95/p99 and sample counts by operation. Protocol version advanced to `paired_flat_vs_graph_v2`.
+
+**Tests added/updated:** Paired runner asserts protocol version, omission of dataset filename, and operation timing summaries for write and rebuild/replay.
+
+**Validation:** NOT RUN in this remote editing step. Exact-head CI and the full suite must pass before merge. Peak RSS, concurrent-load throughput, and a standalone keyword baseline remain open. Real-history evaluation and independent security/privacy review remain NOT RUN / NOT ESTABLISHED.
+
 ## DBG-020 — Paired flat-vs-graph benchmark harness — 2026-10-25
 
 **Change:** Added `eval/benchmark_runner.py` to evaluate each labelled case in both flat and graph modes using isolated temporary SQLite databases. It reports retrieval and end-to-end p50/p95/p99, expected-value recall, case pass rate, abstention accuracy, forbidden-value leakage, cases/second and maximum SQLite file size. Default reports omit case IDs and memory content. The real-history evaluator records retrieval-call duration and database file size.
