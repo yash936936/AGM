@@ -126,3 +126,33 @@ def test_connection_scopes_reject_string_instead_of_iterating_characters(tmp_pat
                 store.conn, _ctx(), name="invalid-scope-type",
                 endpoint="http://127.0.0.1:8765", scopes="memory:read",
             )
+
+
+@pytest.mark.parametrize("scopes", [
+    [],
+    "",
+    "memory:read",
+    3,
+    ["memory:read", None],
+    [["memory:read"]],
+])
+def test_connection_scopes_reject_empty_or_malformed_values(tmp_path, scopes):
+    with MemoryStore(str(tmp_path / "hub-connection-scope-invalid.db")) as store:
+        with pytest.raises(ValueError, match="scopes"):
+            create_connection(
+                store.conn, _ctx(), name="invalid-scopes",
+                endpoint="http://127.0.0.1:8765", scopes=scopes,
+            )
+
+
+@pytest.mark.parametrize("timeout", [0, -1, True, float("inf"), float("nan"), "1"])
+def test_connection_diagnostic_timeout_must_be_finite_and_positive(tmp_path, timeout):
+    with MemoryStore(str(tmp_path / "hub-connection-timeout.db")) as store:
+        created = create_connection(
+            store.conn, _ctx(), name="timeout-validation",
+            endpoint="http://127.0.0.1:1",
+        )
+        with pytest.raises(ValueError, match="timeout"):
+            probe_connection(
+                store.conn, _ctx(), str(created["id"]), timeout=timeout,
+            )
