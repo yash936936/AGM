@@ -1,3 +1,13 @@
+## DBG-056 — Verify graph snapshot reproducibility after view rebuild — 2026-10-26
+
+**Finding:** Existing local-hub tests checked repeated snapshot determinism but not whether a snapshot remains identical after rebuilding materialized views from the event log, an explicit M1 acceptance requirement.
+
+**Change:** Add a regression that writes scoped records, captures a snapshot, calls `rebuild_views()`, and compares the full snapshot including snapshot marker and digest.
+
+**Validation:** Local tests NOT RUN. Exact-head CI, package inspection, repository hygiene and review pending. M1 remains PARTIAL / VERIFY.
+
+---
+
 ## DBG-055 — Obsidian export source-span provenance merged — 2026-10-26
 
 **Merged:** PR [#37](https://github.com/yash936936/AGM/pull/37), merge commit `f19aa818a00dc9995077721fc108c08d295362a7`.
