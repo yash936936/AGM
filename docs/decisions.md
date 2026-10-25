@@ -1,3 +1,27 @@
+## D-036 — Explicitly authorized active-memory proposal execution
+
+**Decision:** Extend the additive active-turn library seam with an explicit executor for write, correction, history, and delete proposals. The executor re-evaluates the current-message policy, checks action-specific scopes, requires a host authorization signal, requires confirmation for mutations, and delegates to existing tenant-scoped MemoryStore methods.
+
+**Why:** Proposal review alone does not connect the lifecycle to an execution path. Keeping the executor explicit preserves the boundary between proposal eligibility and host authorization.
+
+**Limits:** The authorization flag and scope set are trusted inputs from the host, not authentication by themselves. Callers must derive them from the actual authenticated identity and pass the matching scoped Ctx. REST/MCP contracts are unchanged; parity of this new library executor with adapter execution paths must be tested or intentionally documented. Current-head tests and CI remain pending.
+
+**Affects:** src/agm/active_memory_turn.py, active-turn tests and M2 report. No new dependency or persisted schema change.
+
+---
+
+## D-035 — Keep active-turn orchestration read-only until host authorization
+
+**Decision:** Add a small Python orchestration seam that combines pre-answer context preparation with during/after-turn proposal review, but does not execute writes, corrections, or deletion. Eligible proposals remain subject to host authorization and existing scoped core/API methods.
+
+**Why:** Active memory needs a clear before/during/after-turn integration point without granting model-generated proposals direct mutation authority or changing frozen REST/MCP contracts.
+
+**Affects:** New `src/agm/active_memory_turn.py` and focused tests. No new dependency, no schema change, and no public REST path or MCP tool-name change. This is an additive Python library API.
+
+**Limits:** It does not call an LLM, persist proposals, or provide independent authorization. External release gates remain open.
+
+---
+
 ## D-034 — Strict connection scope and diagnostic timeout validation — 2026-10-25
 
 **Decision:** A missing (`None`) connection scope argument defaults to the least-privilege `memory:read` scope. An explicitly supplied empty list, non-list, or list containing non-string members is invalid; accepted scopes must be a non-empty subset of `memory:read`, `memory:write`, and `memory:delete`. Diagnostic timeouts must be finite positive numbers; booleans are rejected despite Python's boolean/integer relationship.
