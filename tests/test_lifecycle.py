@@ -293,7 +293,7 @@ def test_before_turn_context_is_bounded_and_item_ids_match_included_records(ctx)
         WriteItem(kind="episode", text="AGM bounded context short marker 2fa1"),
     )
     long_marker = "AGM bounded context oversized marker 91bd"
-    store.write(
+    long = store.write(
         ctx,
         WriteItem(kind="episode", text=(long_marker + " ") + ("long-context-detail " * 1200)),
     )
@@ -310,6 +310,8 @@ def test_before_turn_context_is_bounded_and_item_ids_match_included_records(ctx)
     assert MEMORY_NOTICE in result.context_text
     assert short.item_id in result.item_ids
     assert short.item_id in result.context_text
+    assert long.item_id in {item.id for item in result.retrieval.items}
+    assert long.item_id not in result.item_ids
     assert long_marker not in result.context_text
     assert all(item_id in result.context_text for item_id in result.item_ids)
 
