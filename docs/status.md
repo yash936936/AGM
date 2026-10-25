@@ -155,3 +155,12 @@ PR #20 passed exact-head CI [run 40214773052](https://github.com/yash936936/AGM/
 **Validation:** Local tests NOT RUN in this environment. Exact-head GitHub Actions, full suite, package inspection, repository hygiene and whitespace checks are pending. Do not merge or treat M1 timeline acceptance as passed until these checks complete.
 
 **Milestone disposition:** M0 IN PROGRESS; M1 PARTIAL / VERIFY; M2–M4 NOT ACCEPTED. Held-out real-history evaluation NOT RUN; independent security/privacy review NOT ESTABLISHED.
+## 2026-10-25 — M0 retention policy regression for revoked pinned memories
+
+**Branch:** `fix/retention-preserve-revoked-pins-v2`.
+
+**Finding:** Revocation removes a writer's materialized nodes but leaves source payloads for audit. The orphan-event expiry loop could scrub an aged pinned memory's source payload under the default policy because it only checked pinned IDs from currently materialized nodes.
+
+**Change:** Inspect the source event's stored item pin flag when scrubbing orphan events. Preserve pinned source payloads unless `include_pinned=True`; add a regression covering default expiry, rebuild/replay, and explicit opt-in.
+
+**Validation:** Local tests NOT RUN here. Exact-head CI, full suite, package inspection, repository hygiene and whitespace checks are pending. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY. Real-history evaluation and independent security/privacy review remain open.
