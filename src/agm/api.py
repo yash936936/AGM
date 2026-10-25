@@ -17,6 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from .config import KeyIdentity, KeyRegistry, database_path, ensure_loopback_host, load_key_registry
 from .models import Ctx, Readback, RetrieveResult, TaskState, WriteItem, WriteResult
 from .store import MemoryStore
+from .hub_state import (close_session, create_connection, create_session, delete_connection, list_connections, list_sessions, test_connection)
 
 _LOG = logging.getLogger(__name__)
 
@@ -57,6 +58,16 @@ class HandoffReadbackRequest(RequestModel):
 class RevokeRequest(RequestModel):
     writer_id: str
     since: str | None = None
+
+
+class SessionCreateRequest(RequestModel):
+    label: str = Field(default="", max_length=120)
+
+
+class ConnectionCreateRequest(RequestModel):
+    name: str = Field(min_length=1, max_length=100)
+    endpoint: str = Field(min_length=1, max_length=512)
+    scopes: list[str] = Field(default_factory=lambda: ["memory:read"])
 
 
 def _extract_key(x_api_key: str | None, authorization: str | None) -> str | None:
@@ -269,6 +280,86 @@ def create_app(
             value = request_store(request).revoke_writer(identity.ctx, payload.writer_id, payload.since)
             return value.model_dump(mode="json")
         except (ValueError, KeyError, NotImplementedError) as exc:
+            raise api_error(exc) from exc
+
+
+    @app.post("/v1/sessions", tags=["sessions"])
+    async def session_create(
+        payload: SessionCreateRequest,
+        request: Request,
+        identity: KeyIdentity = Depends(require_scope("memory:write")),
+    ) -> dict[str, Any]:
+        try:
+            return create_session(request_store(request).conn, identity.ctx, payload.label)
+        except (ValueError, KeyError) as exc:
+            raise api_error(exc) from exc
+
+    @app.get("/v1/sessions", tags=["sessions"])
+    async def session_list(
+        request: Request,
+        limit: int = 50,
+        identity: KeyIdentity = Depends(require_scope("memory:read")),
+    ) -> list[dict[str, Any]]:
+        try:
+            return list_sessions(request_store(request).conn, identity.ctx, limit=limit)
+        except (ValueError, KeyError) as exc:
+            raise api_error(exc) from exc
+
+    @app.post("/v1/sessions/{session_id}/close", tags=["sessions"])
+    async def session_close(
+        session_id: str,
+        request: Request,
+        identity: KeyIdentity = Depends(require_scope("memory:write")),
+    ) -> dict[str, bool]:
+        try:
+            return {"closed": close_session(request_store(request).conn, identity.ctx, session_id)}
+        except (ValueError, KeyError) as exc:
+            raise api_error(exc) from exc
+
+    @app.post("/v1/connections", tags=["connections"])
+    async def connection_create(
+        payload: ConnectionCreateRequest,
+        request: Request,
+        identity: KeyIdentity = Depends(require_scope("admin")),
+    ) -> dict[str, Any]:
+        try:
+            return create_connection(
+                request_store(request).conn, identity.ctx,
+                name=payload.name, endpoint=payload.endpoint, scopes=payload.scopes,
+            )
+        except (ValueError, KeyError) as exc:
+            raise api_error(exc) from exc
+
+    @app.get("/v1/connections", tags=["connections"])
+    async def connection_list(
+        request: Request,
+        identity: KeyIdentity = Depends(require_scope("admin")),
+    ) -> list[dict[str, Any]]:
+        try:
+            return list_connections(request_store(request).conn, identity.ctx)
+        except (ValueError, KeyError) as exc:
+            raise api_error(exc) from exc
+
+    @app.post("/v1/connections/{connection_id}/test", tags=["connections"])
+    async def connection_test(
+        connection_id: str,
+        request: Request,
+        identity: KeyIdentity = Depends(require_scope("admin")),
+    ) -> dict[str, Any]:
+        try:
+            return test_connection(request_store(request).conn, identity.ctx, connection_id)
+        except (ValueError, KeyError) as exc:
+            raise api_error(exc) from exc
+
+    @app.delete("/v1/connections/{connection_id}", tags=["connections"])
+    async def connection_delete(
+        connection_id: str,
+        request: Request,
+        identity: KeyIdentity = Depends(require_scope("admin")),
+    ) -> dict[str, bool]:
+        try:
+            return {"deleted": delete_connection(request_store(request).conn, identity.ctx, connection_id)}
+        except (ValueError, KeyError) as exc:
             raise api_error(exc) from exc
 
     return app

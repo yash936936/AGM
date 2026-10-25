@@ -1,3 +1,13 @@
+## DBG-019 — Owner bootstrap, session lifecycle, and connection registry — 2026-10-25
+
+**Change under review:** PR [#11](https://github.com/yash936936/AGM/pull/11) adds a local bootstrap CLI, scoped persistent session routes, loopback-only REST connection registry/health probes, focused tests, a Windows/Linux Python 3.11–3.13 CI matrix, and wheel content inspection.
+
+**Security boundaries:** bootstrap refuses to overwrite an existing key file and does not print the generated key to stdout; the generated key remains in a local file and must be protected. Connection records store endpoint metadata and memory scopes only, not connection secrets. Diagnostic probes disable proxy use and accept only loopback HTTP endpoints.
+
+**Validation:** Exact-head CI is pending. Local execution is unavailable because GitHub DNS resolution failed when attempting to clone the repo. External held-out real-history evaluation and independent security/privacy review are NOT RUN / NOT ESTABLISHED.
+
+**Revocation update:** main commit `bffa7ff652df55308004a867ab2a6dec9f1c24cb` passed all 193 tests on Python 3.11, 3.12 and 3.13 in run 40193212194, including the cutoff-revocation regression. This is exact-head evidence for that main commit, not for the new PR branch.
+
 ## DBG-018 — Local hub views and export increment — 2026-10-25
 **Branch:** `feat/m0-m1-completion`; PR #10.
 **Changed:** Added `src/agm/local_hub.py` for project-scoped timeline metadata, deterministic graph snapshots, and guarded Obsidian Markdown export; added `tests/test_local_hub.py` for scope, payload minimization, deterministic snapshots, secret redaction and copy semantics. Added D-030 and `M0_M1_IMPLEMENTATION_REVIEW.md`.

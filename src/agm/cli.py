@@ -6,6 +6,7 @@ import tempfile
 from pathlib import Path
 
 from .config import ensure_loopback_host, load_key_registry
+from .bootstrap import bootstrap_owner
 from .models import Ctx, Readback, TaskState, WriteItem
 from .store import MemoryStore
 from .trust import DEFAULT_ARCHIVE_THRESHOLD, lifecycle_candidates
@@ -76,6 +77,18 @@ def _lifecycle(args: argparse.Namespace) -> int:
                 f"idle_days={item['idle_days']} decay_weight={item['decay_weight']:.4f} "
                 f"usage_count={item['usage_count']}"
             )
+    return 0
+
+
+def _bootstrap_owner(args: argparse.Namespace) -> int:
+    try:
+        bootstrap_owner(args.keys, tenant_id=args.tenant, writer_id=args.writer, project=args.project)
+    except FileExistsError:
+        raise SystemExit(f"Refusing to overwrite existing key file: {args.keys}")
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
+    print(f"Owner key file created at {args.keys}. Read it locally and protect it as a secret.")
+    print("The API remains loopback-only by default.")
     return 0
 
 
@@ -170,6 +183,12 @@ def main(argv: list[str] | None = None) -> int:
     rebuild = subparsers.add_parser("rebuild", help="rebuild all views from the event log")
     rebuild.add_argument("--db", required=True, metavar="PATH")
 
+    owner = subparsers.add_parser("bootstrap-owner", help="create a local owner API-key file")
+    owner.add_argument("--keys", default="agm.keys.json", metavar="PATH", help="new key file; must not already exist")
+    owner.add_argument("--tenant", required=True, help="owner tenant identifier")
+    owner.add_argument("--writer", default="owner", help="owner writer identifier")
+    owner.add_argument("--project", default="default", help="owner project")
+
     api = subparsers.add_parser("serve-api", help="run the authenticated local REST API")
     api.add_argument("--db", default=None, metavar="PATH", help="SQLite path (default: AGM_DB_PATH or ./agm.db)")
     api.add_argument("--keys", default=None, metavar="PATH", help="JSON API-key file (default: AGM_KEYS_FILE or ./agm.keys.json)")
@@ -216,6 +235,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "lifecycle":
         return _lifecycle(args)
+    if args.command == "bootstrap-owner":
+        return _bootstrap_owner(args)
     if args.command == "serve-api":
         return _serve_api(args)
     if args.command == "doctor":
