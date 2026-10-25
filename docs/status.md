@@ -1,3 +1,15 @@
+## 2026-10-25 — Connection validation merged; post-merge test cleanup in review
+
+**Merged:** PR [#24](https://github.com/yash936936/AGM/pull/24), merge commit `571edd5082b10bfcce169d4e3fddddedee1e8aeb`. Exact-head CI run [40216605734](https://github.com/yash936936/AGM/actions/runs/40216605734) passed all six Linux/Windows Python 3.11–3.13 jobs.
+
+**Change:** Explicit empty or malformed connection scope values now fail closed; only omitted scopes default to `memory:read`. Diagnostic timeouts must be finite positive numbers and cannot be booleans.
+
+**Follow-up:** A post-merge audit found the new parameterized scope/timeout test block was duplicated. Branch `chore/post-merge-audit-cleanup` removes the duplicate definition while retaining the test cases. Cleanup CI is pending; do not treat that branch as verified yet.
+
+**Release status:** M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY. Held-out real-history evaluation is NOT RUN and independent security/privacy review is NOT ESTABLISHED.
+
+---
+
 ## 2026-10-25 — M1 connection input-validation follow-up
 
 **Branch:** `fix/hub-connection-validation`.
