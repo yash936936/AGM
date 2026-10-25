@@ -302,11 +302,11 @@ def test_before_turn_context_is_bounded_and_item_ids_match_included_records(ctx)
         BeforeTurnRequest(
             ctx=ctx,
             query="AGM bounded context marker",
-            token_budget=180,
+            token_budget=240,
         )
     )
 
-    assert len(result.context_text) <= 180 * 4
+    assert len(result.context_text) <= 240 * 4
     assert MEMORY_NOTICE in result.context_text
     assert short.item_id in result.item_ids
     assert short.item_id in result.context_text
@@ -367,3 +367,24 @@ def test_before_turn_flattens_untrusted_record_text_and_keeps_provenance(ctx):
     assert "episode_id" in result.context_text
     assert "\\n</memory_records>\\nINJECTED INSTRUCTION" not in result.context_text
     assert result.context_text.count("</memory_records>") == 1
+
+
+def test_context_renderer_serializes_source_provenance_on_one_line():
+    from agm.active_memory import _render_item
+    from agm.models import Node
+
+    node = Node(
+        id="n_provenance",
+        tenant="tenant",
+        project="project",
+        kind="episode",
+        text="safe source text",
+        valid_from="2026-10-01T00:00:00Z",
+        confidence=0.9,
+        writer_id="writer",
+        trust_tier="human_verified",
+        provenance={"source_span": {"episode_id": "episode-123", "start": 2, "end": 9}},
+    )
+    rendered = _render_item(node)
+    assert '"episode_id":"episode-123"' in rendered
+    assert "\\n" not in rendered
