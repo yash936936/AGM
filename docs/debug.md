@@ -1,3 +1,11 @@
+## DBG-060 — External-gate tracking docs exact-head CI — 2026-10-26
+
+**Merged:** PR [#42](https://github.com/yash936936/AGM/pull/42), merge commit `0d1b60bd3d27e8422c0fd31f3714d03a17fadc61`.
+**Exact-head CI:** [Run 40226444920](https://github.com/yash936936/AGM/actions/runs/40226444920) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. Jobs ran pytest, REST integration smoke, MCP fresh-session smoke, hygiene, whitespace, and wheel/package inspection.
+**Interpretation:** Repository CI is green for this docs-only tracking change. No external evidence was generated: held-out consented real-history evaluation is NOT RUN; independent security/privacy review is NOT PERFORMED; third-party host integration is NOT VERIFIED. Do not mark the overall production release gate complete.
+
+---
+
 ## DBG-059 — External release-gate protocols merged — 2026-10-26
 
 **Change:** PR #41 merged at `73b56aa7b9a98cbe185c3d27c736667cb42e9d5a`, adding protocols for held-out consented real-history evaluation, independent security/privacy review, and real third-party host integration under `docs/acceptance/`.
