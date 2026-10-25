@@ -1315,10 +1315,22 @@ class MemoryStore:
         revoke_rows = self.conn.execute(
             "SELECT * FROM events WHERE type = 'revoke_writer' ORDER BY id ASC"
         ).fetchall()
+        revoked_node_ids: set[str] = set()
         for revoke_row in revoke_rows:
             revoke_payload = decode_payload(revoke_row)
-            if not revoke_payload.get("scrubbed"):
-                self._apply_revoke_payload(revoke_payload)
+            if revoke_payload.get("scrubbed"):
+                continue
+            self._apply_revoke_payload(revoke_payload)
+            revoked_node_ids.update(str(node_id) for node_id in revoke_payload.get("node_ids", []))
+
+        # Revocation is a final-state constraint on the materialized view. Apply
+        # the collected tombstones after all event handlers have run so no
+        # replayed source/derived event can reintroduce a revoked node.
+        for node_id in revoked_node_ids:
+            self.conn.execute("DELETE FROM nodes_fts WHERE node_id = ?", (node_id,))
+            self.conn.execute("DELETE FROM embeddings WHERE node_id = ?", (node_id,))
+            self.conn.execute("DELETE FROM edges WHERE src = ? OR dst = ?", (node_id, node_id))
+            self.conn.execute("DELETE FROM nodes WHERE id = ?", (node_id,))
 
     @_atomic_mutation(checkpoint=True)
     def revoke_writer(self, ctx: Ctx, writer_id: str, since: str | None = None) -> RevokeResult:
