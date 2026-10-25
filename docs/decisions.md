@@ -1,3 +1,15 @@
+## D-037 — Keep proposal executor library-only; adapters retain frozen contracts
+
+**Decision:** Treat `execute_authorized_memory_proposal()` as an additive Python library API for M2. Do not silently route REST or MCP mutation tools through proposal review or change their request/response contracts. REST and MCP remain direct authenticated adapters over the existing scoped `MemoryStore` operations. Integrators using the new proposal lifecycle must call the executor with trusted host authorization, the real scoped `Ctx`, and explicit mutation confirmation.
+
+**Why:** The active-turn seam has a current-message evidence/policy contract that existing REST/MCP calls do not receive. Retrofitting that contract into the existing adapters would change their semantics and require an explicit contract and compatibility review. A library-only boundary is safer than implying parity that is not implemented.
+
+**Verification boundary:** Shared `MemoryStore` operations have adapter smoke coverage, but the new proposal-policy/confirmation flow is not exposed through REST/MCP and therefore does not have behavioral parity across those surfaces. Any future adapter integration requires a new numbered decision, request schemas, authentication-to-context mapping, explicit confirmation semantics, and cross-surface acceptance tests.
+
+**Affects:** M2 implementation report and status. No code behavior, REST route, MCP tool name, schema, dependency, or persisted data change.
+
+---
+
 ## D-036 — Explicitly authorized active-memory proposal execution
 
 **Decision:** Extend the additive active-turn library seam with an explicit executor for write, correction, history, and delete proposals. The executor re-evaluates the current-message policy, checks action-specific scopes, requires a host authorization signal, requires confirmation for mutations, and delegates to existing tenant-scoped MemoryStore methods.
