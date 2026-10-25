@@ -15,7 +15,7 @@ from typing import Any
 from .events import decode_payload
 from .guard import sanitize_value
 from .models import Ctx
-from .store import MemoryStore, _iso_key
+from .store import MemoryStore
 
 _SAFE_FILENAME = re.compile(r"[^a-zA-Z0-9._-]+")
 
@@ -37,6 +37,15 @@ def timeline(store: MemoryStore, ctx: Ctx, *, limit: int = 100) -> list[dict[str
     result: list[dict[str, Any]] = []
     for row in rows:
         payload = decode_payload(row)
+        event_ctx = payload.get("ctx")
+        # Events without project metadata are only visible to their originating writer.
+        event_project = (
+            str(event_ctx.get("project", "default"))
+            if isinstance(event_ctx, dict)
+            else ("default" if str(row["writer_id"]) == ctx.writer_id else None)
+        )
+        if event_project != ctx.project:
+            continue
         if payload.get("scrubbed"):
             summary = "Content payload scrubbed"
         elif row["type"] in {"add", "supersede", "contested", "quarantined"}:
