@@ -292,3 +292,10 @@
 **Validation:** NOT RUN locally. Exact-head CI, focused `tests/test_local_hub.py`, full pytest suite, wheel/package inspection, repository hygiene and `git diff --check` remain required. Do not merge until exact-head CI passes.
 
 **Release status:** M0 remains IN PROGRESS, M1 remains PARTIAL / VERIFY. Real-history evaluation is NOT RUN and independent security/privacy review is NOT ESTABLISHED.
+## DBG-042 — Default retention must preserve revoked pinned source payloads
+
+**Finding:** `expire_before()` used materialized pinned node IDs to protect pinned content during orphan-event scrubbing. Revocation removes those nodes, so an aged pinned source event could be scrubbed by a default sweep despite the documented retain-pinned-by-default policy.
+
+**Candidate fix:** Branch `fix/retention-preserve-revoked-pins-v2`, source commit `692e5d9c95290050d548d2ffd7550cef57693a52`, regression commit `0acae570159906e2715aaab8053f972f05976d37`. The orphan-event path now checks the stored source item's `pin` flag and skips pinned payloads unless `include_pinned=True`. The regression revokes a pinned writer, runs default expiry and replay, then verifies explicit opt-in can scrub the payload.
+
+**Validation:** NOT RUN locally. Exact-head CI and packaging/hygiene checks required before merge. M0 remains IN PROGRESS; do not treat this fix as accepted until evidence passes.
