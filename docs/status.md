@@ -140,3 +140,7 @@ Session/connection scope changes passed all six Linux/Windows Python 3.11–3.13
 ## 2026-10-25 — REST identity isolation coverage added
 
 PR #19 passed all six Linux/Windows Python 3.11–3.13 jobs in [run 40214468957](https://github.com/yash936936/AGM/actions/runs/40214468957) and merged. Follow-up acceptance tests now exercise session/connection isolation across tenant, project and writer identities plus REST query validation for session-list limits. Test commit `613d96fcc453f6979eec16c9a68beb5e7d3c0f77`; exact-head CI is pending/not yet visible. M0 remains IN PROGRESS, M1 remains PARTIAL / VERIFY, and held-out real-history plus independent security/privacy review remain open.
+
+## 2026-10-25 — REST identity-isolation candidate validated and merged
+
+PR #20 passed exact-head CI [run 40214773052](https://github.com/yash936936/AGM/actions/runs/40214773052): all six Ubuntu/Windows Python 3.11–3.13 jobs passed tests, repository hygiene, whitespace checks and wheel/package inspection. Merged commit: `d4eff63b74c0ed37cdf52c1b71c7b951a26d4547`. This validates the added REST tests for tenant/project/writer isolation and invalid session-list limits on that candidate. M0 remains IN PROGRESS and M1 remains PARTIAL / VERIFY. Held-out consented real-history evaluation remains NOT RUN; independent security/privacy review remains NOT ESTABLISHED.
