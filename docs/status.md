@@ -1,3 +1,13 @@
+## 2026-10-26 — M0 retention and replay closure candidate
+
+**Branch:** `acceptance/m0-retention-replay-closure`.
+
+**Change:** Adds `test_revoked_pinned_source_survives_default_expiry_and_replay`: revoked pinned source content must survive default expiry and a view rebuild, then be scrubbed only with `include_pinned=True`, while the compact revocation audit event remains. This closes a specific missing regression, not the whole M0 matrix.
+
+**Validation:** Exact-head CI pending. Do not mark M0 complete until the full current-main acceptance matrix is green and reviewed. Held-out real-history evaluation and independent security/privacy review remain open release gates.
+
+---
+
 ## 2026-10-26 — M1 Obsidian export provenance merged
 
 **Merged:** PR [#37](https://github.com/yash936936/AGM/pull/37), merge commit `f19aa818a00dc9995077721fc108c08d295362a7`.
