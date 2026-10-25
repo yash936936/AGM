@@ -120,3 +120,7 @@
 
 **M1 status:** PARTIAL / VERIFY. Existing coverage establishes scoped metadata timeline, deterministic scoped snapshot, secret-scrubbed Obsidian export and snapshot-copy semantics. Owner-auth bootstrap, session/connection API scope isolation, connection diagnostics token secrecy, and export deletion policy still require end-to-end acceptance review on an exact candidate. 
 
+
+## 2026-10-25 — M1 local-hub CI assertion fixes
+
+GitHub Actions run [40213071743](https://github.com/yash936936/AGM/actions/runs/40213071743) failed two newly added local-hub tests on Ubuntu Python 3.11–3.13: one referenced a nonexistent `WriteResult.event_id`; the other over-specified JSON string escaping in exported frontmatter. Both test assertions were corrected in commit `d8e8c7acff925d70d3167bb40f40b548bc3288e9`. The full suite was otherwise 214 passed in the Python 3.11 job. This fix is not accepted until exact-head CI passes across the Linux/Windows Python 3.11–3.13 matrix. M0 remains IN PROGRESS, M1 remains PARTIAL / VERIFY; real-history evaluation and independent security/privacy review remain open release gates.
