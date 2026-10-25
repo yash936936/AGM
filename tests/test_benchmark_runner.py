@@ -97,3 +97,17 @@ def test_repeated_run_summary_preserves_each_run_and_aggregates_percentiles():
     assert summary["summary"]["graph"]["errors_total"] == 1
     assert summary["summary"]["flat"]["latency_percentiles_across_runs_ms"]["p50"]["p50"] == 3.0
     assert len(summary["runs"]) == 2
+
+
+
+def test_frozen_synthetic_acceptance_suite_covers_required_scenarios():
+    from pathlib import Path
+    from scripts.evaluate_real_history import load_cases
+
+    path = Path("examples/benchmark_acceptance.synthetic.jsonl")
+    cases = load_cases(path)
+    assert len(cases) == 10
+    assert {"abstention", "current_vs_stale", "deletion", "revocation", "expiry", "tenant_isolation"} <= {
+        case["scenario"] for case in cases
+    }
+    assert len({case["case_id"] for case in cases}) == len(cases)
