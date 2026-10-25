@@ -44,6 +44,10 @@ def test_revocation_since_cutoff_preserves_older_memory_after_rebuild_and_reopen
             store.conn.execute(
                 "UPDATE events SET created_at = ? WHERE id = ?", (created_at, event_id)
             )
+        # These direct SQL updates are test-fixture setup, not part of the
+        # revocation transaction. Commit them so revoke_writer starts and
+        # commits its own top-level atomic mutation.
+        store.conn.commit()
 
         result = store.revoke_writer(ctx, ctx.writer_id, since=cutoff)
         assert result.revoked
