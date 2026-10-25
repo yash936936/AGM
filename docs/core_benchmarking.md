@@ -116,7 +116,7 @@ Copy this table into a dated report for each benchmark run. Replace every NOT RU
 
 ## Current next step
 
-The paired benchmark runner is merged. This increment adds aggregate operation-level timing for writes, lifecycle mutations, and rebuild/replay, and removes the source filename from aggregate reports. Peak process RSS, concurrent retrieval load, and a standalone keyword baseline remain future work. Keep the existing smoke evaluator intact as a fast regression check; do not silently turn its four scenarios into the headline benchmark.
+The paired runner now reports operation-level timing, best-effort peak process RSS, and opt-in concurrent retrieval load. A frozen 10-case synthetic acceptance suite covers cross-session recall, relevance, abstention, temporal correction, deletion, revocation, expiry, and tenant isolation. A transparent token-overlap keyword baseline is available both inside the paired report and as a standalone CLI. Keep this synthetic suite labelled as a regression fixture, not a held-out real-history benchmark.
 
 ## Paired runner usage
 
@@ -129,9 +129,23 @@ python -m eval.benchmark_runner path/to/consented-deidentified-cases.jsonl --out
 
 The default report omits case identifiers, memory text, and the source dataset filename. `--include-case-details` emits ordinal indices, scenario labels, outcomes and timings; protect these details if scenario composition is sensitive.
 
-For each mode the runner reports case pass rate, expected-value recall, forbidden-value leakage, abstention accuracy where labelled, retrieval latency p50/p95/p99, end-to-end case latency p50/p95/p99, operation-level write/correction/delete/revocation/expiry/rebuild-replay timings where present, cases/second, elapsed time and maximum per-case SQLite file size. The aggregate report also captures process peak RSS using platform-specific standard-library APIs where supported. Pass `--concurrency N --concurrent-requests M` to measure concurrent retrieval latency percentiles, request throughput, errors, and elapsed time per mode; this load test is opt-in because it adds runtime and is not a release-quality workload by itself. The aggregate report does not include the dataset filename, since filenames can contain identifying information. Retrieval latency measures only the `MemoryStore.retrieve` call; end-to-end case latency includes fixture setup, lifecycle operations, reopen and replay. Mode order alternates per case to reduce systematic order bias.
+For each AGM mode the runner reports case pass rate, expected-value recall, forbidden-value leakage, abstention accuracy where labelled, retrieval latency p50/p95/p99, end-to-end case latency p50/p95/p99, operation-level write/correction/delete/revocation/expiry/rebuild-replay timings where present, cases/second, elapsed time and maximum per-case SQLite file size. The aggregate report also captures process peak RSS using platform-specific standard-library APIs where supported. If Windows reports RSS as null, memory measurement was unavailable and must not be reported as zero. Pass `--concurrency N --concurrent-requests M` to measure concurrent retrieval latency percentiles, request throughput, errors, and elapsed time per mode. Add `--repetitions N` to rerun the complete paired benchmark and report per-run concurrent metrics plus across-run percentile summaries. This load test is opt-in because it adds runtime and is not a release-quality workload by itself. The aggregate report does not include the dataset filename, since filenames can contain identifying information. Retrieval latency measures only the `MemoryStore.retrieve` call; end-to-end case latency includes fixture setup, lifecycle operations, reopen and replay. Mode order alternates per case to reduce systematic order bias.
+
+The paired report includes a separate `keyword_baseline` using casefolded token overlap over fixture memories. This baseline simulates the lifecycle operations declared in each case, but is deliberately simpler than AGM retrieval and is **not** the production SQLite FTS implementation. It is intended as a transparent lexical comparator, not a claim that all keyword-search systems behave this way. To run it by itself:
+
+```bash
+python -m eval.keyword_baseline examples/benchmark_acceptance.synthetic.jsonl --output keyword-report.json
+```
+
+Use the 10-case frozen synthetic suite for repeatable development checks:
+
+```bash
+python -m eval.benchmark_runner examples/benchmark_acceptance.synthetic.jsonl --concurrency 4 --concurrent-requests 100 --repetitions 5 --output benchmark-report.json
+```
+
+This produces 5 independent runs per AGM mode; with 10 cases and 100 requests per case, each repetition issues up to 1,000 concurrent requests per mode. Reduce requests/repetitions for a faster smoke run.
 
 The runner is a local measurement harness, not evidence of production performance. Use synthetic cases in CI and only explicitly consented, de-identified histories for held-out evaluation. Record commit SHA, OS, Python version, CPU/RAM, dataset hash, case count, configuration and repetition count with any result.
 
-A lightweight peak-RSS reading and opt-in concurrent retrieval load measurement are now available; a standalone keyword baseline remains NOT RUN. Results remain NOT RUN until the runner is executed on a declared dataset and environment. Real-history acceptance still requires an authorized held-out dataset; independent security/privacy review requires an actual reviewer and signed findings. Do not treat synthetic CI as closing either gate.
+The 10-case synthetic acceptance suite is committed as `examples/benchmark_acceptance.synthetic.jsonl`. Its results remain synthetic smoke evidence. Real-history acceptance still requires an authorized held-out dataset; independent security/privacy review requires an actual reviewer and signed findings. Do not treat synthetic CI as closing either gate.
 

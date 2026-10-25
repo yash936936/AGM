@@ -1,3 +1,13 @@
+## 2026-10-25 — Benchmark acceptance suite and keyword baseline in review
+
+**Current branch:** `work/benchmark-acceptance-baselines`, based on PR #15's peak-RSS/concurrency candidate.
+
+**Implemented in this increment:** strengthened Windows peak-working-set API signatures; added opt-in `--repetitions` with per-run concurrent p50/p95/p99, throughput and error summaries; added `examples/benchmark_acceptance.synthetic.jsonl` with 10 labelled cases covering cross-session recall, relevance, abstention, temporal correction, deletion, revocation, expiry and tenant isolation; added a token-overlap lexical baseline to paired reports and standalone `python -m eval.keyword_baseline`.
+
+**Validation:** PR #15 exact-head CI passed all six Linux/Windows Python 3.11–3.13 jobs in [run 40210586141](https://github.com/yash936936/AGM/actions/runs/40210586141). Initial run [40211567298](https://github.com/yash936936/AGM/actions/runs/40211567298) caught a lexical tokenization-regex bug, now corrected on the latest head. Follow-up exact-head CI [40211660005](https://github.com/yash936936/AGM/actions/runs/40211660005) is pending, including the Windows RSS assertion. User-run PR #15 smoke output used one synthetic case, had zero concurrent errors, and reported peak RSS as null; it is not a quality or capacity claim.
+
+**Still blocked:** the 10-case suite is synthetic; no consented, de-identified held-out dataset was supplied, so real-history results remain NOT RUN. Independent security/privacy review remains NOT ESTABLISHED. Do not claim production readiness.
+
 ## 2026-10-25 — Benchmark runner merged; operation and load metrics extended
 
 **Merged:** [PR #13](https://github.com/yash936936/AGM/pull/13) added paired flat-vs-graph evaluation. [PR #14](https://github.com/yash936936/AGM/pull/14) added operation-level timings and removed the input dataset filename from aggregate output.

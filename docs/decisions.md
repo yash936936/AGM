@@ -1,3 +1,11 @@
+## D-032 — Frozen synthetic acceptance suite, repeatability, and lexical baseline — 2026-10-25
+
+**Decision:** Keep a 10-case labelled synthetic JSONL suite for repeatable development checks across recall, relevance, abstention, temporal correction, deletion, revocation, expiry, and tenant isolation. Add an opt-in full-run repetition count to expose run-to-run load variance. Add a transparent casefolded token-overlap lexical baseline, available in the paired report and standalone CLI.
+
+**Limits:** The lexical baseline simulates the lifecycle operations declared by each fixture and is not AGM's SQLite FTS implementation. Synthetic benchmark outputs do not establish real-history quality, production capacity, or H1–H7 evidence. RSS may remain unavailable on unsupported platforms and must be reported as unavailable, not zero. No new dependencies or frozen API changes.
+
+**Affects:** `eval/benchmark_runner.py`, `eval/keyword_baseline.py`, `examples/benchmark_acceptance.synthetic.jsonl`, benchmark tests and docs.
+
 ## D-031 — Paired retrieval benchmark runner and privacy-minimized reports — 2026-10-25
 
 **Decision:** Add a paired runner for flat (`expand=False`) and graph (`expand=True`) retrieval over the existing JSONL evaluation schema. Each mode uses a separate temporary database per case; mode order alternates by case. Report retrieval/end-to-end latency percentiles, expected-value recall, pass rate, abstention accuracy, forbidden-value leakage, cases/second and maximum SQLite file size. Default output omits case IDs and memory content.
