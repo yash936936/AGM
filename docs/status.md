@@ -1,3 +1,10 @@
+## 2026-10-25 — M1 local hub implementation increment
+
+**Branch/PR:** `feat/m0-m1-completion`, [PR #10](https://github.com/yash936936/AGM/pull/10), draft.
+**Implemented in this increment:** `src/agm/local_hub.py` supplies a project-scoped metadata timeline, deterministic read-only graph snapshot, and guarded Obsidian export. Focused tests are in `tests/test_local_hub.py`. D-030 records the design and its boundaries.
+**Verification:** Local tests NOT RUN because GitHub DNS/network was unavailable to the execution environment. Actions run 40192632664 was triggered; check its final conclusion before considering the branch verified.
+**Still open:** M1 owner authentication/bootstrap, session lifecycle, connection registry and real connection diagnostics. M0 full exact-head acceptance, cutoff-revocation regression verification, local Windows smoke/packaging checks, held-out real-history evaluation and independent security/privacy review. M0/M1 are not complete or production accepted.
+
 ## 2026-10-25 — fast-track audit and exact-head CI blocker
 
 **Review branch:** `debug/revocation-replay-fasttrack-review`; public `main` was not changed by this review. Baseline main head: `fb732d2e49bc99205cd14964a9d0ba01163bfbb0`.
