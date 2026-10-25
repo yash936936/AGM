@@ -1,10 +1,8 @@
-## DBG-056 — Revoked pinned source retention across replay — 2026-10-26
+## DBG-057 — M1 cross-session recall and lifecycle regression — 2026-10-26
 
-**Finding:** The retention implementation preserves revoked pinned source events by checking the original write payload's `item.pin` flag when no materialized node remains. Existing tests covered ordinary pinned nodes and explicit pinned expiry, but did not prove the revoked-orphan case across replay.
+**Regression added:** `tests/test_m1_acceptance.py::test_cross_session_recall_correction_delete_and_rebuild` creates an original and corrected fact, closes the store, reopens it as a fresh session, verifies current recall and historical versions, deletes both versions, rebuilds views, and confirms neither version can be retrieved or found in source-event payloads after a second reopen/rebuild.
 
-**Regression added:** `test_revoked_pinned_source_survives_default_expiry_and_replay` verifies default expiry preserves the content marker, `rebuild_views()` does not restore a revoked node or erase the payload, explicit `include_pinned=True` scrubs the source payload, and the revocation audit event remains after reopening/rebuilding.
-
-**Validation:** Exact-head CI pending. This synthetic regression does not close the full M0 acceptance matrix or external security/privacy review.
+**Validation:** Exact-head CI pending. This test complements but does not replace REST/MCP smoke-client runs, a held-out consented real-history evaluation, or independent security/privacy review.
 
 ---
 
