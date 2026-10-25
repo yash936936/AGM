@@ -1,3 +1,13 @@
+## DBG-061 — M2 kickoff and external release gates marked pending — 2026-10-26
+
+**Documentation change:** Marked held-out real-history evaluation, independent security/privacy review, and third-party host integration **OPEN / PENDING**, with the evidence required to close each gate. Started M2 planning in `docs/acceptance/m2_active_memory_execution_brief.md`.
+
+**M2 scope:** Audit and connect the existing pre-answer context preparation and memory-proposal policy into a safe before/during/after-turn lifecycle. Keep mutations behind explicit intent and existing scoped APIs; preserve tenant isolation, event-log/replay semantics, untrusted-memory notices, and frozen REST/MCP contracts.
+
+**Validation:** NOT RUN. This step establishes the brief and status only; no code tests were executed. M2 is started but not implemented or accepted.
+
+---
+
 ## DBG-059 — External release-gate protocols merged — 2026-10-26
 
 **Change:** PR #41 merged at `73b56aa7b9a98cbe185c3d27c736667cb42e9d5a`, adding protocols for held-out consented real-history evaluation, independent security/privacy review, and real third-party host integration under `docs/acceptance/`.
