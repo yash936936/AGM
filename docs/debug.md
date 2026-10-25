@@ -267,3 +267,11 @@
 **Change:** Added REST-level authorization tests for read-only session access (list allowed; create/close forbidden), connection endpoints requiring `admin`, and an admin-authorized connection create/list round trip that checks metadata-only output. Test commit `2085ba3b76652636152b3f4dccb627a426e7b123`.
 
 **Validation:** NOT RUN locally; this new REST authorization coverage has no exact-head CI result yet. Do not treat it as passing until all six matrix jobs and package/hygiene checks complete on the exact candidate.
+
+## DBG-039 — REST identity-boundary acceptance
+
+**Evidence:** PR #19's exact-head run [40214468957](https://github.com/yash936936/AGM/actions/runs/40214468957) passed all six Linux/Windows Python 3.11–3.13 jobs, including tests, repository hygiene, whitespace and wheel inspection; PR #19 merged at `24072c84beb395fcf07af54c8628fd93d96b90c8`.
+
+**Change:** Added end-to-end REST coverage proving sessions and connections are isolated across project, writer and tenant identities, and that session-list query limits outside the allowed integer range return 422. Test commit `613d96fcc453f6979eec16c9a68beb5e7d3c0f77`.
+
+**Validation:** NOT RUN locally and no exact-head CI result yet. This is a new regression candidate; do not accept it until the full Linux/Windows Python 3.11–3.13 matrix passes.

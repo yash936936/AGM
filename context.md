@@ -63,3 +63,8 @@ Latest validated baseline is CI run [40213472988](https://github.com/yash936936/
 ## Current follow-up — REST authorization matrix
 
 CI run [40214097156](https://github.com/yash936936/AGM/actions/runs/40214097156) passed the previous session/connection scope candidate and PR #18 was merged. The next candidate adds REST-level tests for session read/write scopes and admin-only connection management. See `docs/debug.md` DBG-038. Validate exact-head CI before further M1 implementation or marking these tests accepted.
+
+
+## Current follow-up — REST identity boundary
+
+PR #19's exact-head CI passed all six matrix jobs and it was merged. The next acceptance candidate tests cross-tenant/project/writer isolation for session and connection REST routes and invalid session-list query values. See `docs/debug.md` DBG-039. Validate the exact head before accepting or merging the follow-up.
