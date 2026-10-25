@@ -1,3 +1,18 @@
+## DBG-017 — Fast-track plan reconciled with current repository — 2026-10-25
+**Task:** Inspect the supplied fasttrack.zip against context.md, AGENTS.md, current roadmap/status/decisions, and GitHub CI; revise the plan before code changes.
+
+**ZIP inspection:** The archive contains three files only: prompts/m0_m1_fast_track.md, scripts/verify_all.py, and tests/test_m0_open_gaps.py. It is a plan/test overlay, not a complete repository snapshot. Its premise of “187 tests pass” and missing M0/M1 features conflicts with the current checkout and the documented October 25 status. The current main tree does not contain tests/test_m0_open_gaps.py. Do not apply it wholesale or add these tests without validating each gap against current contracts.
+
+**Current main head:** fb732d2e49bc99205cd14964a9d0ba01163bfbb0 (merge of fix/revocation-replay-corrective). Added a revised plan at prompts/fasttrack_debug_plan_revised.md on branch debug/revocation-replay-fasttrack-review, commit e8356e7bd5fd19472a23fbb850e345b8f1116711. No runtime code changed in this review.
+
+**Critical current failure:** GitHub Actions run 40189884890, exact main head fb732d2e49bc99205cd14964a9d0ba01163bfbb0, failed on Python 3.11, 3.12 and 3.13. Each reports 1 failed, 189 passed, 1 warning. The failed test is tests/test_privacy_edge_acceptance.py::test_revocation_since_cutoff_preserves_older_memory_after_rebuild_and_reopen. The later item is absent immediately after revoke_writer, but returns after reopening and rebuild_views. Repository hygiene and git diff --check passed in those jobs. This is NOT fixed.
+
+**Plan change:** Make the revocation replay regression the first code task. Investigate the event metadata/payload and final replay enforcement before changing M0 or adding M1. After repair, validate retention/expiry against D-028/D-029, then inventory genuine M0 gaps using docs/M0_ACCEPTANCE_MATRIX.md and only then do an evidence-based M1 feature gap analysis. The ZIP's broad owner auth, connection/session tables, UI, export implementation, version bump and temporal validation list are not pre-approved implementation work.
+
+**Validation:** Repository files and the current main Actions run/logs were inspected remotely. Local test execution, Windows execution, smoke clients, pack inspection and the candidate branch runtime fix are NOT RUN. Do not claim otherwise.
+
+**Next:** Fix replay so cutoff revocation is durable across close/open/rebuild, older items remain and tenant isolation is preserved. Run focused test, full test suite and hygiene/whitespace checks, then exact-head CI on all supported Python versions. Do not merge until those gates pass.
+
 ## DBG-015 — Require mutation operations for mutation scenario labels — 2026-10-25
 **Task:** Prevent benchmark cases from claiming correction, deletion, or revocation coverage through a scenario label without running the matching store operation.
 
