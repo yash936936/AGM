@@ -1,3 +1,13 @@
+## DBG-048 — Strengthen expiry rollback injection after view mutation — 2026-10-25
+
+**Review finding:** PR [#27](https://github.com/yash936936/AGM/pull/27) passed exact-head CI run [40218590007](https://github.com/yash936936/AGM/actions/runs/40218590007), all six Linux/Windows Python 3.11–3.13 jobs. Post-merge review correctly noted that its failure hook raised before the real nested delete handler changed derived views.
+
+**Follow-up change:** The revised test calls the original `_apply_delete_payload` first, records that the handler ran, and then raises an injected exception. It verifies the expiry operation restores the source payload, event count and active node, closes the transaction, and leaves the marker retrievable after reopen/rebuild. This exercises rollback after the real nested handler has performed its view mutation, rather than only failure before mutation.
+
+**Validation:** Candidate branch `test/m0-expiry-post-mutation-rollback`; exact-head CI pending. Local tests NOT RUN in this remote editing environment. Synthetic failure injection is not independent security/privacy review. M0 remains IN PROGRESS; held-out real-history evaluation and independent security/privacy review remain open.
+
+---
+
 ## DBG-047 — M0 expiry sweep atomic rollback regression — 2026-10-25
 
 **Task:** Verify that retention expiry is atomic across its nested delete operations.
