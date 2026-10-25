@@ -421,11 +421,15 @@ def test_expiry_rolls_back_deletes_when_orphan_scrub_fails(tmp_path):
 
         # Force the failure in the final orphan-scrub phase, after the sweep
         # has already run its nested delete for the live item.
+        # Scope the trigger to the revoked orphan's source event. The live
+        # item's own delete scrubs its source payload earlier in the sweep.
+        orphan_event_id = source_ids[orphan.item_id]
         store.conn.execute(
-            """CREATE TRIGGER fail_expiry_orphan_scrub
-               BEFORE UPDATE OF payload ON events
-               WHEN NEW.payload = '{"scrubbed":true}'
-               BEGIN SELECT RAISE(ABORT, 'injected orphan scrub failure'); END"""
+            f"""CREATE TRIGGER fail_expiry_orphan_scrub
+                BEFORE UPDATE OF payload ON events
+                WHEN OLD.id = {int(orphan_event_id)}
+                 AND NEW.payload = '{{"scrubbed":true}}'
+                BEGIN SELECT RAISE(ABORT, 'injected orphan scrub failure'); END"""
         )
         store.conn.commit()
 
