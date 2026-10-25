@@ -221,7 +221,7 @@ def run_benchmark(path: Path, *, min_case_pass_rate: float = DEFAULT_MIN_CASE_PA
 
 def _keyword_tokens(value: str) -> set[str]:
     import re
-    return {token for token in re.findall(r"[\\w]+", value.casefold()) if len(token) > 1}
+    return {token for token in re.findall(r"[\w]+", value.casefold()) if len(token) > 1}
 
 
 def evaluate_keyword_baseline(cases: list[dict[str, Any]]) -> dict[str, Any]:
