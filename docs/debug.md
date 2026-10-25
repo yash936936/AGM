@@ -1,3 +1,13 @@
+## DBG-055 — Preserve source-span provenance in Obsidian export — 2026-10-26
+
+**Finding:** `export_obsidian()` did not select `source_episode`, `span_start`, or `span_end` from the node table and therefore omitted source provenance from exported frontmatter.
+
+**Change:** Include source episode ID and start/end span coordinates in deterministic frontmatter, with a regression test for the exported fields.
+
+**Validation:** Local tests NOT RUN in this remote editing environment. Exact-head CI, package inspection, repository hygiene and review pending. M1 remains PARTIAL / VERIFY.
+
+---
+
 ## DBG-053 — Bound the lifecycle before-turn memory context — 2026-10-25
 
 **Finding:** `MemoryLifecycle.before_turn()` previously formatted all retrieved nodes into `context_text` without a character/token budget, despite the M1 context contract requiring bounded evidence. Its `top_k` validation also accepted booleans and non-integer values until deeper layers handled them.
