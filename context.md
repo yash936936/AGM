@@ -1,3 +1,11 @@
+## 2026-10-26 — M0/M1 acceptance PRs merged
+
+PR #39 merged at `ff74460daf3c6585c5820e380320cb8cfc134475`. Its exact-head CI run [40224653021](https://github.com/yash936936/AGM/actions/runs/40224653021) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. It adds coverage for revoked pinned source retention across default expiry and replay, plus explicit expiry scrubbing while retaining the revocation audit event.
+
+PR #40 merged at `d27c6475d51263df6b75a0309438530b352665d6`. Its exact-head CI run [40224688462](https://github.com/yash936936/AGM/actions/runs/40224688462) passed all six Ubuntu/Windows Python 3.11–3.13 jobs, including the full pytest suite, REST integration smoke client, MCP fresh-session smoke client, hygiene, whitespace, and package inspection. It adds cross-session recall/correction/delete/rebuild coverage and makes REST/MCP smoke clients part of CI.
+
+**Status:** The named M0 retention/replay regression and repository CI acceptance are verified. M1 core cross-session lifecycle and adapter smoke coverage are verified by CI. Do not claim the entire production release gate is closed: held-out, consented real-history evaluation and independent security/privacy review remain incomplete. A real external host smoke test is also distinct from the repository smoke clients.
+
 
 
 ## 2026-10-26 — M0/M1 closure PRs prepared
