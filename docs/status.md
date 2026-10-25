@@ -1,3 +1,23 @@
+## 2026-10-26 — M1 Obsidian export provenance merged
+
+**Merged:** PR [#37](https://github.com/yash936936/AGM/pull/37), merge commit `f19aa818a00dc9995077721fc108c08d295362a7`.
+
+**Validation:** Exact-head CI [40223870098](https://github.com/yash936936/AGM/actions/runs/40223870098) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. Regression coverage verifies source episode ID and start/end span coordinates in deterministic export frontmatter.
+
+**Status:** M1 remains PARTIAL / VERIFY because the full acceptance matrix and local Windows integration checks remain outstanding. M0 remains IN PROGRESS; real-history evaluation and independent security/privacy review remain open.
+
+---
+
+## 2026-10-26 — M1 lifecycle context review fixes merged
+
+**Merged:** PR [#34](https://github.com/yash936936/AGM/pull/34), merge commit `1c546392267cdd86a97b76e4979fae26cb141033`.
+
+**Validation:** Exact-head CI [40223512300](https://github.com/yash936936/AGM/actions/runs/40223512300) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. Fixes preserve positional request compatibility, retain source provenance, and prevent untrusted memory values from creating new context lines or closing record framing.
+
+**Status:** M1 remains PARTIAL / VERIFY; M0 remains IN PROGRESS. Held-out real-history evaluation and independent security/privacy review remain open.
+
+---
+
 ## 2026-10-26 — M1 Obsidian export provenance follow-up on current main
 
 **Finding:** `export_obsidian()` exported stable memory IDs and event metadata but omitted source episode/span fields, losing provenance required by the M1 acceptance contract.
