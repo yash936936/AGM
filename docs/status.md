@@ -1,3 +1,13 @@
+## 2026-10-26 — M1 Obsidian export provenance follow-up on current main
+
+**Finding:** `export_obsidian()` exported stable memory IDs and event metadata but omitted source episode/span fields, losing provenance required by the M1 acceptance contract.
+
+**Change:** Branch `fix/m1-obsidian-export-provenance-v2` adds `source_episode_id`, `source_span_start`, and `source_span_end` frontmatter fields and a regression test using a synthetic source episode/span.
+
+**Validation:** NOT RUN locally in this remote editing environment. Exact-head CI and review pending. M1 remains PARTIAL / VERIFY; M0 remains IN PROGRESS. Held-out real-history evaluation and independent security/privacy review remain open.
+
+---
+
 ## 2026-10-26 — M1 lifecycle context review follow-up in progress
 
 **Finding:** PR #32's bounded before-turn lifecycle change passed exact-head CI run [40221564276](https://github.com/yash936936/AGM/actions/runs/40221564276), all six Ubuntu/Windows Python 3.11–3.13 jobs. Review then identified that adding `token_budget` in the middle of `BeforeTurnRequest` shifted existing positional arguments, shared context rendering dropped source provenance, and raw memory text could forge a closing memory-record delimiter.

@@ -1,3 +1,13 @@
+## DBG-055 — Preserve source-span provenance in Obsidian export — 2026-10-26
+
+**Finding:** `export_obsidian()` did not select `source_episode`, `span_start`, or `span_end` from the node table and therefore omitted source provenance from exported frontmatter.
+
+**Change:** Include source episode ID and start/end span coordinates in deterministic frontmatter, with a regression test for the exported fields. Rebased onto current main as `fix/m1-obsidian-export-provenance-v2` after the parallel lifecycle review merge.
+
+**Validation:** Local tests NOT RUN in this remote editing environment. Exact-head CI, package inspection, repository hygiene and review pending. M1 remains PARTIAL / VERIFY.
+
+---
+
 ## DBG-054 — Fix lifecycle context compatibility and trust-boundary regressions — 2026-10-26
 
 **Finding:** Review of merged PR #32 found three regressions: `token_budget` was inserted before existing dataclass fields and broke positional callers; shared bounded rendering omitted stored provenance; and memory text with newlines / a forged closing record tag could break record framing.
