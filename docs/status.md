@@ -1,3 +1,17 @@
+## 2026-10-25 — M1 before-turn context budget enforcement in review
+
+**Branch:** `fix/m1-bounded-before-turn-context`.
+
+**Finding:** The older `MemoryLifecycle.before_turn()` rendered every retrieved item directly and accepted an unbounded `top_k`; the separate active-memory packer already provided token-budget enforcement, but this lifecycle entry point did not use it.
+
+**Change:** Delegate rendering to `prepare_turn_context()`, add an explicit token budget, require positive integer `top_k` and token budget values, and test that oversized records are omitted while included IDs match the rendered context.
+
+**Merged baseline:** PR [#31](https://github.com/yash936936/AGM/pull/31), merge commit `7d44e3fdea3a7cf87319b92efd52ebcca0bb7129`; exact-head CI run [40221085442](https://github.com/yash936936/AGM/actions/runs/40221085442) passed all six Linux/Windows Python 3.11–3.13 jobs.
+
+**Validation:** New exact-head CI pending; local tests NOT RUN in this remote editing environment. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY.
+
+---
+
 ## 2026-10-25 — M1 graph snapshot quarantine filter in review
 
 **Branch:** `fix/m1-snapshot-quarantine-filter`.
