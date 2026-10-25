@@ -128,3 +128,7 @@ GitHub Actions run [40213071743](https://github.com/yash936936/AGM/actions/runs/
 ## 2026-10-25 — Follow-up on remaining local-hub export failure
 
 Run [40213224547](https://github.com/yash936936/AGM/actions/runs/40213224547) confirmed the timeline test fix and reported one remaining export-test failure: the fixture used literal backslash+n sequences, so the password label did not have the intended token boundary. The fixture now uses actual line breaks for both the note and adversarial project metadata (test commit `40ff30a5966b6e5539663ce9e25bd4c35f125765`). Exact-head CI must pass before accepting this change; M1 remains PARTIAL / VERIFY and M0 remains IN PROGRESS.
+
+## 2026-10-25 — M1 session/connection scope acceptance expanded
+
+The corrected export fixture candidate passed all six Linux/Windows Python 3.11–3.13 jobs in [CI run 40213472988](https://github.com/yash936936/AGM/actions/runs/40213472988), including hygiene, whitespace, tests and wheel inspection. Follow-on work adds project/writer isolation tests for sessions and connections and strict integer validation for session-list limits. Current implementation/test commits are `8eeca08ca33499217f6e1a3c582051576a6bd4e7` and `42e3e638d8f051893c5a70ae26daba833be2f8c0`; the subsequent documentation commits are not validation. Exact-head CI remains required. M1 stays PARTIAL / VERIFY; M0 stays IN PROGRESS.

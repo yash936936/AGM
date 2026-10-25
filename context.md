@@ -53,3 +53,8 @@ Continue M0 acceptance on the active candidate branch: run the new retention orp
 ## Current CI follow-up — 2026-10-25
 
 The latest M1 local-hub test commit initially failed exact-head CI because two assertions were incorrect (see `docs/debug.md`, DBG-035). Those assertions have been corrected; the current follow-up candidate is `4070196a4e04a09097ef1ed98ab64323b9a578db`. Check exact-head Actions results before further implementation, then address any remaining failures. Do not merge while checks fail or remain unverified; M0 is still IN PROGRESS and M1 PARTIAL / VERIFY. Real-history evaluation and independent security/privacy review remain mandatory open release gates.
+
+
+## Current follow-up — M1 session/connection scope
+
+Latest validated baseline is CI run [40213472988](https://github.com/yash936936/AGM/actions/runs/40213472988), which passed all six matrix jobs before the latest M1 changes. The current candidate adds strict session-list limit type validation and tests session/connection isolation across project and writer scope. See `docs/debug.md` DBG-037. Check exact-head CI before accepting these additions; do not merge while checks are pending or failing.
