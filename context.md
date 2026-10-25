@@ -8,6 +8,10 @@ AGM is a model-agnostic memory layer for AI agents, based on `Adaptive_Graph_Mem
 
 ## Latest implementation audit
 
+PR #30 merged at `409e5136b5af626b14349417ccdc7a2b8bc6c209`. Exact-head CI run [40220628800](https://github.com/yash936936/AGM/actions/runs/40220628800) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. Its trigger is scoped to the revoked orphan source event, proving failure occurs in the final orphan-scrub phase after an earlier live-item delete; the full sweep rolls back.
+
+Current M1 follow-up: branch `fix/m1-snapshot-quarantine-filter` prevents graph snapshots from exposing quarantined nodes and adds a regression test. Exact-head CI pending. Local tests are not run in this remote editing environment. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY until its complete acceptance matrix is reviewed. Held-out consented real-history evaluation remains NOT RUN and independent security/privacy review remains NOT ESTABLISHED.
+
 PR #29 merged at `85b8c55555866fa67ad1008b073b28429e73a798`. Exact-head CI run [40219869374](https://github.com/yash936936/AGM/actions/runs/40219869374) passed all six Ubuntu/Windows Python 3.11–3.13 jobs, including tests, repository hygiene, whitespace checks, and wheel/package inspection. The multi-item expiry regression confirms a failure after the second real nested delete mutation rolls back the entire sweep.
 
 Current follow-up: `test/m0-orphan-scrub-rollback` adds coverage for failure in the final orphan-source-payload scrub after a live item has already been deleted in the same sweep. Exact-head CI is required before acceptance. Local tests are not run in this remote editing environment. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY. Held-out consented real-history evaluation is NOT RUN, and independent security/privacy review is NOT ESTABLISHED.
