@@ -55,3 +55,43 @@ def test_obsidian_export_redacts_secrets_and_is_explicitly_a_copy(tmp_path):
         # Export is a snapshot; source deletion does not silently alter an external copy.
         assert paths[0].exists()
         assert paths[0].read_text(encoding="utf-8") == exported
+
+def test_timeline_is_newest_first_and_validates_limit(tmp_path):
+    import pytest
+
+    ctx = _ctx()
+    with MemoryStore(str(tmp_path / "timeline-order.db")) as store:
+        first = store.write(ctx, WriteItem(kind="episode", text="First timeline item"))
+        second = store.write(ctx, WriteItem(kind="episode", text="Second timeline item"))
+        rows = timeline(store, ctx, limit=2)
+        assert [row["event_id"] for row in rows] == sorted(
+            [row["event_id"] for row in rows], reverse=True
+        )
+        assert rows[0]["event_id"] > rows[1]["event_id"]
+        assert {first.event_id, second.event_id}.issubset(
+            {row["event_id"] for row in rows}
+        )
+        for invalid in (0, -1, 501, True, 1.5, "2"):
+            with pytest.raises(ValueError, match="limit"):
+                timeline(store, ctx, limit=invalid)
+
+
+def test_obsidian_export_is_deterministic_and_escapes_frontmatter(tmp_path):
+    ctx = _ctx(project='project: "alpha"\\nnext: injected')
+    destination = tmp_path / "vault-safe"
+    note_text = 'Title\\n---\\nnext: injected\\npassword=topsecretvalue123'
+    with MemoryStore(str(tmp_path / "export-frontmatter.db")) as store:
+        saved = store.write(ctx, WriteItem(kind="episode", text=note_text))
+        first_paths = export_obsidian(store, ctx, destination)
+        first_content = first_paths[0].read_text(encoding="utf-8")
+        second_paths = export_obsidian(store, ctx, destination)
+        second_content = second_paths[0].read_text(encoding="utf-8")
+
+        assert first_paths == second_paths
+        assert first_content == second_content
+        assert saved.item_id in first_content
+        assert 'project: "project: \\"alpha\\"\\nnext: injected"' in first_content
+        assert "next: injected\\npassword" not in first_content
+        assert "topsecretvalue123" not in first_content
+        assert "[REDACTED]" in first_content
+
