@@ -237,7 +237,11 @@ def evaluate_keyword_baseline(cases: list[dict[str, Any]]) -> dict[str, Any]:
         active: list[dict[str, Any]] = []
         for memory in case["memories"]:
             active.append({
-                "context": {key: memory.get(key) for key in ("tenant_id", "project", "writer_id")},
+                "context": {
+                    "tenant_id": memory.get("tenant_id"),
+                    "project": memory.get("project", "eval"),
+                    "writer_id": memory.get("writer_id", "eval-writer"),
+                },
                 "item": dict(memory["item"]), "created_at": memory.get("created_at"), "active": True,
             })
         for operation in case.get("operations", []):
@@ -247,7 +251,11 @@ def evaluate_keyword_baseline(cases: list[dict[str, Any]]) -> dict[str, Any]:
                 target["active"] = False
                 if op_type == "correction":
                     active.append({
-                        "context": {key: operation["context"].get(key) for key in ("tenant_id", "project", "writer_id")},
+                        "context": {
+                            "tenant_id": operation["context"].get("tenant_id"),
+                            "project": operation["context"].get("project", "eval"),
+                            "writer_id": operation["context"].get("writer_id", "eval-writer"),
+                        },
                         "item": dict(operation["item"]), "created_at": None, "active": True,
                     })
             elif op_type == "revoke_writer":
@@ -278,6 +286,7 @@ def evaluate_keyword_baseline(cases: list[dict[str, Any]]) -> dict[str, Any]:
                         and (operation.get("include_pinned", False) or memory["item"].get("pin") is not True)):
                         memory["active"] = False
         query = case["query"]
+        retrieve_started = time.perf_counter()
         query_text = str(query["text"]) + " " + str(query.get("entity", ""))
         query_tokens = _keyword_tokens(query_text)
         candidates = []
@@ -301,8 +310,8 @@ def evaluate_keyword_baseline(cases: list[dict[str, Any]]) -> dict[str, Any]:
         missing, leaked = expected - retrieved_values, forbidden & retrieved_values
         expected_abstain = case.get("expect_abstain")
         abstain_ok = expected_abstain is None or (not top) is expected_abstain
-        latency_ms = (time.perf_counter() - started) * 1000.0
-        total_elapsed += latency_ms / 1000.0
+        latency_ms = (time.perf_counter() - retrieve_started) * 1000.0
+        total_elapsed += (time.perf_counter() - started)
         rows.append({
             "latency_ms": latency_ms, "expected": len(expected), "missing": len(missing),
             "forbidden": len(forbidden), "leaks": len(leaked), "abstain_checked": expected_abstain is not None,
