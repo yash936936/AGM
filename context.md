@@ -8,7 +8,7 @@ AGM is a model-agnostic memory layer for AI agents, based on `Adaptive_Graph_Mem
 
 ## Latest implementation audit
 
-M1 acceptance audit found the graph snapshot test covered deterministic repeated reads but not equivalence across `MemoryStore.rebuild_views()`. Branch `test/m1-graph-snapshot-rebuild-acceptance` adds this regression. Exact-head CI pending; M1 remains PARTIAL / VERIFY.
+M1 acceptance audit found the graph snapshot test covered deterministic repeated reads but not equivalence across `MemoryStore.rebuild_views()`. Branch `test/m1-graph-snapshot-rebuild-acceptance` adds this regression, including a real node-to-node `derived_from` edge. Initial CI passed all six jobs, but review correctly noted that the first fixture had no node-to-node edges; the regression now asserts edge and digest reproducibility. New exact-head CI pending; M1 remains PARTIAL / VERIFY.
 
 
 PR #37 merged at `f19aa818a00dc9995077721fc108c08d295362a7`. Exact-head CI run [40223870098](https://github.com/yash936936/AGM/actions/runs/40223870098) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. Obsidian exports now retain source episode IDs and source-span start/end coordinates in frontmatter.
