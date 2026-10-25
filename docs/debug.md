@@ -235,3 +235,11 @@
 
 **Validation:** NOT RUN locally. Latest test commit is `881512bc1da1a0d67874d3ed5427b3beff0f0fe9`; no exact-head CI run was visible when recorded. Run `python -m pytest -q tests/test_local_hub.py`, then the full suite and package/hygiene checks on the exact candidate.
 
+
+## DBG-035 — Local-hub acceptance CI failures corrected
+
+**Evidence:** Exact-head GitHub Actions run [40213071743](https://github.com/yash936936/AGM/actions/runs/40213071743) exposed two failures in `tests/test_local_hub.py` across Ubuntu Python 3.11, 3.12 and 3.13: the timeline test incorrectly assumed `WriteResult.event_id` exists, and the export test hard-coded a JSON-escaping representation that did not match the actual project string/serializer output. The other 214 tests passed in the Ubuntu Python 3.11 job.
+
+**Fix:** Removed the invalid `WriteResult.event_id` assumption; the test now checks the two timeline rows and their descending event IDs. The export test now derives the expected frontmatter scalar with `json.dumps` and checks that an injected newline key is not present in frontmatter.
+
+**Validation:** Fix committed as `d8e8c7acff925d70d3167bb40f40b548bc3288e9`. Focused and full tests have not been run locally; exact-head CI must confirm the fix before this acceptance coverage is considered passing.
