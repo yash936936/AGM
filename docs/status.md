@@ -1,3 +1,13 @@
+## 2026-10-26 — M1 lifecycle context review follow-up in progress
+
+**Finding:** PR #32's bounded before-turn lifecycle change passed exact-head CI run [40221564276](https://github.com/yash936936/AGM/actions/runs/40221564276), all six Ubuntu/Windows Python 3.11–3.13 jobs. Review then identified that adding `token_budget` in the middle of `BeforeTurnRequest` shifted existing positional arguments, shared context rendering dropped source provenance, and raw memory text could forge a closing `<memory_records>` delimiter.
+
+**Candidate:** `fix/m1-lifecycle-context-review-findings` appends `token_budget` to preserve the old positional signature, includes provenance in the shared renderer, flattens newlines and escapes angle-bracket delimiters in untrusted values, and adds regression tests.
+
+**Validation:** NOT RUN locally in this remote editing environment. Exact-head CI and review are pending. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY. Held-out consented real-history evaluation and independent security/privacy review remain open.
+
+---
+
 ## 2026-10-25 — M1 before-turn context budget enforcement in review
 
 **Branch:** `fix/m1-bounded-before-turn-context`.
