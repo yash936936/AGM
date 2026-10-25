@@ -1,3 +1,13 @@
+## DBG-058 — M0/M1 acceptance closure CI — 2026-10-26
+
+**M0:** PR #39 merged at `ff74460daf3c6585c5820e380320cb8cfc134475`. Exact-head run [40224653021](https://github.com/yash936936/AGM/actions/runs/40224653021) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. Regression covers revoked pinned source retention across default expiry/replay and explicit scrubbing while preserving revocation audit.
+
+**M1:** PR #40 merged at `d27c6475d51263df6b75a0309438530b352665d6`. Exact-head run [40224688462](https://github.com/yash936936/AGM/actions/runs/40224688462) passed all six matrix jobs. CI now executes REST and MCP fresh-session smoke clients as well as pytest, hygiene, whitespace and package inspection. Regression covers cross-session recall, correction history, delete, and no resurfacing after replay/reopen.
+
+**Unresolved release gates:** Held-out consented real-history evaluation and independent security/privacy review remain incomplete. Passing synthetic tests and repository smoke clients do not establish those external claims. Testing against an actual third-party host is also distinct from the repository MCP smoke client.
+
+---
+
 ## DBG-057 — M1 cross-session recall and lifecycle regression — 2026-10-26
 
 **Regression added:** `tests/test_m1_acceptance.py::test_cross_session_recall_correction_delete_and_rebuild` creates an original and corrected fact, closes the store, reopens it as a fresh session, verifies current recall and historical versions, deletes both versions, rebuilds views, and confirms neither version can be retrieved or found in source-event payloads after a second reopen/rebuild.
