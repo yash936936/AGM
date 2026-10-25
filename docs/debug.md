@@ -1,3 +1,13 @@
+## DBG-022 — Peak RSS and concurrent retrieval load measurements — 2026-10-25
+
+**Task:** Continue performance instrumentation after PR #14.
+
+**Changed:** Added best-effort peak resident/working-set memory capture for Windows and Unix-like systems without adding a dependency. Added opt-in concurrent retrieval load execution against each evaluated case database, reporting worker count, requests, errors, p50/p95/p99, throughput, and elapsed time. Protocol version advanced to `paired_flat_vs_graph_v3`.
+
+**Tests added:** Peak RSS is checked for a valid positive value when available; concurrent retrieval tests assert request counts, no errors, latency, throughput, and that dataset filenames remain absent.
+
+**Validation:** NOT RUN yet for this branch. CI and full suite must pass before merge. Concurrent results are synthetic fixture diagnostics, not production capacity claims. Real-history evaluation and independent security/privacy review remain NOT RUN / NOT ESTABLISHED.
+
 ## DBG-021 — Benchmark privacy and operation timing follow-up — 2026-10-25
 
 **Task:** Address review follow-ups from merged PR #13.
