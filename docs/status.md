@@ -1,3 +1,13 @@
+## 2026-10-25 — M1 owner/session/connection increment in review
+
+**PR:** [#11](https://github.com/yash936936/AGM/pull/11), branch `feat/m1-owner-sessions-connections`, draft; exact-head CI pending.
+
+**Implemented in candidate:** one-time local owner-key bootstrap command; persistent tenant/project/writer-scoped session create/list/close endpoints; scoped REST connection registry; least-privilege memory scopes; loopback-only health diagnostics; Linux/Windows CI matrix for Python 3.11–3.13; built-wheel hygiene inspection; focused tests for bootstrap, sessions, registry scoping, endpoint validation and failed diagnostics.
+
+**Revocation update:** Current main commit `bffa7ff652df55308004a867ab2a6dec9f1c24cb` passed run [40193212194](https://github.com/yash936936/AGM/actions/runs/40193212194): 193 passed on Python 3.11, 3.12 and 3.13. This resolves the previously recorded cutoff-revocation regression for that tested commit; retain the regression test as a release gate.
+
+**Still blocked:** held-out real-history evaluation requires a consented, de-identified dataset and frozen protocol; independent security/privacy review requires an actual reviewer and signed findings. Do not claim production readiness. Windows and package checks are newly added to CI and remain pending until PR #11 jobs finish. Local tests were not run because this environment cannot resolve GitHub for cloning.
+
 ## 2026-10-25 — M1 local hub implementation increment
 
 **Branch/PR:** `feat/m0-m1-completion`, [PR #10](https://github.com/yash936936/AGM/pull/10), draft.
