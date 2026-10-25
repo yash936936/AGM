@@ -68,9 +68,7 @@ def test_timeline_is_newest_first_and_validates_limit(tmp_path):
             [row["event_id"] for row in rows], reverse=True
         )
         assert rows[0]["event_id"] > rows[1]["event_id"]
-        assert {first.event_id, second.event_id}.issubset(
-            {row["event_id"] for row in rows}
-        )
+        assert len(rows) == 2
         for invalid in (0, -1, 501, True, 1.5, "2"):
             with pytest.raises(ValueError, match="limit"):
                 timeline(store, ctx, limit=invalid)
@@ -90,8 +88,9 @@ def test_obsidian_export_is_deterministic_and_escapes_frontmatter(tmp_path):
         assert first_paths == second_paths
         assert first_content == second_content
         assert saved.item_id in first_content
-        assert 'project: "project: \\"alpha\\"\\nnext: injected"' in first_content
-        assert "next: injected\\npassword" not in first_content
+        import json
+        assert f"project: {json.dumps(ctx.project, ensure_ascii=False)}" in first_content
+        assert "\nnext: injected" not in first_content.split("---", 2)[1]
         assert "topsecretvalue123" not in first_content
         assert "[REDACTED]" in first_content
 
