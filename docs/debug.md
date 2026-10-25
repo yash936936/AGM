@@ -138,7 +138,7 @@
 
 **Evidence:** CI run 40188540997 failed this regression on Python 3.11, 3.12 and 3.13. The first attempted fix replayed revocation events a second time, but the same acceptance test still failed. Do not treat that approach as a fix.
 
-**Candidate correction:** Branch `fix/revocation-replay-corrective`, commit `c977180b6e8b779cd3bde921d5141d8ed2f2af61`, collects node IDs from non-scrubbed persisted revocation events and enforces their removal as the final replay step. This deliberately treats revocation as a final-state constraint on materialized views.
+**Candidate correction:** Branch `fix/revocation-replay-corrective`, latest candidate commit `4001f746d62d70a0062f8a5ac9992d4003e47c00`, collects stored tombstone IDs and re-derives nodes matching each revocation's tenant, writer and `since` cutoff, then enforces their removal as the final replay step. This deliberately treats revocation as a final-state constraint on materialized views.
 
 **Validation:** NOT RUN for the candidate correction. Run `python -m pytest -q tests/test_privacy_edge_acceptance.py`, then `python -m pytest -q`, `git diff --check`, and exact-head CI. If the cutoff test still fails, inspect the persisted revoke payload and post-replay node/event IDs before attempting another code change.
 
