@@ -143,3 +143,87 @@ def test_writer_revocation_with_same_writer_id_does_not_cross_tenants(tmp_path):
         assert not any(marker_a in text for text in _texts(reopened, tenant_a, marker_a))
         tenant_b_texts = _texts(reopened, tenant_b, marker_b)
         assert any(marker_b in text for text in tenant_b_texts), tenant_b_texts
+
+
+
+def test_expiry_scrubs_revoked_orphans_only_in_requested_tenant_project_after_replay(tmp_path):
+    path = str(tmp_path / "expiry-orphan-scope.db")
+    owner = Ctx(
+        tenant_id="expiry-tenant-a",
+        writer_id="expiry-writer-a",
+        tier="human_verified",
+        project="expiry-project-a",
+    )
+    sibling_project = Ctx(
+        tenant_id="expiry-tenant-a",
+        writer_id="expiry-writer-b",
+        tier="human_verified",
+        project="expiry-project-b",
+    )
+    sibling_tenant = Ctx(
+        tenant_id="expiry-tenant-b",
+        writer_id="expiry-writer-a",
+        tier="human_verified",
+        project="expiry-project-a",
+    )
+    markers = {
+        "owner": "expiry_orphan_owner_marker_13a7",
+        "sibling_project": "expiry_orphan_sibling_project_marker_29b4",
+        "sibling_tenant": "expiry_orphan_sibling_tenant_marker_81d2",
+    }
+    cutoff = "2025-01-01T00:00:00+00:00"
+
+    with MemoryStore(path) as store:
+        owner_item = _write_marker(store, owner, markers["owner"])
+        sibling_item = _write_marker(store, sibling_project, markers["sibling_project"])
+        tenant_item = _write_marker(store, sibling_tenant, markers["sibling_tenant"])
+
+        # Make the source writes old without relying on wall-clock sleeps.
+        for item in (owner_item, sibling_item, tenant_item):
+            source_event_id = store.conn.execute(
+                "SELECT event_id FROM nodes WHERE id = ?", (item.item_id,)
+            ).fetchone()["event_id"]
+            store.conn.execute(
+                "UPDATE events SET created_at = ? WHERE id = ?",
+                ("2024-12-31T23:59:59+00:00", source_event_id),
+            )
+        store.conn.commit()
+
+        # Revocation deliberately removes the owner node but retains its source
+        # event, creating the orphan that expiry must scrub.
+        revoked = store.revoke_writer(owner, owner.writer_id)
+        assert revoked.revoked
+        assert store.conn.execute(
+            "SELECT COUNT(*) FROM nodes WHERE id = ?", (owner_item.item_id,)
+        ).fetchone()[0] == 0
+
+        first = store.expire_before(owner, cutoff)
+        assert first.scrubbed_orphan_events == 1
+        owner_source = store.conn.execute(
+            "SELECT payload FROM events WHERE tenant = ? AND type = 'add' AND writer_id = ? ORDER BY id LIMIT 1",
+            (owner.tenant_id, owner.writer_id),
+        ).fetchone()
+        assert owner_source["payload"] == '{"scrubbed":true}'
+        sibling_source = store.conn.execute(
+            "SELECT payload FROM events WHERE tenant = ? AND type = 'add' AND writer_id = ? ORDER BY id LIMIT 1",
+            (sibling_project.tenant_id, sibling_project.writer_id),
+        ).fetchone()
+        tenant_source = store.conn.execute(
+            "SELECT payload FROM events WHERE tenant = ? AND type = 'add' AND writer_id = ? ORDER BY id LIMIT 1",
+            (sibling_tenant.tenant_id, sibling_tenant.writer_id),
+        ).fetchone()
+        assert markers["sibling_project"] in sibling_source["payload"]
+        assert markers["sibling_tenant"] in tenant_source["payload"]
+
+        second = store.expire_before(owner, cutoff)
+        assert second.scrubbed_orphan_events == 0
+
+    with MemoryStore(path) as reopened:
+        reopened.rebuild_views()
+        assert not any(markers["owner"] in text for text in _texts(reopened, owner, markers["owner"]))
+        assert any(markers["sibling_project"] in text for text in _texts(
+            reopened, sibling_project, markers["sibling_project"]
+        ))
+        assert any(markers["sibling_tenant"] in text for text in _texts(
+            reopened, sibling_tenant, markers["sibling_tenant"]
+        ))
