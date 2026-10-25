@@ -8,6 +8,9 @@ AGM is a model-agnostic memory layer for AI agents, based on `Adaptive_Graph_Mem
 
 ## Latest implementation audit
 
+PR #32 merged at `63826e826a2de02ec83fb284acae687f17293025`; exact-head CI run [40221564276](https://github.com/yash936936/AGM/actions/runs/40221564276) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. Follow-up review identified positional compatibility, provenance retention, and prompt-boundary escaping gaps; branch `fix/m1-lifecycle-context-review-findings-v2` addresses them. Exact-head CI pending. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY.
+
+
 PR #32 merged at `63826e826a2de02ec83fb284acae687f17293025`; exact-head CI run [40221564276](https://github.com/yash936936/AGM/actions/runs/40221564276) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. Review follow-up PR [#33](https://github.com/yash936936/AGM/pull/33) fixes positional `BeforeTurnRequest` compatibility, preserves provenance in bounded rendering, and flattens untrusted embedded line breaks. Latest candidate head is under CI; do not merge until all six jobs pass. M0 remains IN PROGRESS and M1 remains PARTIAL / VERIFY. Local Windows smoke clients, held-out real-history evaluation, and independent security/privacy review remain open.
 
 PR #31 merged at `7d44e3fdea3a7cf87319b92efd52ebcca0bb7129`. Exact-head CI run [40221085442](https://github.com/yash936936/AGM/actions/runs/40221085442) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. Graph snapshots now exclude quarantined nodes and cannot include their content through edges.
