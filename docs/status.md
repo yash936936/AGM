@@ -1,3 +1,13 @@
+## 2026-10-25 — M0 expiry atomic-rollback regression in review
+
+**Candidate branch:** `test/m0-expiry-atomic-rollback`.
+
+**Coverage added:** Inject a failure during the nested delete operation inside an expiry sweep and assert that source payload scrubbing, event insertion, and node-state changes all roll back together. Reopen the database and rebuild views to confirm the memory remains retrievable.
+
+**Validation:** NOT RUN locally in this remote editing environment. Exact-head Linux/Windows Python 3.11–3.13 CI, repository hygiene, whitespace checks, and wheel/package inspection are required before acceptance. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY. Held-out real-history evaluation remains NOT RUN and independent security/privacy review remains NOT ESTABLISHED.
+
+---
+
 ## 2026-10-25 — M0 retention orphan-scrub scope acceptance merged
 
 **Merged:** PR [#26](https://github.com/yash936936/AGM/pull/26), merge commit `f68aa2878e662ee7cb46099612aef27d60cfb4d1`.
