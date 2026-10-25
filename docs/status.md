@@ -1,3 +1,17 @@
+## 2026-10-25 — M1 graph snapshot quarantine filter in review
+
+**Branch:** `fix/m1-snapshot-quarantine-filter`.
+
+**Finding:** `graph_snapshot()` returned every node in tenant/project scope, including nodes marked `quarantined`. Unlike ordinary retrieval and Obsidian export, the snapshot path did not exclude instruction-like quarantined content.
+
+**Change:** Filter quarantined nodes at the node query and at edge endpoint subqueries. Add a regression that stores instruction-like text, confirms the write was quarantined, and asserts neither the node nor its marker appears in the snapshot.
+
+**Merged M0 baseline:** PR [#30](https://github.com/yash936936/AGM/pull/30), merge commit `409e5136b5af626b14349417ccdc7a2b8bc6c209`; exact-head CI run [40220628800](https://github.com/yash936936/AGM/actions/runs/40220628800) passed all six Linux/Windows Python 3.11–3.13 jobs.
+
+**Validation:** New exact-head CI pending; local tests NOT RUN in this remote editing environment. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY.
+
+---
+
 ## 2026-10-25 — M0 orphan-scrub failure rollback candidate
 
 **Branch:** `test/m0-orphan-scrub-rollback`.
