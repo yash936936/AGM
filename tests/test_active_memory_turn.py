@@ -73,9 +73,12 @@ def test_authorized_write_correction_history_delete_survive_replay_and_reopen(tm
         reopened.rebuild_views()
         history = reopened.history(ctx, "user", "editor")
         assert {node.value for node in history} >= {"Vim", "Neovim"}
-        delete = MemoryProposal(action="delete", entity="user", target_memory_id=corrected.item_id)
-        deleted = execute_authorized_memory_proposal(reopened, ctx, delete, current_user_message="Please forget that memory", scopes=scopes, authorized=True, confirmed=True)
-        assert deleted.deleted
+        delete_current = MemoryProposal(action="delete", entity="user", target_memory_id=corrected.item_id)
+        deleted_current = execute_authorized_memory_proposal(reopened, ctx, delete_current, current_user_message="Please forget that memory", scopes=scopes, authorized=True, confirmed=True)
+        assert deleted_current.deleted
+        delete_original = MemoryProposal(action="delete", entity="user", target_memory_id=written.item_id)
+        deleted_original = execute_authorized_memory_proposal(reopened, ctx, delete_original, current_user_message="Please forget that memory", scopes=scopes, authorized=True, confirmed=True)
+        assert deleted_original.deleted
         reopened.rebuild_views()
 
     with MemoryStore(db) as final_store:
@@ -83,6 +86,7 @@ def test_authorized_write_correction_history_delete_survive_replay_and_reopen(tm
         assert not final_store.retrieve(ctx, "user editor", entity="user").items
         payloads = " ".join(str(row[0]) for row in final_store.conn.execute("SELECT payload FROM events"))
         assert "Neovim" not in payloads
+        assert "Vim" not in payloads
 
 
 def test_authorized_lifecycle_is_tenant_and_project_scoped(tmp_path, ctx):
