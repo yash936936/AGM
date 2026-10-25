@@ -1,3 +1,13 @@
+## DBG-052 — Quarantined content must not appear in graph snapshots — 2026-10-25
+
+**Finding:** `graph_snapshot()` scoped nodes by tenant/project but did not filter `status='quarantined'`. This could expose instruction-like content that ordinary retrieval and Obsidian export intentionally suppress.
+
+**Change:** Exclude quarantined nodes from snapshot node selection and from both edge-endpoint subqueries. Added `test_graph_snapshot_omits_quarantined_instruction_like_memory`, which verifies the write is quarantined and the node ID/content marker are absent from the snapshot.
+
+**Validation:** Branch `fix/m1-snapshot-quarantine-filter`; exact-head CI pending. Local tests NOT RUN in this remote editing environment. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY.
+
+---
+
 ## DBG-051 — Expiry rollback when final orphan scrub fails — 2026-10-25
 
 **Task:** Exercise the other late-failure boundary of `expire_before`: the sweep has already deleted an eligible live item, then fails while scrubbing a revoked-writer orphan event.
