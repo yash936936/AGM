@@ -111,3 +111,16 @@ def test_frozen_synthetic_acceptance_suite_covers_required_scenarios():
         case["scenario"] for case in cases
     }
     assert len({case["case_id"] for case in cases}) == len(cases)
+
+
+
+def test_frozen_acceptance_suite_runs_through_paired_benchmark():
+    from pathlib import Path
+
+    report = run_benchmark(Path("examples/benchmark_acceptance.synthetic.jsonl"))
+    assert report["cases"] == 10
+    for mode in ("flat", "graph"):
+        assert report["modes"][mode]["forbidden_value_leaks"] == 0
+        assert report["modes"][mode]["release_gate_pass"] is True
+    assert report["keyword_baseline"]["cases"] == 10
+    assert report["keyword_baseline"]["forbidden_value_leaks"] == 0
