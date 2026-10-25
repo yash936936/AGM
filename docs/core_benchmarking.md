@@ -116,7 +116,7 @@ Copy this table into a dated report for each benchmark run. Replace every NOT RU
 
 ## Current next step
 
-Add a deterministic benchmark runner that emits raw JSON/CSV for per-query outcomes and operation timings, then run it on the exact candidate commit. Keep the existing smoke evaluator intact as a fast regression check; do not silently turn its four scenarios into the headline benchmark.
+The paired benchmark runner is merged. This increment adds aggregate operation-level timing for writes, lifecycle mutations, and rebuild/replay, and removes the source filename from aggregate reports. Peak process RSS, concurrent retrieval load, and a standalone keyword baseline remain future work. Keep the existing smoke evaluator intact as a fast regression check; do not silently turn its four scenarios into the headline benchmark.
 
 ## Paired runner usage
 
@@ -127,9 +127,9 @@ python -m pip install -e ".[dev]"
 python -m eval.benchmark_runner path/to/consented-deidentified-cases.jsonl --output benchmark-report.json
 ```
 
-The default report omits case identifiers and memory text. `--include-case-details` emits ordinal indices, scenario labels, outcomes and timings; protect these details if scenario composition is sensitive.
+The default report omits case identifiers, memory text, and the source dataset filename. `--include-case-details` emits ordinal indices, scenario labels, outcomes and timings; protect these details if scenario composition is sensitive.
 
-For each mode the runner reports case pass rate, expected-value recall, forbidden-value leakage, abstention accuracy where labelled, retrieval latency p50/p95/p99, end-to-end case latency p50/p95/p99, cases/second, elapsed time and maximum per-case SQLite file size. Retrieval latency measures only the `MemoryStore.retrieve` call; end-to-end case latency includes fixture setup, lifecycle operations, reopen and replay. Mode order alternates per case to reduce systematic order bias.
+For each mode the runner reports case pass rate, expected-value recall, forbidden-value leakage, abstention accuracy where labelled, retrieval latency p50/p95/p99, end-to-end case latency p50/p95/p99, operation-level write/correction/delete/revocation/expiry/rebuild-replay timings where present, cases/second, elapsed time and maximum per-case SQLite file size. The aggregate report does not include the dataset filename, since filenames can contain identifying information. Retrieval latency measures only the `MemoryStore.retrieve` call; end-to-end case latency includes fixture setup, lifecycle operations, reopen and replay. Mode order alternates per case to reduce systematic order bias.
 
 The runner is a local measurement harness, not evidence of production performance. Use synthetic cases in CI and only explicitly consented, de-identified histories for held-out evaluation. Record commit SHA, OS, Python version, CPU/RAM, dataset hash, case count, configuration and repetition count with any result.
 
