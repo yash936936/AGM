@@ -1,3 +1,23 @@
+## DBG-055 — Obsidian export source-span provenance merged — 2026-10-26
+
+**Merged:** PR [#37](https://github.com/yash936936/AGM/pull/37), merge commit `f19aa818a00dc9995077721fc108c08d295362a7`.
+
+**Change:** Export includes source episode ID and span start/end in Markdown frontmatter.
+
+**Validation:** Exact-head CI [40223870098](https://github.com/yash936936/AGM/actions/runs/40223870098) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. Local tests NOT RUN in this remote editing environment.
+
+---
+
+## DBG-054 — Lifecycle context compatibility and trust-boundary fixes merged — 2026-10-26
+
+**Merged:** PR [#34](https://github.com/yash936936/AGM/pull/34), merge commit `1c546392267cdd86a97b76e4979fae26cb141033`.
+
+**Change:** Appended `token_budget` to preserve dataclass positional compatibility; preserved source provenance in bounded rendering; flattened untrusted values and escaped angle-bracket delimiters.
+
+**Validation:** Exact-head CI [40223512300](https://github.com/yash936936/AGM/actions/runs/40223512300) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. Earlier follow-up test-fixture failures were corrected before this exact-head run. Local tests NOT RUN here.
+
+---
+
 ## DBG-055 — Preserve source-span provenance in Obsidian export — 2026-10-26
 
 **Finding:** `export_obsidian()` did not select `source_episode`, `span_start`, or `span_end` from the node table and therefore omitted source provenance from exported frontmatter.
