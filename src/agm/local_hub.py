@@ -144,7 +144,8 @@ def export_obsidian(store: MemoryStore, ctx: Ctx, destination: str | Path) -> li
     root.mkdir(parents=True, exist_ok=True)
     rows = store.conn.execute(
         """SELECT id, kind, text, entity_id, attribute, value, valid_from, valid_to,
-                  confidence, writer_id, tier, status, event_id
+                  confidence, writer_id, tier, status, event_id,
+                  source_episode, span_start, span_end
            FROM nodes WHERE tenant = ? AND project = ? AND status != 'quarantined'
            ORDER BY id ASC""",
         (ctx.tenant_id, ctx.project),
@@ -169,6 +170,9 @@ def export_obsidian(store: MemoryStore, ctx: Ctx, destination: str | Path) -> li
             "trust_tier": str(row["tier"]),
             "status": str(row["status"]),
             "event_id": int(row["event_id"]),
+            "source_episode_id": row["source_episode"],
+            "source_span_start": row["span_start"],
+            "source_span_end": row["span_end"],
             "project": ctx.project,
             "tenant_id": ctx.tenant_id,
             "attribute": clean_data.get("attribute"),
