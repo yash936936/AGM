@@ -1262,7 +1262,13 @@ class MemoryStore:
             if not isinstance(event_ctx, dict) or str(event_ctx.get("project", "default")) != ctx.project:
                 continue
             node_id = payload.get("node_id")
-            if not node_id or str(node_id) in pinned_due_ids:
+            item_payload = payload.get("item")
+            source_is_pinned = isinstance(item_payload, dict) and item_payload.get("pin") is True
+            # A revoked writer's pinned source event has no materialized node to
+            # consult. Preserve its content under the default policy unless the
+            # caller explicitly opts pinned memories into expiry.
+            if (not node_id or str(node_id) in pinned_due_ids
+                    or (source_is_pinned and not include_pinned)):
                 continue
             remaining = self.conn.execute("SELECT 1 FROM nodes WHERE id = ?", (str(node_id),)).fetchone()
             if remaining is not None:
