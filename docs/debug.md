@@ -1,3 +1,13 @@
+## DBG-045 — M0 retention orphan-scrub tenant/project isolation — 2026-10-25
+
+**Task:** Strengthen M0 acceptance coverage for aged content-bearing source events that become orphans after writer revocation.
+
+**Test added:** `test_expiry_scrubs_revoked_orphans_only_in_requested_tenant_project_after_replay` creates synthetic aged writes in the requested tenant/project, a sibling project, and a sibling tenant. It revokes the target writer, runs expiry twice to check idempotency, verifies only the target project's orphan payload is scrubbed, then rebuilds views after reopening and checks that the revoked marker stays absent while both out-of-scope markers remain retrievable.
+
+**Validation:** NOT RUN locally in this remote editing environment. Exact-head CI is required. The regression uses synthetic data and does not establish compliance or prove external backup/WAL erasure. M0 remains IN PROGRESS; held-out real-history evaluation and independent security/privacy review remain open.
+
+---
+
 ## DBG-044 — Post-merge audit: connection validation CI and duplicate test cleanup — 2026-10-25
 
 **Merged change:** PR [#24](https://github.com/yash936936/AGM/pull/24), merge commit `571edd5082b10bfcce169d4e3fddddedee1e8aeb`, rejects explicit empty/malformed connection scopes and non-finite/non-positive diagnostic timeouts. Exact-head GitHub Actions run [40216605734](https://github.com/yash936936/AGM/actions/runs/40216605734) passed all six Ubuntu/Windows Python 3.11–3.13 jobs, including tests, repository hygiene, whitespace and wheel/package inspection.
