@@ -1,3 +1,15 @@
+## 2026-10-26 — M2 active-turn orchestration candidate
+
+**Status:** IMPLEMENTED CANDIDATE / NOT ACCEPTED. Added `src/agm/active_memory_turn.py` for read-only pre-answer context preparation and proposal review. Eligible proposals are surfaced for host review only; this code does not persist them or grant mutation authorization.
+
+**Tests added:** `tests/test_active_memory_turn.py` covers read-only event-log behavior, context budget validation, proposal eligibility/rejection, and the host authorization boundary.
+
+**Validation:** NOT RUN in this remote editing environment. Focused/full pytest, REST/MCP smoke clients, hygiene/whitespace/package checks, and exact-head CI remain pending. See `REPORT_M2_ACTIVE_MEMORY.md`.
+
+**External gates:** Held-out real-history evaluation, independent security/privacy review, and third-party host integration remain **OPEN / PENDING**.
+
+---
+
 ## 2026-10-26 — M2 kickoff and external gates status
 
 ### External release gates
