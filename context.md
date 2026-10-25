@@ -8,9 +8,9 @@ AGM is a model-agnostic memory layer for AI agents, based on `Adaptive_Graph_Mem
 
 ## Latest implementation audit
 
-PR #27 merged at `2a9a003b7bfa4bf162661e420a692e155b7b1719`; exact-head CI run [40218590007](https://github.com/yash936936/AGM/actions/runs/40218590007) passed all six Ubuntu/Windows Python 3.11–3.13 jobs, including tests, repository hygiene, whitespace checks, and wheel/package inspection. Review identified that the first rollback test injected failure before view mutation, so it did not prove rollback after partial mutation.
+PR #28 merged at `9db3fbaf9dc3a039f2198b6c61e9340619df7f9b`. Exact-head CI run [40219212770](https://github.com/yash936936/AGM/actions/runs/40219212770) passed all six Ubuntu/Windows Python 3.11–3.13 jobs, including tests, repository hygiene, whitespace checks, and wheel/package inspection. The expiry rollback regression now calls the real nested delete handler before injecting a failure, exercising rollback after derived-view mutation; it also verifies source payload/event count and active node state, transaction closure, and retrieval after reopen/rebuild. The prior PR #27 baseline passed all six jobs in run [40218590007](https://github.com/yash936936/AGM/actions/runs/40218590007).
 
-Current follow-up: strengthen the expiry rollback regression by invoking the real nested delete handler and then injecting a failure, checking the expiry transaction rolls back event/payload and derived-view changes. Candidate branch `test/m0-expiry-post-mutation-rollback`; exact-head CI pending. Local tests are not run in this remote editing environment. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY. Held-out consented real-history evaluation is NOT RUN, and independent security/privacy review is NOT ESTABLISHED.
+M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY. Local tests are not run in this remote editing environment. Held-out consented real-history evaluation is NOT RUN, and independent security/privacy review is NOT ESTABLISHED. Do not claim production readiness while these gates remain open.
 ## Roles
 
 - **Supervisor:** owns the docs, frozen contracts, phase briefs and code review.
