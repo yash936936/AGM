@@ -1,3 +1,15 @@
+## DBG-049 — Post-mutation expiry rollback regression merged — 2026-10-25
+
+**Merged:** PR [#28](https://github.com/yash936936/AGM/pull/28), merge commit `9db3fbaf9dc3a039f2198b6c61e9340619df7f9b).
+
+**Finding addressed:** The previous regression injected failure before the real delete handler mutated views. The updated test invokes the original `_apply_delete_payload`, records that it ran, and then raises an injected exception from within the expiry sweep.
+
+**Evidence:** Exact-head CI run [40219212770](https://github.com/yash936936/AGM/actions/runs/40219212770) passed all six Linux/Windows Python 3.11–3.13 jobs, including tests, repository hygiene, whitespace checks, and wheel/package inspection. Assertions cover restored source payload, unchanged event count, active node, closed transaction, and retrieval after database reopen and view rebuild.
+
+**Limits:** Local tests NOT RUN in this remote editing environment. Synthetic rollback evidence does not establish real-history quality or independent security/privacy review. M0 remains IN PROGRESS; held-out real-history evaluation and independent security/privacy review remain open.
+
+---
+
 ## DBG-048 — Strengthen expiry rollback injection after view mutation — 2026-10-25
 
 **Review finding:** PR [#27](https://github.com/yash936936/AGM/pull/27) passed exact-head CI run [40218590007](https://github.com/yash936936/AGM/actions/runs/40218590007), all six Linux/Windows Python 3.11–3.13 jobs. Post-merge review correctly noted that its failure hook raised before the real nested delete handler changed derived views.
