@@ -1,3 +1,13 @@
+## 2026-10-26 — M1 Obsidian export provenance follow-up in progress
+
+**Finding:** `export_obsidian()` exported stable memory IDs and event metadata but did not select or emit source episode/span columns, so the export lost source provenance required by the M1 acceptance contract.
+
+**Change:** Branch `fix/m1-obsidian-export-provenance` adds `source_episode_id`, `source_span_start`, and `source_span_end` frontmatter fields and a regression test using a synthetic source episode/span.
+
+**Validation:** NOT RUN locally in this remote editing environment. Exact-head CI and review pending. M1 remains PARTIAL / VERIFY; M0 remains IN PROGRESS. Held-out real-history evaluation and independent security/privacy review remain open.
+
+---
+
 ## 2026-10-25 — M1 before-turn context budget enforcement in review
 
 **Branch:** `fix/m1-bounded-before-turn-context`.
