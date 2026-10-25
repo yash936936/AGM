@@ -1,3 +1,13 @@
+## 2026-10-26 — M1 lifecycle context review follow-up on current main
+
+**Finding:** PR #32 passed exact-head CI [40221564276](https://github.com/yash936936/AGM/actions/runs/40221564276), but review found that inserting `token_budget` mid-dataclass broke positional callers, the shared renderer omitted source provenance, and raw multiline memory could forge a closing context delimiter.
+
+**Change:** Branch `fix/m1-lifecycle-context-review-findings-v2` is based on current main and appends `token_budget` to preserve positional construction, includes provenance in bounded context rendering, flattens untrusted values, escapes angle brackets, and adds regressions for all three cases.
+
+**Validation:** Local tests NOT RUN. Exact-head CI and review pending. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY; held-out real-history evaluation and independent security/privacy review remain open.
+
+---
+
 ## 2026-10-26 — M1 lifecycle review follow-up in progress
 
 **Finding:** Post-merge review of PR #32 identified three issues: adding `token_budget` in the middle of the dataclass fields breaks existing positional callers; shared context rendering drops `Node.provenance`; and multiline memory text can imitate a closing `</memory_records>` boundary.
