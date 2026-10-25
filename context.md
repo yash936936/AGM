@@ -47,4 +47,4 @@ The workflow is documented in `docs/workflow.md`.
 
 ## Next task
 
-First, apply patch 0.5.1 and connect a real host (`examples/claude_code_mcp.md`). Then scope Phase 6 (evaluation v2). All five planned prototype phases are implemented and the integrated test suite has been verified on Windows. Remaining work is final review, archive inspection, and deciding whether to begin a separately scoped next iteration. Keep services on loopback until a separate security review is completed.
+Continue M0 acceptance on the active candidate branch: run the new retention orphan-scrub scope regression and the full test suite on the exact head, then inspect the package contents and repository hygiene. Keep M0 in progress and M1 partial/verify until their acceptance matrices have evidence tied to a reviewed commit. Held-out consented real-history evaluation and independent security/privacy review remain mandatory release gates. Keep services on loopback until security review is complete.
