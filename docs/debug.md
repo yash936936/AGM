@@ -216,3 +216,38 @@
 **Validation:** NOT RUN for the candidate correction. Run `python -m pytest -q tests/test_privacy_edge_acceptance.py`, then `python -m pytest -q`, `git diff --check`, and exact-head CI. If the cutoff test still fails, inspect the persisted revoke payload and post-replay node/event IDs before attempting another code change.
 
 **Process note:** PR #7 was merged despite failing CI, contrary to the project's no-merge-before-acceptance rule. Do not merge the corrective PR until validation passes.
+
+## DBG-033 — Retention orphan-scrub scope regression
+
+**Task:** Add a regression for the privacy boundary of `MemoryStore.expire_before` when source payloads belong to revoked writers and no longer have materialized nodes.
+
+**Change:** Added a test with aged revoked source events in the current tenant/project, another project in the same tenant, and another tenant. The test requires expiry to scrub only the current tenant/project's orphan payloads and verifies that replay does not restore scrubbed content.
+
+**Validation:** Test and full suite NOT RUN locally in this environment. Commit `ee81976c701e90c633b577a09aa7f6a26d762e14` has no visible CI status yet. The test must pass on exact-head CI before this acceptance check is considered verified.
+
+**Related evidence:** User-reported Windows run: 213 passed, one Starlette/httpx deprecation warning; peak RSS 60,682,240 bytes; five concurrent repetitions with zero errors. These are user-supplied results, not independently rerun here.
+
+## DBG-034 — Local-hub timeline and export acceptance coverage
+
+**Task:** Strengthen M1 tests around deterministic metadata ordering and export serialization safety.
+
+**Change:** Added tests that assert timeline entries are newest-first and invalid limits fail closed; repeated Obsidian exports are byte-for-byte stable; project frontmatter containing quotes/newlines is serialized as a scalar rather than injecting YAML keys; and secret-like text is redacted in exported content.
+
+**Validation:** NOT RUN locally. Latest test commit is `881512bc1da1a0d67874d3ed5427b3beff0f0fe9`; no exact-head CI run was visible when recorded. Run `python -m pytest -q tests/test_local_hub.py`, then the full suite and package/hygiene checks on the exact candidate.
+
+
+## DBG-035 — Local-hub acceptance CI failures corrected
+
+**Evidence:** Exact-head GitHub Actions run [40213071743](https://github.com/yash936936/AGM/actions/runs/40213071743) exposed two failures in `tests/test_local_hub.py` across Ubuntu Python 3.11, 3.12 and 3.13: the timeline test incorrectly assumed `WriteResult.event_id` exists, and the export test hard-coded a JSON-escaping representation that did not match the actual project string/serializer output. The other 214 tests passed in the Ubuntu Python 3.11 job.
+
+**Fix:** Removed the invalid `WriteResult.event_id` assumption; the test now checks the two timeline rows and their descending event IDs. The export test now derives the expected frontmatter scalar with `json.dumps` and checks that an injected newline key is not present in frontmatter.
+
+**Validation:** Fix committed as `d8e8c7acff925d70d3167bb40f40b548bc3288e9`. Focused and full tests have not been run locally; exact-head CI must confirm the fix before this acceptance coverage is considered passing.
+
+## DBG-036 — Export test used escaped newline characters instead of line breaks
+
+**Evidence:** Exact-head run [40213224547](https://github.com/yash936936/AGM/actions/runs/40213224547) showed the timeline assertion was fixed, but the export test still failed because its fixture encoded literal backslash+n characters before `password=`. The redaction rule correctly expects a token boundary before the label, so that malformed fixture bypassed the intended boundary and did not represent a password on a new line.
+
+**Fix:** Updated the note fixture to contain actual newline characters and the adversarial project label to contain an actual newline. This now tests the intended serialization-injection and secret-redaction behavior through the normal write path rather than a literal escape sequence.
+
+**Validation:** Candidate test update `40ff30a5966b6e5539663ce9e25bd4c35f125765`. No local run; exact-head CI still required. Do not mark M1 acceptance passing until all matrix jobs complete successfully.

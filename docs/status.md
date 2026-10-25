@@ -99,3 +99,32 @@
 **Validation:** NOT RUN at this candidate head. Required next: focused edge acceptance tests, full pytest suite, `git diff --check`, and CI on the exact branch head. Do not merge this corrective branch or claim the issue fixed until all pass.
 
 **Release status:** Revocation replay correctness remains unresolved; production readiness is not established.
+
+## 2026-10-25 — Retention orphan-scrub scope regression added
+
+**Branch:** `work/benchmark-acceptance-baselines`.
+
+**Change:** Added a regression that creates aged, revoked source events in the current project, another project in the same tenant, and another tenant. It asserts that expiry scrubs only the current tenant/project's orphan payloads and that replay does not reintroduce scrubbed content. This extends the existing retention scope, idempotency and rollback coverage.
+
+**Validation:** The focused test and full suite have NOT been run in this environment. The new commit is `ee81976c701e90c633b577a09aa7f6a26d762e14`; no CI status was visible for that commit at the time of this update. Do not treat this test as passing until exact-head CI completes.
+
+**Benchmark evidence update:** Follow-up exact-head CI run [40211660005](https://github.com/yash936936/AGM/actions/runs/40211660005) and latest docs-head run [40211734663](https://github.com/yash936936/AGM/actions/runs/40211734663) passed all six Linux/Windows Python 3.11–3.13 jobs. User-reported Windows benchmark evidence: full suite `213 passed, 1 warning`; peak RSS `60,682,240` bytes; five repetitions, four workers, 1,000 requests per mode per repetition, zero errors; median concurrent p95 126.4 ms flat / 132.3 ms graph, throughput 89.0 / 86.4 requests/s. On the 10-case synthetic suite, flat and graph each passed 100% with 100% expected-value recall and zero forbidden-value leaks; keyword baseline passed 90% and abstention accuracy was 90%. These are synthetic/user-reported measurements, not held-out real-history or production-capacity evidence.
+
+**Still blocked:** held-out consented real-history evaluation is NOT RUN; independent security/privacy review is NOT ESTABLISHED. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY.
+
+## 2026-10-25 — M1 local-hub acceptance tests expanded
+
+**Change:** Added focused tests for timeline newest-first ordering and invalid-limit rejection, plus deterministic repeat export and YAML-frontmatter injection resistance for an adversarial project label containing quotes and a newline. The export test also checks secret redaction in the exported body.
+
+**Validation:** Tests and full suite NOT RUN locally. Candidate commit `881512bc1da1a0d67874d3ed5427b3beff0f0fe9`; exact-head CI is not yet visible. Do not treat the new M1 tests as passing until CI executes on this head.
+
+**M1 status:** PARTIAL / VERIFY. Existing coverage establishes scoped metadata timeline, deterministic scoped snapshot, secret-scrubbed Obsidian export and snapshot-copy semantics. Owner-auth bootstrap, session/connection API scope isolation, connection diagnostics token secrecy, and export deletion policy still require end-to-end acceptance review on an exact candidate. 
+
+
+## 2026-10-25 — M1 local-hub CI assertion fixes
+
+GitHub Actions run [40213071743](https://github.com/yash936936/AGM/actions/runs/40213071743) failed two newly added local-hub tests on Ubuntu Python 3.11–3.13: one referenced a nonexistent `WriteResult.event_id`; the other over-specified JSON string escaping in exported frontmatter. Both test assertions were corrected in commit `d8e8c7acff925d70d3167bb40f40b548bc3288e9`. The full suite was otherwise 214 passed in the Python 3.11 job. This fix is not accepted until exact-head CI passes across the Linux/Windows Python 3.11–3.13 matrix. M0 remains IN PROGRESS, M1 remains PARTIAL / VERIFY; real-history evaluation and independent security/privacy review remain open release gates.
+
+## 2026-10-25 — Follow-up on remaining local-hub export failure
+
+Run [40213224547](https://github.com/yash936936/AGM/actions/runs/40213224547) confirmed the timeline test fix and reported one remaining export-test failure: the fixture used literal backslash+n sequences, so the password label did not have the intended token boundary. The fixture now uses actual line breaks for both the note and adversarial project metadata (test commit `40ff30a5966b6e5539663ce9e25bd4c35f125765`). Exact-head CI must pass before accepting this change; M1 remains PARTIAL / VERIFY and M0 remains IN PROGRESS.

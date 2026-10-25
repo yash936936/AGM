@@ -258,3 +258,61 @@ def test_expire_before_rolls_back_entire_sweep_on_failure(tmp_path, monkeypatch)
 
         assert calls == 2
         assert snapshot() == before
+
+def test_expire_before_scrubs_orphan_events_only_in_current_tenant_and_project(tmp_path):
+    db = tmp_path / "retention-orphan-scope.db"
+    local = _ctx(tenant="scope-tenant", project="project-a", writer="local-writer")
+    other_project = _ctx(tenant="scope-tenant", project="project-b", writer="project-writer")
+    other_tenant = _ctx(tenant="other-tenant", project="project-a", writer="tenant-writer")
+    local_admin = _ctx(tenant="scope-tenant", project="project-a", writer="local-admin")
+    project_admin = _ctx(tenant="scope-tenant", project="project-b", writer="project-admin")
+    tenant_admin = _ctx(tenant="other-tenant", project="project-a", writer="tenant-admin")
+
+    with MemoryStore(str(db)) as store:
+        local_item = store.write(local, WriteItem(
+            kind="episode", text="Local orphan payload LOCAL-ORPHAN-RETENTION-711"
+        ))
+        project_item = store.write(other_project, WriteItem(
+            kind="episode", text="Other project payload PROJECT-ORPHAN-RETENTION-822"
+        ))
+        tenant_item = store.write(other_tenant, WriteItem(
+            kind="episode", text="Other tenant payload TENANT-ORPHAN-RETENTION-933"
+        ))
+        for item in (local_item, project_item, tenant_item):
+            _backdate_event(store, item.item_id, OLD_CREATED_AT)
+
+        assert store.revoke_writer(local_admin, local.writer_id).revoked
+        assert store.revoke_writer(project_admin, other_project.writer_id).revoked
+        assert store.revoke_writer(tenant_admin, other_tenant.writer_id).revoked
+
+        result = store.expire_before(local_admin, CUTOFF)
+        assert result.expired_ids == []
+        assert result.scrubbed_orphan_events >= 1
+
+        payloads_by_marker = {}
+        for marker in (
+            "LOCAL-ORPHAN-RETENTION-711",
+            "PROJECT-ORPHAN-RETENTION-822",
+            "TENANT-ORPHAN-RETENTION-933",
+        ):
+            payloads_by_marker[marker] = any(
+                marker in str(row["payload"])
+                for row in store.conn.execute("SELECT payload FROM events")
+            )
+
+        assert payloads_by_marker["LOCAL-ORPHAN-RETENTION-711"] is False
+        assert payloads_by_marker["PROJECT-ORPHAN-RETENTION-822"] is True
+        assert payloads_by_marker["TENANT-ORPHAN-RETENTION-933"] is True
+
+        store.rebuild_views()
+        assert store.conn.execute(
+            "SELECT 1 FROM nodes WHERE id IN (?, ?, ?)",
+            (local_item.item_id, project_item.item_id, tenant_item.item_id),
+        ).fetchone() is None
+        payloads_after_rebuild = " ".join(
+            str(row["payload"]) for row in store.conn.execute("SELECT payload FROM events")
+        )
+        assert "LOCAL-ORPHAN-RETENTION-711" not in payloads_after_rebuild
+        assert "PROJECT-ORPHAN-RETENTION-822" in payloads_after_rebuild
+        assert "TENANT-ORPHAN-RETENTION-933" in payloads_after_rebuild
+
