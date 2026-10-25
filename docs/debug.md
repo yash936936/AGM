@@ -1,4 +1,17 @@
-## DBG-054 — Repair M1 lifecycle review findings — 2026-10-26\n\n**Finding:** Review of merged PR #32 surfaced a positional API compatibility break, dropped `Node.provenance` in shared context rendering, and a record-boundary injection risk when memory text contains embedded line breaks.\n\n**Change candidate:** Append `token_budget` after all existing `BeforeTurnRequest` fields; include stable JSON-serialized provenance in each rendered record; flatten carriage returns/newlines in untrusted record text; add regression tests for the three behaviors.\n\n**Baseline evidence:** PR #32 merged at `63826e826a2de02ec83fb284acae687f17293025`; exact-head CI run [40221564276](https://github.com/yash936936/AGM/actions/runs/40221564276) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. That run predates this fix and is not evidence for it.\n\n**Validation:** Exact-head CI run [40222174178](https://github.com/yash936936/AGM/actions/runs/40222174178) failed on Ubuntu Python 3.11 and 3.13: the budget test's short record no longer fit after provenance metadata was added, and the injection fixture encoded literal `\\n` text rather than actual line breaks. The budget was increased while retaining oversized-record exclusion; the fixture now uses real line breaks, and a focused renderer test verifies provenance serialization. This correction is committed after the failed run; a fresh exact-head CI run is required. Local tests NOT RUN in this remote editing environment. M0 IN PROGRESS; M1 PARTIAL / VERIFY.\n\n---\n\n## DBG-053 — Bound the lifecycle before-turn memory context — 2026-10-25
+## DBG-054 — Repair M1 lifecycle review findings — 2026-10-26
+
+**Finding:** Review of merged PR #32 surfaced a positional API compatibility break, dropped `Node.provenance` in shared context rendering, and a record-boundary injection risk when memory text contains embedded line breaks.
+
+**Change candidate:** Append `token_budget` after all existing `BeforeTurnRequest` fields; include stable JSON-serialized provenance in each rendered record; flatten carriage returns/newlines in untrusted record text; add regression tests for the three behaviors.
+
+**Baseline evidence:** PR #32 merged at `63826e826a2de02ec83fb284acae687f17293025`; exact-head CI run [40221564276](https://github.com/yash936936/AGM/actions/runs/40221564276) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. That run predates this fix and is not evidence for it.
+
+**Validation:** Exact-head CI run [40222174178](https://github.com/yash936936/AGM/actions/runs/40222174178) failed on Ubuntu Python 3.11 and 3.13: the budget test's short record no longer fit after provenance metadata was added, and the injection fixture encoded literal `\
+` text rather than actual line breaks. The budget was increased while retaining oversized-record exclusion; the fixture now uses real line breaks, and a focused renderer test verifies provenance serialization. This correction is committed after the failed run; a fresh exact-head CI run is required. Local tests NOT RUN in this remote editing environment. M0 IN PROGRESS; M1 PARTIAL / VERIFY.
+
+---
+
+## DBG-053 — Bound the lifecycle before-turn memory context — 2026-10-25
 
 **Finding:** `MemoryLifecycle.before_turn()` previously formatted all retrieved nodes into `context_text` without a character/token budget, despite the M1 context contract requiring bounded evidence. Its `top_k` validation also accepted booleans and non-integer values until deeper layers handled them.
 
