@@ -133,12 +133,13 @@
 
 
 ## DBG-016 — Revoked node reappears after replay — 2026-10-25
-**Symptom:** `revoke_writer(..., since=cutoff)` removes the selected post-cutoff node from the live materialized view, but the node is present again after closing/reopening the database and calling `rebuild_views()`.
 
-**Evidence:** The persisted `revoke_writer` event payload contains the expected node ID in `node_ids`; the cutoff test confirms the earlier node is preserved and the later node is removed before replay. The failure is specifically observed after view rebuild.
+**Symptom:** `revoke_writer(..., since=cutoff)` removes the selected post-cutoff node from the live materialized view, but the node returns after closing/reopening and rebuilding views.
 
-**Change under review:** Replay all persisted `revoke_writer` events once more after source events have been replayed, applying their tombstones to the rebuilt view. Acceptance tests cover the cutoff case and cross-tenant deletion/revocation boundaries.
+**Evidence:** CI run 40188540997 failed this regression on Python 3.11, 3.12 and 3.13. The first attempted fix replayed revocation events a second time, but the same acceptance test still failed. Do not treat that approach as a fix.
 
-**Validation:** NOT RUN against the PR branch. The initial local run reported 1 failed and 2 passed before this change; the attempted patch download was malformed, so it did not validate the candidate fix. Run focused acceptance tests and the full suite before merge.
+**Candidate correction:** Branch `fix/revocation-replay-corrective`, commit `c977180b6e8b779cd3bde921d5141d8ed2f2af61`, collects node IDs from non-scrubbed persisted revocation events and enforces their removal as the final replay step. This deliberately treats revocation as a final-state constraint on materialized views.
 
-**Next:** Verify PR #7; do not claim this issue fixed until the regression test and full suite pass.
+**Validation:** NOT RUN for the candidate correction. Run `python -m pytest -q tests/test_privacy_edge_acceptance.py`, then `python -m pytest -q`, `git diff --check`, and exact-head CI. If the cutoff test still fails, inspect the persisted revoke payload and post-replay node/event IDs before attempting another code change.
+
+**Process note:** PR #7 was merged despite failing CI, contrary to the project's no-merge-before-acceptance rule. Do not merge the corrective PR until validation passes.
