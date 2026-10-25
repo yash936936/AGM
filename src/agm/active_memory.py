@@ -6,6 +6,7 @@ records before a model call and marks retrieved text as untrusted data.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 from typing import Sequence
 
 from .models import Ctx, Node, RetrieveResult
@@ -58,7 +59,9 @@ def _render_item(item: Node) -> str:
         f"trust_tier={item.trust_tier}",
         f"writer_id={item.writer_id}",
         f"score={item.score:.4f}",
-        f"text={item.text}",
+        f"provenance={json.dumps(item.provenance or {}, sort_keys=True, ensure_ascii=True, separators=(',', ':'))}",
+        # Flatten untrusted text so it cannot inject a new record/boundary line.
+        f"text={item.text.replace(chr(13), ' ').replace(chr(10), ' ')}",
     ]
     return "- " + " | ".join(fields)
 

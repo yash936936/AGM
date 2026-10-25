@@ -1,3 +1,13 @@
+## 2026-10-26 — M1 lifecycle review follow-up in progress
+
+**Finding:** Post-merge review of PR #32 identified three issues: adding `token_budget` in the middle of the dataclass fields breaks existing positional callers; shared context rendering drops `Node.provenance`; and multiline memory text can imitate a closing `</memory_records>` boundary.
+
+**Change candidate:** Branch `fix/m1-lifecycle-review-findings` appends the budget field after existing fields, serializes provenance into the bounded record, flattens CR/LF from untrusted memory text, and adds regression tests for positional compatibility, provenance retention, and boundary-injection resistance.
+
+**Validation:** Initial exact-head CI run [40222174178](https://github.com/yash936936/AGM/actions/runs/40222174178) exposed two test issues (short record exceeded the original small budget after provenance metadata was added; the adversarial fixture used literal backslash-n sequences instead of actual line breaks). Both test fixtures were corrected and a direct provenance-rendering regression was added. A fresh exact-head CI run is required; local tests remain NOT RUN in this remote editing environment. PR #32 itself merged at `63826e826a2de02ec83fb284acae687f17293025` with run [40221564276](https://github.com/yash936936/AGM/actions/runs/40221564276) passing six jobs; those results do not validate this follow-up. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY.
+
+---
+
 ## 2026-10-25 — M1 before-turn context budget enforcement in review
 
 **Branch:** `fix/m1-bounded-before-turn-context`.
