@@ -223,3 +223,47 @@ def test_admin_scope_can_create_and_list_metadata_only_connection(tmp_path: Path
         assert listed.json()[0]["id"] == created.json()["id"]
         assert "token" not in str(listed.json()).lower()
         assert "password" not in str(listed.json()).lower()
+
+
+def test_session_and_connection_routes_are_isolated_by_identity_scope(tmp_path: Path) -> None:
+    db_path = tmp_path / "identity-scope.db"
+    registry = registry_from_data({"keys": [
+        {"api_key": "owner-key-0123456789", "tenant_id": "tenant-a", "writer_id": "writer-a",
+         "trust_tier": "trusted_agent", "project": "project-a", "scopes": ["memory:read", "memory:write", "admin"]},
+        {"api_key": "other-project-key-0123456789", "tenant_id": "tenant-a", "writer_id": "writer-a",
+         "trust_tier": "trusted_agent", "project": "project-b", "scopes": ["memory:read", "memory:write", "admin"]},
+        {"api_key": "other-writer-key-0123456789", "tenant_id": "tenant-a", "writer_id": "writer-b",
+         "trust_tier": "trusted_agent", "project": "project-a", "scopes": ["memory:read", "memory:write", "admin"]},
+        {"api_key": "other-tenant-key-0123456789", "tenant_id": "tenant-b", "writer_id": "writer-a",
+         "trust_tier": "trusted_agent", "project": "project-a", "scopes": ["memory:read", "memory:write", "admin"]},
+    ]})
+    app = create_app(db_path=str(db_path), key_registry=registry,
+                     store_factory=lambda: MemoryStore(str(db_path)))
+    with TestClient(app) as client:
+        owner = {"X-API-Key": "owner-key-0123456789"}
+        created_session = client.post("/v1/sessions", headers=owner, json={"label": "owner session"})
+        created_connection = client.post("/v1/connections", headers=owner, json={
+            "name": "owner agent", "endpoint": "http://127.0.0.1:8765", "scopes": ["memory:read"],
+        })
+        assert created_session.status_code == 200, created_session.text
+        assert created_connection.status_code == 200, created_connection.text
+        session_id = created_session.json()["id"]
+        connection_id = created_connection.json()["id"]
+
+        for key in ("other-project-key-0123456789", "other-writer-key-0123456789", "other-tenant-key-0123456789"):
+            headers = {"X-API-Key": key}
+            assert client.get("/v1/sessions", headers=headers).json() == []
+            assert client.post(f"/v1/sessions/{session_id}/close", headers=headers).json() == {"closed": False}
+            assert client.get("/v1/connections", headers=headers).json() == []
+            assert client.delete(f"/v1/connections/{connection_id}", headers=headers).json() == {"deleted": False}
+
+        assert client.get("/v1/sessions", headers=owner).json()[0]["id"] == session_id
+        assert client.get("/v1/connections", headers=owner).json()[0]["id"] == connection_id
+
+
+def test_session_list_limit_rejects_invalid_query_values(tmp_path: Path) -> None:
+    client, _, _ = _client(tmp_path)
+    with client:
+        for value in ("0", "-1", "201", "1.5", "not-an-int"):
+            response = client.get(f"/v1/sessions?limit={value}", headers=_headers())
+            assert response.status_code == 422, (value, response.text)
