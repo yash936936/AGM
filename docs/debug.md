@@ -275,3 +275,9 @@
 **Change:** Added end-to-end REST coverage proving sessions and connections are isolated across project, writer and tenant identities, and that session-list query limits outside the allowed integer range return 422. Test commit `613d96fcc453f6979eec16c9a68beb5e7d3c0f77`.
 
 **Validation:** NOT RUN locally and no exact-head CI result yet. This is a new regression candidate; do not accept it until the full Linux/Windows Python 3.11–3.13 matrix passes.
+
+## DBG-040 — REST identity-isolation candidate passed CI
+
+**Evidence:** Exact-head workflow [40214773052](https://github.com/yash936936/AGM/actions/runs/40214773052) passed all six Ubuntu/Windows Python 3.11–3.13 jobs, including test suite, repository hygiene, whitespace and wheel/package inspection. PR #20 merged as `d4eff63b74c0ed37cdf52c1b71c7b951a26d4547`.
+
+**Accepted for this commit:** REST session/connection isolation across tenant, project and writer identities, plus invalid session-list limit query handling. This is code-level acceptance evidence only; it does not close the broader M1 lifecycle audit, M0 release audit, held-out real-history evaluation, or independent security/privacy review.
