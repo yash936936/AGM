@@ -1,3 +1,13 @@
+## DBG-043 — Validate connection scopes and diagnostic timeouts — 2026-10-25
+
+**Finding:** `create_connection()` used a truthiness fallback for scopes, so an explicitly empty scope list silently became `memory:read` instead of failing closed. Non-list/unhashable scope values could leak `TypeError`. `test_connection()` accepted invalid timeout values, which could escape as inconsistent runtime exceptions.
+
+**Change:** Apply the least-privilege default only when scopes are omitted (`None`); require explicit scopes to be a non-empty list of strings in the allowlist. Require diagnostic timeout to be a finite positive number and reject booleans.
+
+**Tests added:** malformed/empty scope values and timeout type/boundary cases. Local tests were NOT RUN in this environment; exact-head CI is required.
+
+---
+
 ## DBG-023 — RSS API fix, repeatable load runs, synthetic acceptance suite, and keyword baseline — 2026-10-25
 **CI follow-up:** Initial run [40211567298](https://github.com/yash936936/AGM/actions/runs/40211567298) found a lexical-baseline test failure: the tokenization regex matched a literal backslash sequence, yielding zero recall. Corrected the regex on the latest branch head. The follow-up exact-head matrix is [run 40211660005](https://github.com/yash936936/AGM/actions/runs/40211660005), currently queued; do not consider this increment verified until it completes.
 
