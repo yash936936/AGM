@@ -1,3 +1,15 @@
+## D-035 — Keep active-turn orchestration read-only until host authorization
+
+**Decision:** Add a small Python orchestration seam that combines pre-answer context preparation with during/after-turn proposal review, but does not execute writes, corrections, or deletion. Eligible proposals remain subject to host authorization and existing scoped core/API methods.
+
+**Why:** Active memory needs a clear before/during/after-turn integration point without granting model-generated proposals direct mutation authority or changing frozen REST/MCP contracts.
+
+**Affects:** New `src/agm/active_memory_turn.py` and focused tests. No new dependency, no schema change, and no public REST path or MCP tool-name change. This is an additive Python library API.
+
+**Limits:** It does not call an LLM, persist proposals, or provide independent authorization. External release gates remain open.
+
+---
+
 ## D-034 — Strict connection scope and diagnostic timeout validation — 2026-10-25
 
 **Decision:** A missing (`None`) connection scope argument defaults to the least-privilege `memory:read` scope. An explicitly supplied empty list, non-list, or list containing non-string members is invalid; accepted scopes must be a non-empty subset of `memory:read`, `memory:write`, and `memory:delete`. Diagnostic timeouts must be finite positive numbers; booleans are rejected despite Python's boolean/integer relationship.
