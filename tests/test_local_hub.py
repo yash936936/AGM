@@ -133,3 +133,24 @@ def test_graph_snapshot_omits_quarantined_instruction_like_memory(tmp_path):
 
         assert all(node["id"] != quarantined.item_id for node in snapshot["nodes"])
         assert marker not in str(snapshot)
+
+def test_obsidian_export_preserves_source_span_provenance(tmp_path):
+    ctx = _ctx()
+    destination = tmp_path / "vault-provenance"
+    with MemoryStore(str(tmp_path / "export-provenance.db")) as store:
+        saved = store.write(
+            ctx,
+            WriteItem(
+                kind="episode",
+                text="Source-backed export note",
+                source_span={"episode_id": "episode-origin-5c2a", "start": 12, "end": 27},
+            ),
+        )
+        paths = export_obsidian(store, ctx, destination)
+        assert len(paths) == 1
+        exported = paths[0].read_text(encoding="utf-8")
+        assert saved.item_id in exported
+        assert 'source_episode_id: "episode-origin-5c2a"' in exported
+        assert "source_span_start: 12" in exported
+        assert "source_span_end: 27" in exported
+
