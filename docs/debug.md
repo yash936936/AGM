@@ -1,3 +1,13 @@
+## DBG-047 — M0 expiry sweep atomic rollback regression — 2026-10-25
+
+**Task:** Verify that retention expiry is atomic across its nested delete operations.
+
+**Test added:** `test_expiry_rolls_back_entire_sweep_when_nested_delete_fails` injects a failure while applying the nested delete event, then asserts the original source payload and event count are unchanged, the node remains active, no transaction is left open, and reopen/rebuild still retrieves the marker.
+
+**Validation:** NOT RUN locally in this remote editing environment. Exact-head CI is required. This is synthetic failure-injection evidence, not independent security/privacy review. M0 remains IN PROGRESS; held-out real-history evaluation and independent security/privacy review remain open.
+
+---
+
 ## DBG-046 — M0 retention orphan-scrub isolation merged — 2026-10-25
 
 **Merged:** PR [#26](https://github.com/yash936936/AGM/pull/26), merge commit `f68aa2878e662ee7cb46099612aef27d60cfb4d1`.

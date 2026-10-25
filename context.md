@@ -8,9 +8,9 @@ AGM is a model-agnostic memory layer for AI agents, based on `Adaptive_Graph_Mem
 
 ## Latest implementation audit
 
-PR #26 merged at `f68aa2878e662ee7cb46099612aef27d60cfb4d1`. Exact-head CI run [40217991980](https://github.com/yash936936/AGM/actions/runs/40217991980) passed all six Ubuntu/Windows Python 3.11–3.13 jobs, including the test suite, repository hygiene, whitespace checks, and wheel/package inspection. The added M0 acceptance regression verifies that expiry scrubs an aged source event orphaned by writer revocation only within the requested tenant/project, is idempotent, and preserves the isolation boundary after database reopen and view rebuild. Local tests were not run in this remote editing environment.
+PR #26 merged at `f68aa2878e662ee7cb46099612aef27d60cfb4d1`. Exact-head CI run [40217991980](https://github.com/yash936936/AGM/actions/runs/40217991980) passed all six Ubuntu/Windows Python 3.11–3.13 jobs, including tests, repository hygiene, whitespace checks, and wheel/package inspection. Its M0 regression covers tenant/project isolation for retention orphan scrubbing after writer revocation, idempotent expiry, and reopen/rebuild.
 
-PR #25's duplicate-test cleanup and PR #23/#24's retention and connection-validation changes also passed exact-head CI. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY. Held-out consented real-history evaluation remains NOT RUN, and independent security/privacy review remains NOT ESTABLISHED. Do not claim production readiness while those gates remain open.
+Current audit focus: verify full-sweep rollback when a nested delete fails during expiry. The new regression is pending exact-head CI. Local tests are not run in this remote editing environment. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY. Held-out consented real-history evaluation is NOT RUN, and independent security/privacy review is NOT ESTABLISHED.
 ## Roles
 
 - **Supervisor:** owns the docs, frozen contracts, phase briefs and code review.
