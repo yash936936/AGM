@@ -259,3 +259,11 @@
 **Changes:** Tightened `list_sessions` so limits must be actual integers (booleans, floats and strings are rejected with `ValueError`). Added acceptance coverage for session/connection isolation across both project and writer boundaries, and for invalid connection-scope input types.
 
 **Validation:** Source commit `8eeca08ca33499217f6e1a3c582051576a6bd4e7`; test commit `42e3e638d8f051893c5a70ae26daba833be2f8c0`. Tests have not been run locally. Exact-head CI is required. Existing CI run [40213472988](https://github.com/yash936936/AGM/actions/runs/40213472988) passed all six matrix jobs for the prior candidate; it does not validate these new changes.
+
+## DBG-038 — REST authorization coverage for M1 hub endpoints
+
+**Evidence:** CI run [40214097156](https://github.com/yash936936/AGM/actions/runs/40214097156) passed all six Linux/Windows Python 3.11–3.13 jobs for the session/connection scope candidate. PR #18 was merged at `927553613e16413b367d91556252a75ede80adaa`.
+
+**Change:** Added REST-level authorization tests for read-only session access (list allowed; create/close forbidden), connection endpoints requiring `admin`, and an admin-authorized connection create/list round trip that checks metadata-only output. Test commit `2085ba3b76652636152b3f4dccb627a426e7b123`.
+
+**Validation:** NOT RUN locally; this new REST authorization coverage has no exact-head CI result yet. Do not treat it as passing until all six matrix jobs and package/hygiene checks complete on the exact candidate.
