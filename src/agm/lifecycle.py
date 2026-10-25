@@ -27,7 +27,7 @@ class BeforeTurnRequest:
     high_stakes: bool = False
     expand: bool = True
     as_of: str | None = None
-    # Appended to preserve the existing positional constructor contract.
+    # Append to preserve existing positional construction of the public dataclass.
     token_budget: int = 2000
 
     def __post_init__(self) -> None:
