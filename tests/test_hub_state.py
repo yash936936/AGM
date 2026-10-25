@@ -7,7 +7,7 @@ import pytest
 from agm import Ctx, MemoryStore
 from agm.hub_state import (
     close_session, create_connection, create_session, delete_connection,
-    list_connections, list_sessions, test_connection,
+    list_connections, list_sessions, test_connection as probe_connection,
 )
 
 
@@ -88,8 +88,9 @@ def test_connection_diagnostics_fail_closed_for_unreachable_loopback(tmp_path):
         created = create_connection(
             store.conn, _ctx(), name="offline", endpoint="http://127.0.0.1:1",
         )
-        result = test_connection(store.conn, _ctx(), str(created["id"]), timeout=0.1)
+        result = probe_connection(store.conn, _ctx(), str(created["id"]), timeout=0.1)
         assert result["ok"] is False
         assert result["error"] == "could not reach loopback health endpoint"
         assert isinstance(result["latency_ms"], float)
-        assert test_connection(store.conn, _ctx(tenant="foreign"), str(created["id"]))["error"] == "connection not found" if False else True
+        with pytest.raises(KeyError, match="connection not found"):
+            probe_connection(store.conn, _ctx(tenant="foreign"), str(created["id"]))
