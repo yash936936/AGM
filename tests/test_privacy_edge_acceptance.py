@@ -368,6 +368,8 @@ def test_expiry_rolls_back_prior_items_when_later_nested_delete_fails(tmp_path, 
 
 
 def test_expiry_rolls_back_deletes_when_orphan_scrub_fails(tmp_path):
+    import sqlite3
+
     import pytest
 
     path = str(tmp_path / "expiry-orphan-scrub-rollback.db")
@@ -427,7 +429,7 @@ def test_expiry_rolls_back_deletes_when_orphan_scrub_fails(tmp_path):
         )
         store.conn.commit()
 
-        with pytest.raises(Exception, match="injected orphan scrub failure"):
+        with pytest.raises(sqlite3.IntegrityError, match="injected orphan scrub failure"):
             store.expire_before(owner, cutoff)
 
         assert store.conn.execute(
