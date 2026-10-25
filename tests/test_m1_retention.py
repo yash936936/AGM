@@ -316,3 +316,39 @@ def test_expire_before_scrubs_orphan_events_only_in_current_tenant_and_project(t
         assert "PROJECT-ORPHAN-RETENTION-822" in payloads_after_rebuild
         assert "TENANT-ORPHAN-RETENTION-933" in payloads_after_rebuild
 
+def test_expiry_preserves_revoked_pinned_source_until_explicit_opt_in(tmp_path):
+    db = tmp_path / "retention-revoked-pinned.db"
+    writer = _ctx(writer="pinned-writer")
+    admin = _ctx(writer="retention-admin")
+    marker = "REVOKED-PINNED-RETENTION-AB91"
+
+    with MemoryStore(str(db)) as store:
+        item = store.write(writer, WriteItem(
+            kind="episode", text=f"Pinned source marker {marker}", pin=True,
+        ))
+        _backdate_event(store, item.item_id, OLD_CREATED_AT)
+        assert store.revoke_writer(admin, writer.writer_id).revoked
+        assert store.conn.execute(
+            "SELECT 1 FROM nodes WHERE id = ?", (item.item_id,)
+        ).fetchone() is None
+
+        default_sweep = store.expire_before(admin, CUTOFF)
+        assert default_sweep.scrubbed_orphan_events == 0
+        payloads = " ".join(
+            str(row[0]) for row in store.conn.execute("SELECT payload FROM events")
+        )
+        assert marker in payloads
+
+        store.rebuild_views()
+        assert store.conn.execute(
+            "SELECT 1 FROM nodes WHERE id = ?", (item.item_id,)
+        ).fetchone() is None
+        assert marker in " ".join(
+            str(row[0]) for row in store.conn.execute("SELECT payload FROM events")
+        )
+
+        opted_in_sweep = store.expire_before(admin, CUTOFF, include_pinned=True)
+        assert opted_in_sweep.scrubbed_orphan_events >= 1
+        assert marker not in " ".join(
+            str(row[0]) for row in store.conn.execute("SELECT payload FROM events")
+        )
