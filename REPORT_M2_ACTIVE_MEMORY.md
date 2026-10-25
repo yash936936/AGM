@@ -1,37 +1,40 @@
-# M2 Implementation Report — Active-turn orchestration seam
+# M2 Implementation Report — Active-turn orchestration
 
-**Status:** IMPLEMENTED CANDIDATE / NOT ACCEPTED  
-**Date:** 2026-10-26
+**Status:** IMPLEMENTATION CANDIDATE / NOT ACCEPTED  
+**Updated:** 2026-10-26
 
-## Files changed
-- `src/agm/active_memory_turn.py`: adds `begin_active_memory_turn` for read-only pre-answer context and `review_active_memory_proposals` for policy decisions.
-- `tests/test_active_memory_turn.py`: covers read-only preparation, budget enforcement, eligible/rejected proposal separation, and host authorization boundary.
-- `docs/decisions.md`: records D-035 for keeping orchestration read-only.
-- `docs/status.md`, `docs/debug.md`: record M2 implementation candidate and validation status.
+## Implemented in the current candidate
 
-## Test coverage intent
-- `test_begin_turn_prepares_context_without_mutating_event_log`: ensures turn preparation returns relevant context and does not append events.
-- `test_review_separates_eligible_proposals_from_rejected_ones`: ensures policy outcomes remain inspectable and deletion without explicit intent is rejected.
-- `test_review_does_not_need_store_and_cannot_mutate_it`: keeps proposal review independent of persistence and documents that eligibility is not authorization.
-- `test_begin_turn_rejects_invalid_context_budget`: preserves input validation at the orchestration boundary.
+- `begin_active_memory_turn()` delegates to the existing bounded, scoped, read-only context preparation.
+- `review_active_memory_proposals()` evaluates proposals against the current user message and returns eligibility/rejection reasons. Eligibility is not authorization.
+- `execute_authorized_memory_proposal()` is the explicit execution seam. It re-evaluates policy, checks the required scope, requires host authorization, requires confirmation for mutations, and delegates to existing `MemoryStore` methods for write, correction, history, and deletion.
+- Tests now cover authorization/scope/confirmation denial, the write/correction/history/delete lifecycle, replay/reopen, source-payload scrubbing, and cross-tenant isolation.
+- No new dependency or REST/MCP public contract change is intended.
 
-## Commands and validation
-- Focused pytest: NOT RUN in this remote GitHub editing environment.
-- Full pytest: NOT RUN.
-- REST smoke client: NOT RUN.
-- MCP smoke client: NOT RUN.
-- Hygiene, whitespace, and package inspection: NOT RUN.
-- Exact-head CI: pending.
+## Validation evidence
 
-## Contract concerns
-None intended. No frozen REST paths, MCP tool names, persisted schemas, or dependencies changed.
+- Prior candidate commit `5dcf7d86818f9a4c3bd9a7c8350235934ac92340`: GitHub Actions run [40227572306](https://github.com/yash936936/AGM/actions/runs/40227572306) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. This run predates the authorized-execution and lifecycle-test changes and is **not** validation of the current head.
+- Current candidate commit: `f0f2913874b3319894e64e642bc513b83f59493a`.
+- Local focused pytest: NOT RUN. Attempted repository clone for local execution, but network DNS resolution for GitHub failed in this environment.
+- Current-head focused/full pytest, REST smoke, MCP smoke, hygiene, whitespace, package inspection: PENDING exact-head CI evidence.
+- Library/REST/MCP parity for the newly added execution seam: NOT VERIFIED. The new seam is a library API; existing adapter contracts are unchanged, but adapter execution-path parity has not been demonstrated.
 
-## Assumptions and limitations
-- The host supplies the actual user message and any model/host proposals.
-- A policy decision marked eligible is not authorization to mutate.
-- Mutations must use existing authenticated, tenant/project-scoped APIs.
-- No LLM calls or background writes are introduced.
-- This candidate does not close held-out real-history evaluation, independent security/privacy review, or third-party host integration.
+## Acceptance checklist
 
-## Unfinished
-Run focused and full tests, both smoke clients, hygiene/whitespace/package checks, inspect CI, and obtain review before accepting M2.
+- [x] Read-only before-turn context preparation.
+- [x] Proposal policy review is separate from authorization.
+- [x] Explicit host authorization and scope checks before execution.
+- [x] Explicit confirmation for mutations.
+- [x] Tests authored for write/correction/history/delete and replay/reopen.
+- [x] Test authored for cross-tenant isolation.
+- [ ] Current-head focused and full test suites pass.
+- [ ] Current-head six-job CI matrix passes.
+- [ ] Current-head REST/MCP smoke clients and hygiene/package checks pass.
+- [ ] Library/REST/MCP execution parity is tested or documented as intentionally library-only.
+- [ ] Code review accepts the authorization contract and test evidence.
+
+## Limitations and release gates
+
+The authorization boolean and scopes are supplied by the calling host; this function is not itself an authentication boundary. Integrations must pass trusted authorization results and the caller's actual scoped `Ctx`. No LLM calls or background writes are introduced.
+
+Held-out consented real-history evaluation, independent security/privacy review, and real third-party host integration remain **OPEN / PENDING**. This candidate is not production-ready and M2 is not accepted until current-head validation and review are complete.
