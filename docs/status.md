@@ -1,3 +1,20 @@
+## 2026-10-26 — M2 kickoff and external gates status
+
+### External release gates
+
+| Gate | Status | Pending evidence |
+|---|---|---|
+| Held-out real-history evaluation | **OPEN / PENDING** | Consented, de-identified dataset and reviewed benchmark results |
+| Independent security/privacy review | **OPEN / PENDING** | Independent reviewer findings and sign-off |
+| Third-party host integration | **OPEN / PENDING** | Recorded test against a real host using synthetic data |
+
+These gates remain pending until the required evidence is actually produced and reviewed. Documentation and synthetic CI do not close them.
+
+### M2: active memory behavior
+
+**Status: STARTED, implementation not yet accepted.** Begin with `docs/acceptance/m2_active_memory_execution_brief.md`. Existing `active_memory.py` prepares pre-answer context and `active_memory_policy.py` evaluates proposed operations; M2 must verify and connect the before/during/after-turn lifecycle while preserving explicit authorization for mutations, tenant/project scope, replay safety, untrusted-memory boundaries, and frozen adapter contracts.
+
+**Validation:** No tests run for M2 in this remote repository-editing step. Do not claim implementation or acceptance until code changes have exact-head CI and review evidence.
 ## 2026-10-26 — External-gate tracking documentation CI verified
 
 **PR:** [#42](https://github.com/yash936936/AGM/pull/42), merged at `0d1b60bd3d27e8422c0fd31f3714d03a17fadc61`.

@@ -1,3 +1,11 @@
+## 2026-10-26 — M2 kickoff: active memory behavior
+
+M0/M1 repository acceptance changes are merged and their cited CI runs passed. The three external release gates are **OPEN / PENDING**: held-out consented real-history evaluation, independent security/privacy review, and real third-party host integration. Do not treat pending evidence as passed.
+
+M2 starts with the active-memory lifecycle: prepare relevant profile/preferences, active goals, and query context before answering; evaluate any proposed write/correction/history/delete against the current user message during the turn; and keep execution of mutations behind explicit user intent, confirmation where needed, and existing scoped store APIs. Retrieved memory remains untrusted data. No automatic LLM execution or background mutation is in scope for the kickoff.
+
+Brief: `docs/acceptance/m2_active_memory_execution_brief.md`. First implementation target is a tested orchestration seam around the existing `active_memory.py` and `active_memory_policy.py`, without changing frozen REST/MCP contracts or adding dependencies. This is a kickoff, not a claim that M2 is complete.
+
 ## 2026-10-26 — M0/M1 acceptance PRs merged
 
 PR #39 merged at `ff74460daf3c6585c5820e380320cb8cfc134475`. Its exact-head CI run [40224653021](https://github.com/yash936936/AGM/actions/runs/40224653021) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. It adds coverage for revoked pinned source retention across default expiry and replay, plus explicit expiry scrubbing while retaining the revocation audit event.
