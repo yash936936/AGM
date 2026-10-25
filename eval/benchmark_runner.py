@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
+import os
+import platform
 import json
 import math
 import sys
@@ -10,6 +13,9 @@ import tempfile
 import time
 from pathlib import Path
 from typing import Any
+
+from agm import MemoryStore
+from scripts.evaluate_real_history import _ctx
 
 from scripts.evaluate_real_history import (
     DEFAULT_MIN_ABSTENTION_ACCURACY, DEFAULT_MIN_CASE_PASS_RATE,
@@ -27,6 +33,60 @@ def percentile(values: list[float], p: float) -> float | None:
     if lo == hi:
         return round(values[lo], 4)
     return round(values[lo] * (hi - position) + values[hi] * (position - lo), 4)
+
+
+def peak_rss_bytes() -> int | None:
+    """Return process peak resident/working-set bytes using the standard library."""
+    if os.name == "nt":
+        try:
+            import ctypes
+            from ctypes import wintypes
+            class PROCESS_MEMORY_COUNTERS(ctypes.Structure):
+                _fields_ = [
+                    ("cb", wintypes.DWORD), ("PageFaultCount", wintypes.DWORD),
+                    ("PeakWorkingSetSize", ctypes.c_size_t), ("WorkingSetSize", ctypes.c_size_t),
+                    ("QuotaPeakPagedPoolUsage", ctypes.c_size_t), ("QuotaPagedPoolUsage", ctypes.c_size_t),
+                    ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t), ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+                    ("PagefileUsage", ctypes.c_size_t), ("PeakPagefileUsage", ctypes.c_size_t),
+                ]
+            counters = PROCESS_MEMORY_COUNTERS()
+            counters.cb = ctypes.sizeof(counters)
+            handle = ctypes.windll.kernel32.GetCurrentProcess()
+            ok = ctypes.windll.psapi.GetProcessMemoryInfo(handle, ctypes.byref(counters), counters.cb)
+            return int(counters.PeakWorkingSetSize) if ok else None
+        except (AttributeError, OSError):
+            return None
+    try:
+        import resource
+        peak = int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+        return peak if platform.system() == "Darwin" else peak * 1024
+    except (ImportError, OSError, ValueError):
+        return None
+
+
+def _concurrent_case_retrieval(case: dict[str, Any], db_path: Path, mode: str,
+                               workers: int, requests: int) -> dict[str, Any]:
+    query = case["query"]
+    ctx = _ctx(query, "query")
+    def one_request(_: int) -> float:
+        started = time.perf_counter()
+        with MemoryStore(str(db_path)) as store:
+            store.retrieve(ctx, query["text"], entity=query.get("entity"),
+                           as_of=query.get("as_of"), k=query.get("k", 5),
+                           expand=mode == "graph", high_stakes=query.get("high_stakes", False))
+        return (time.perf_counter() - started) * 1000.0
+    started = time.perf_counter()
+    latencies: list[float] = []
+    errors = 0
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
+        futures = [pool.submit(one_request, index) for index in range(requests)]
+        for future in concurrent.futures.as_completed(futures):
+            try:
+                latencies.append(future.result())
+            except Exception:
+                errors += 1
+    return {"latencies_ms": latencies, "errors": errors,
+            "elapsed_seconds": time.perf_counter() - started}
 
 
 def summarize(rows: list[dict[str, Any]], elapsed: float, thresholds: tuple[float, float, float]) -> dict[str, Any]:
@@ -79,12 +139,19 @@ def summarize(rows: list[dict[str, Any]], elapsed: float, thresholds: tuple[floa
 def run_benchmark(path: Path, *, min_case_pass_rate: float = DEFAULT_MIN_CASE_PASS_RATE,
                   min_expected_recall: float = DEFAULT_MIN_EXPECTED_RECALL,
                   min_abstention_accuracy: float = DEFAULT_MIN_ABSTENTION_ACCURACY,
-                  include_case_details: bool = False) -> dict[str, Any]:
+                  include_case_details: bool = False, concurrency: int = 0, concurrent_requests: int = 100) -> dict[str, Any]:
     thresholds = (min_case_pass_rate, min_expected_recall, min_abstention_accuracy)
     if any(not math.isfinite(x) or not 0 <= x <= 1 for x in thresholds):
         raise ValueError("thresholds must be between 0 and 1")
+    if type(concurrency) is not int or concurrency < 0 or concurrency > 128:
+        raise ValueError("concurrency must be between 0 and 128")
+    if type(concurrent_requests) is not int or concurrent_requests < 1:
+        raise ValueError("concurrent_requests must be a positive integer")
     cases = load_cases(path)
     rows = {"flat": [], "graph": []}
+    concurrent_samples = {"flat": [], "graph": []}
+    concurrent_elapsed = {"flat": 0.0, "graph": 0.0}
+    concurrent_errors = {"flat": 0, "graph": 0}
     elapsed = {"flat": 0.0, "graph": 0.0}
     details = {"flat": [], "graph": []}
     # Alternate order per case to reduce systematic warm-up bias.
@@ -95,8 +162,14 @@ def run_benchmark(path: Path, *, min_case_pass_rate: float = DEFAULT_MIN_CASE_PA
             case.setdefault("query", {})["expand"] = mode == "graph"
             with tempfile.TemporaryDirectory(prefix=f"agm-bench-{mode}-") as tmp:
                 started = time.perf_counter()
-                result = evaluate_case(case, Path(tmp) / "case.db")
+                db_path = Path(tmp) / "case.db"
+                result = evaluate_case(case, db_path)
                 duration = (time.perf_counter() - started) * 1000
+                if concurrency:
+                    load = _concurrent_case_retrieval(case, db_path, mode, concurrency, concurrent_requests)
+                    concurrent_samples[mode].extend(load["latencies_ms"])
+                    concurrent_elapsed[mode] += load["elapsed_seconds"]
+                    concurrent_errors[mode] += load["errors"]
             result["case_latency_ms"] = duration
             rows[mode].append(result)
             elapsed[mode] += duration / 1000
@@ -111,13 +184,22 @@ def run_benchmark(path: Path, *, min_case_pass_rate: float = DEFAULT_MIN_CASE_PA
     flat_recall, graph_recall = (modes[m]["expected_value_recall"] for m in ("flat", "graph"))
     flat_p95, graph_p95 = (modes[m]["retrieval_latency_ms"]["p95"] for m in ("flat", "graph"))
     report = {
-        "protocol": "paired_flat_vs_graph_v2", "cases": len(cases),
+        "protocol": "paired_flat_vs_graph_v3", "cases": len(cases),
+        "process_peak_rss_bytes": peak_rss_bytes(),
         "modes": modes,
         "comparison": {
             "graph_minus_flat_recall": None if flat_recall is None or graph_recall is None else round(graph_recall - flat_recall, 6),
             "graph_minus_flat_retrieval_p95_ms": None if flat_p95 is None or graph_p95 is None else round(graph_p95 - flat_p95, 4),
         },
     }
+    if concurrency:
+        report["concurrent_retrieval"] = {mode: {
+            "workers": concurrency, "requests_per_case": concurrent_requests,
+            "requests": len(concurrent_samples[mode]), "errors": concurrent_errors[mode],
+            "latency_ms": {f"p{p}": percentile(concurrent_samples[mode], p / 100) for p in (50, 95, 99)},
+            "throughput_requests_per_second": round(len(concurrent_samples[mode]) / concurrent_elapsed[mode], 4) if concurrent_elapsed[mode] else None,
+            "elapsed_seconds": round(concurrent_elapsed[mode], 4),
+        } for mode in rows}
     if include_case_details:
         report["case_details"] = details
     return report
@@ -128,6 +210,8 @@ def main() -> int:
     parser.add_argument("benchmark", type=Path)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--include-case-details", action="store_true")
+    parser.add_argument("--concurrency", type=int, default=0, help="enable concurrent retrieval load with this worker count")
+    parser.add_argument("--concurrent-requests", type=int, default=100, help="requests per case and mode when concurrency is enabled")
     parser.add_argument("--min-case-pass-rate", type=float, default=DEFAULT_MIN_CASE_PASS_RATE)
     parser.add_argument("--min-expected-recall", type=float, default=DEFAULT_MIN_EXPECTED_RECALL)
     parser.add_argument("--min-abstention-accuracy", type=float, default=DEFAULT_MIN_ABSTENTION_ACCURACY)
@@ -136,7 +220,8 @@ def main() -> int:
         report = run_benchmark(args.benchmark, min_case_pass_rate=args.min_case_pass_rate,
                                min_expected_recall=args.min_expected_recall,
                                min_abstention_accuracy=args.min_abstention_accuracy,
-                               include_case_details=args.include_case_details)
+                               include_case_details=args.include_case_details, concurrency=args.concurrency,
+                               concurrent_requests=args.concurrent_requests)
     except (OSError, ValueError, KeyError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
