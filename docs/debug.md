@@ -1,3 +1,13 @@
+## DBG-054 — Fix lifecycle context compatibility and trust-boundary regressions — 2026-10-26
+
+**Finding:** Review of merged PR #32 found three regressions: `token_budget` was inserted before existing dataclass fields and broke positional callers; shared bounded rendering omitted stored provenance; and memory text with newlines / a forged closing record tag could break record framing.
+
+**Change:** On a branch based on current main, append the new field after all prior fields, include provenance in `_render_item`, normalize untrusted field values to one line, escape angle-bracket delimiters, and test positional compatibility, provenance retention and boundary escaping.
+
+**Validation:** Prior PR #32 exact-head CI run [40221564276](https://github.com/yash936936/AGM/actions/runs/40221564276) passed all six matrix jobs. An earlier follow-up branch exposed fixture failures; the bounded-context fixture now uses a 240-token budget and the boundary test uses actual newline characters. This current-main follow-up still requires exact-head CI and review. Local tests NOT RUN. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY.
+
+---
+
 ## DBG-054 — Repair M1 lifecycle review findings — 2026-10-26
 
 **Finding:** Review of merged PR #32 surfaced a positional API compatibility break, dropped `Node.provenance` in shared context rendering, and a record-boundary injection risk when memory text contains embedded line breaks.
