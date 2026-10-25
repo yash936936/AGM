@@ -1,3 +1,15 @@
+## DBG-064 — M2 executor guardrail CI and surface-boundary decision — 2026-10-26
+
+**Validation:** PR #47 head `200a555af4689ac698dec3289da8204fecdc481a`; GitHub Actions run [40229139385](https://github.com/yash936936/AGM/actions/runs/40229139385) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. Job steps include full pytest, REST smoke, MCP fresh-session smoke, repository hygiene, patch whitespace, and wheel/package inspection. Local pytest was NOT RUN because GitHub DNS/network access was unavailable in the editing environment.
+
+**Coverage added:** action-specific scope checks, history read without mutation confirmation, and rejection of a proposal whose evidence does not match the current user message, with no event-log mutation.
+
+**Contract decision:** D-037 records the new proposal executor as library-only. Existing REST/MCP calls remain unchanged and their smoke tests do not prove parity for the proposal-policy/confirmation path. No claim of cross-surface executor parity is made.
+
+**Not verified:** held-out consented real-history evaluation, independent security/privacy review, third-party host integration, and trusted host wiring in a real assistant runtime. M2 remains an implementation candidate, not accepted or production-ready.
+
+---
+
 ## DBG-063 — M2 explicit execution path and lifecycle regression candidate — 2026-10-26
 
 **Implementation:** Added `execute_authorized_memory_proposal()`. It re-evaluates the current-message policy, checks action-specific scope, requires host authorization, and requires explicit confirmation for mutations. It delegates to existing scoped `MemoryStore` write, supersede, history, and delete methods. No REST/MCP names or persisted schemas were changed.
