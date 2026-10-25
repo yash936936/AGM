@@ -299,3 +299,12 @@
 **Candidate fix:** Branch `fix/retention-preserve-revoked-pins-v2`, source commit `692e5d9c95290050d548d2ffd7550cef57693a52`, regression commit `0acae570159906e2715aaab8053f972f05976d37`. The orphan-event path now checks the stored source item's `pin` flag and skips pinned payloads unless `include_pinned=True`. The regression revokes a pinned writer, runs default expiry and replay, then verifies explicit opt-in can scrub the payload.
 
 **Validation:** NOT RUN locally. Exact-head CI and packaging/hygiene checks required before merge. M0 remains IN PROGRESS; do not treat this fix as accepted until evidence passes.
+
+
+## DBG-043 — Validate connection scopes and diagnostic timeouts — 2026-10-25
+
+**Finding:** create_connection() used a truthiness fallback for scopes, so an explicitly empty scope list silently became memory:read instead of failing closed. Non-list/unhashable scope values could leak TypeError. test_connection() accepted invalid timeout values; zero, negative, non-finite, boolean, or string timeouts could raise inconsistent errors outside the diagnostic result contract.
+
+**Change:** Apply the least-privilege default only when scopes are omitted (None); require explicit scopes to be a non-empty list of strings in the allowlist. Require diagnostic timeout to be a finite positive number and reject booleans.
+
+**Tests:** Added malformed/empty scope cases and timeout boundary/type cases. Exact-head CI is required; local tests were not run in this remote editing environment.
