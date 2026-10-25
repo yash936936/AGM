@@ -1,3 +1,15 @@
+## 2026-10-25 — Multi-item expiry sweep atomicity regression in review
+
+**Candidate branch:** `test/m0-multi-item-expiry-rollback`.
+
+**Coverage added:** A two-item expiry sweep now injects failure after the second real nested delete handler has mutated views. Assertions verify that the entire sweep restores both source payloads, event count, both active nodes, transaction state, and retrieval after reopen/rebuild.
+
+**Baseline:** PR [#28](https://github.com/yash936936/AGM/pull/28) merged at `9db3fbaf9dc3a039f2198b6c61e9340619df7f9b`; exact-head CI run [40219212770](https://github.com/yash936936/AGM/actions/runs/40219212770) passed all six Linux/Windows Python 3.11–3.13 jobs.
+
+**Validation:** Follow-up exact-head CI pending. Local tests NOT RUN in this remote editing environment. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY; held-out real-history evaluation and independent security/privacy review remain open.
+
+---
+
 ## 2026-10-25 — Post-mutation expiry rollback acceptance merged
 
 **Merged:** PR [#28](https://github.com/yash936936/AGM/pull/28), merge commit `9db3fbaf9dc3a039f2198b6c61e9340619df7f9b`.
