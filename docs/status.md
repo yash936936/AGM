@@ -99,3 +99,16 @@
 **Validation:** NOT RUN at this candidate head. Required next: focused edge acceptance tests, full pytest suite, `git diff --check`, and CI on the exact branch head. Do not merge this corrective branch or claim the issue fixed until all pass.
 
 **Release status:** Revocation replay correctness remains unresolved; production readiness is not established.
+
+## 2026-10-25 — Retention orphan-scrub scope regression added
+
+**Branch:** `work/benchmark-acceptance-baselines`.
+
+**Change:** Added a regression that creates aged, revoked source events in the current project, another project in the same tenant, and another tenant. It asserts that expiry scrubs only the current tenant/project's orphan payloads and that replay does not reintroduce scrubbed content. This extends the existing retention scope, idempotency and rollback coverage.
+
+**Validation:** The focused test and full suite have NOT been run in this environment. The new commit is `ee81976c701e90c633b577a09aa7f6a26d762e14`; no CI status was visible for that commit at the time of this update. Do not treat this test as passing until exact-head CI completes.
+
+**Benchmark evidence update:** Follow-up exact-head CI run [40211660005](https://github.com/yash936936/AGM/actions/runs/40211660005) and latest docs-head run [40211734663](https://github.com/yash936936/AGM/actions/runs/40211734663) passed all six Linux/Windows Python 3.11–3.13 jobs. User-reported Windows benchmark evidence: full suite `213 passed, 1 warning`; peak RSS `60,682,240` bytes; five repetitions, four workers, 1,000 requests per mode per repetition, zero errors; median concurrent p95 126.4 ms flat / 132.3 ms graph, throughput 89.0 / 86.4 requests/s. On the 10-case synthetic suite, flat and graph each passed 100% with 100% expected-value recall and zero forbidden-value leaks; keyword baseline passed 90% and abstention accuracy was 90%. These are synthetic/user-reported measurements, not held-out real-history or production-capacity evidence.
+
+**Still blocked:** held-out consented real-history evaluation is NOT RUN; independent security/privacy review is NOT ESTABLISHED. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY.
+
