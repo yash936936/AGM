@@ -1,3 +1,12 @@
+## DBG-020 — Paired flat-vs-graph benchmark harness — 2026-10-25
+
+**Change:** Added `eval/benchmark_runner.py` to evaluate each labelled case in both flat and graph modes using isolated temporary SQLite databases. It reports retrieval and end-to-end p50/p95/p99, expected-value recall, case pass rate, abstention accuracy, forbidden-value leakage, cases/second and maximum SQLite file size. Default reports omit case IDs and memory content. The real-history evaluator records retrieval-call duration and database file size.
+
+**Test added:** `tests/test_benchmark_runner.py` covers both modes, metric output, gate status and omission of case identifiers.
+
+**Verification:** Base commit `f7def22501b12693488354ea8e37a1476e6f67a7` passed six Ubuntu/Windows Python 3.11–3.13 jobs in [run 40202107198](https://github.com/yash936936/AGM/actions/runs/40202107198). New code has NOT RUN locally because GitHub DNS resolution failed during clone. Candidate exact-head CI remains pending.
+
+**Not closed:** Held-out real-history evaluation and independent security/privacy review remain NOT RUN / NOT ESTABLISHED. RSS, concurrent-load throughput and a separate keyword baseline remain unimplemented or unmeasured.
 ## DBG-019 — Owner bootstrap, session lifecycle, and connection registry — 2026-10-25
 
 **Change under review:** PR [#11](https://github.com/yash936936/AGM/pull/11) adds a local bootstrap CLI, scoped persistent session routes, loopback-only REST connection registry/health probes, focused tests, a Windows/Linux Python 3.11–3.13 CI matrix, and wheel content inspection.
