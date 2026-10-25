@@ -227,3 +227,11 @@
 
 **Related evidence:** User-reported Windows run: 213 passed, one Starlette/httpx deprecation warning; peak RSS 60,682,240 bytes; five concurrent repetitions with zero errors. These are user-supplied results, not independently rerun here.
 
+## DBG-034 — Local-hub timeline and export acceptance coverage
+
+**Task:** Strengthen M1 tests around deterministic metadata ordering and export serialization safety.
+
+**Change:** Added tests that assert timeline entries are newest-first and invalid limits fail closed; repeated Obsidian exports are byte-for-byte stable; project frontmatter containing quotes/newlines is serialized as a scalar rather than injecting YAML keys; and secret-like text is redacted in exported content.
+
+**Validation:** NOT RUN locally. Latest test commit is `881512bc1da1a0d67874d3ed5427b3beff0f0fe9`; no exact-head CI run was visible when recorded. Run `python -m pytest -q tests/test_local_hub.py`, then the full suite and package/hygiene checks on the exact candidate.
+
