@@ -176,13 +176,16 @@ def evaluate_case(case: dict[str, Any], db_path: Path) -> dict[str, Any]:
     case_id = str(case["case_id"])
     scenario = case.get("scenario", "cross_session_recall")
     item_ids: list[str] = []
+    operation_timings: list[dict[str, Any]] = []
 
     # Stage 1: seed memories.
     with MemoryStore(str(db_path)) as store:
         for index, memory in enumerate(case["memories"]):
             ctx = _ctx(memory, f"case {case_id}.memories[{index}]")
             item = WriteItem.model_validate(memory["item"])
+            operation_started = time.perf_counter()
             result = store.write(ctx, item)
+            operation_timings.append({"operation": "write", "latency_ms": (time.perf_counter() - operation_started) * 1000.0})
             if result.status == "quarantined":
                 raise ValueError(f"case {case_id}: a benchmark memory was quarantined; review fixture quality")
             if not result.item_id:
@@ -204,6 +207,7 @@ def evaluate_case(case: dict[str, Any], db_path: Path) -> dict[str, Any]:
         op_ctx = _ctx(operation["context"], f"{prefix}.context")
         with MemoryStore(str(db_path)) as store:
             op_type = operation["type"]
+            operation_started = time.perf_counter()
             if op_type == "correction":
                 target_id = item_ids[operation["target_memory_index"]]
                 write_item = WriteItem.model_validate(operation["item"])
@@ -228,12 +232,15 @@ def evaluate_case(case: dict[str, Any], db_path: Path) -> dict[str, Any]:
                     raise ValueError(f"{prefix}: expiry operation did not purge any eligible memory")
             else:  # schema validation rejects this branch
                 raise ValueError(f"{prefix}: unsupported operation")
+            operation_timings.append({"operation": op_type, "latency_ms": (time.perf_counter() - operation_started) * 1000.0})
 
     # Stage 3: reopen, rebuild views from the event log, then retrieve.
     query = case["query"]
     query_ctx = _ctx(query, f"case {case_id}.query")
     with MemoryStore(str(db_path)) as store:
+        rebuild_started = time.perf_counter()
         store.rebuild_views()
+        operation_timings.append({"operation": "rebuild_replay", "latency_ms": (time.perf_counter() - rebuild_started) * 1000.0})
         retrieval_started = time.perf_counter()
         result = store.retrieve(
             query_ctx,
@@ -259,6 +266,7 @@ def evaluate_case(case: dict[str, Any], db_path: Path) -> dict[str, Any]:
         "case_id": case_id,
         "scenario": scenario,
         "retrieve_latency_ms": retrieve_latency_ms,
+        "operation_timings": operation_timings,
         "database_size_bytes": database_size_bytes,
         "expected_count": len(expected),
         "missing_count": len(missing),
