@@ -8,9 +8,9 @@ AGM is a model-agnostic memory layer for AI agents, based on `Adaptive_Graph_Mem
 
 ## Latest implementation audit
 
-PR #26 merged at `f68aa2878e662ee7cb46099612aef27d60cfb4d1`. Exact-head CI run [40217991980](https://github.com/yash936936/AGM/actions/runs/40217991980) passed all six Ubuntu/Windows Python 3.11–3.13 jobs, including tests, repository hygiene, whitespace checks, and wheel/package inspection. Its M0 regression covers tenant/project isolation for retention orphan scrubbing after writer revocation, idempotent expiry, and reopen/rebuild.
+PR #27 merged at `2a9a003b7bfa4bf162661e420a692e155b7b1719`; exact-head CI run [40218590007](https://github.com/yash936936/AGM/actions/runs/40218590007) passed all six Ubuntu/Windows Python 3.11–3.13 jobs, including tests, repository hygiene, whitespace checks, and wheel/package inspection. Review identified that the first rollback test injected failure before view mutation, so it did not prove rollback after partial mutation.
 
-Current audit focus: verify full-sweep rollback when a nested delete fails during expiry. The new regression is pending exact-head CI. Local tests are not run in this remote editing environment. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY. Held-out consented real-history evaluation is NOT RUN, and independent security/privacy review is NOT ESTABLISHED.
+Current follow-up: strengthen the expiry rollback regression by invoking the real nested delete handler and then injecting a failure, checking the expiry transaction rolls back event/payload and derived-view changes. Candidate branch `test/m0-expiry-post-mutation-rollback`; exact-head CI pending. Local tests are not run in this remote editing environment. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY. Held-out consented real-history evaluation is NOT RUN, and independent security/privacy review is NOT ESTABLISHED.
 ## Roles
 
 - **Supervisor:** owns the docs, frozen contracts, phase briefs and code review.
@@ -52,7 +52,7 @@ The workflow is documented in `docs/workflow.md`.
 
 ## Next task
 
-Continue M0 acceptance on the active candidate branch: run the new retention orphan-scrub scope regression and the full test suite on the exact head, then inspect the package contents and repository hygiene. Keep M0 in progress and M1 partial/verify until their acceptance matrices have evidence tied to a reviewed commit. Held-out consented real-history evaluation and independent security/privacy review remain mandatory release gates. Keep services on loopback until security review is complete.
+Continue M0 acceptance on the active candidate branch: validate the post-view-mutation expiry rollback regression and full test suite on the exact head, then inspect package contents and repository hygiene. Keep M0 in progress and M1 partial/verify until their acceptance matrices have evidence tied to a reviewed commit. Held-out consented real-history evaluation and independent security/privacy review remain mandatory release gates. Keep services on loopback until security review is complete.
 
 
 ## Current CI follow-up — 2026-10-25

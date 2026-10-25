@@ -1,3 +1,13 @@
+## 2026-10-25 — Expiry rollback regression strengthened after review
+
+**Merged baseline:** PR [#27](https://github.com/yash936936/AGM/pull/27) merged at `2a9a003b7bfa4bf162661e420a692e155b7b1719`; exact-head CI run [40218590007](https://github.com/yash936936/AGM/actions/runs/40218590007) passed all six Linux/Windows Python 3.11–3.13 jobs.
+
+**Review follow-up:** The original failure injection occurred before the nested delete handler mutated derived views. Candidate branch `test/m0-expiry-post-mutation-rollback` changes the hook to invoke the real handler and then raise, so the test checks rollback after the nested handler has performed its mutation.
+
+**Validation:** Exact-head CI for this follow-up is pending. Local tests NOT RUN in this remote editing environment. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY. Held-out consented real-history evaluation remains NOT RUN and independent security/privacy review remains NOT ESTABLISHED.
+
+---
+
 ## 2026-10-25 — M0 expiry atomic-rollback regression in review
 
 **Candidate branch:** `test/m0-expiry-atomic-rollback`.
