@@ -24,10 +24,11 @@ class BeforeTurnRequest:
     query: str
     entity: str | None = None
     top_k: int = 8
-    token_budget: int = 2000
     high_stakes: bool = False
     expand: bool = True
     as_of: str | None = None
+    # Append to preserve existing positional construction of the public dataclass.
+    token_budget: int = 2000
 
     def __post_init__(self) -> None:
         if not isinstance(self.query, str) or not self.query.strip():
