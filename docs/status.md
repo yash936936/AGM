@@ -35,7 +35,7 @@
 
 **Failure evidence:** GitHub Actions run 40188540997 failed on Python 3.11, 3.12 and 3.13. The cutoff test found that a post-cutoff node reappeared after reopen/rebuild. The original replay-pass change did not resolve it.
 
-**Corrective branch:** `fix/revocation-replay-corrective`, commit `c977180b6e8b779cd3bde921d5141d8ed2f2af61`. The candidate collects node IDs from persisted, non-scrubbed revocation events and enforces those tombstones as a final materialized-view constraint after replay. This is a candidate fix, not yet validated.
+**Corrective branch:** `fix/revocation-replay-corrective`, latest candidate commit `4001f746d62d70a0062f8a5ac9992d4003e47c00`. The candidate enforces stored tombstone IDs after replay and also re-derives matching source nodes from each revocation event's tenant, writer and `since` cutoff. This is a candidate fix, not yet validated.
 
 **Validation:** NOT RUN at this candidate head. Required next: focused edge acceptance tests, full pytest suite, `git diff --check`, and CI on the exact branch head. Do not merge this corrective branch or claim the issue fixed until all pass.
 
