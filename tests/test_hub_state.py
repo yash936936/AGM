@@ -79,7 +79,7 @@ def test_connection_scopes_are_least_privilege_and_validated(tmp_path):
         with pytest.raises(ValueError, match="scopes"):
             create_connection(
                 store.conn, _ctx(), name="too-powerful",
-                endpoint="http://localhost:8765", scopes=["admin"],
+                endpoint="http://127.0.0.1:8765", scopes=["admin"],
             )
 
 
