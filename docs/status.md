@@ -15,6 +15,11 @@ These gates remain pending until the required evidence is actually produced and 
 **Status: STARTED, implementation not yet accepted.** Begin with `docs/acceptance/m2_active_memory_execution_brief.md`. Existing `active_memory.py` prepares pre-answer context and `active_memory_policy.py` evaluates proposed operations; M2 must verify and connect the before/during/after-turn lifecycle while preserving explicit authorization for mutations, tenant/project scope, replay safety, untrusted-memory boundaries, and frozen adapter contracts.
 
 **Validation:** No tests run for M2 in this remote repository-editing step. Do not claim implementation or acceptance until code changes have exact-head CI and review evidence.
+## 2026-10-26 — External-gate tracking documentation CI verified
+
+**PR:** [#42](https://github.com/yash936936/AGM/pull/42), merged at `0d1b60bd3d27e8422c0fd31f3714d03a17fadc61`.
+**Exact-head CI:** [Run 40226444920](https://github.com/yash936936/AGM/actions/runs/40226444920) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. Each job completed pytest, REST and MCP fresh-session smoke clients, repository hygiene, whitespace checks, and wheel/package inspection.
+**Scope:** Documentation-only status tracking. This validates the repository workflow at the PR head; it does not close the held-out real-history evaluation, independent security/privacy review, or real third-party host integration gates. All three remain OPEN.
 
 ---
 

@@ -5,6 +5,11 @@
 **M2 scope:** Audit and connect the existing pre-answer context preparation and memory-proposal policy into a safe before/during/after-turn lifecycle. Keep mutations behind explicit intent and existing scoped APIs; preserve tenant isolation, event-log/replay semantics, untrusted-memory notices, and frozen REST/MCP contracts.
 
 **Validation:** NOT RUN. This step establishes the brief and status only; no code tests were executed. M2 is started but not implemented or accepted.
+## DBG-060 — External-gate tracking docs exact-head CI — 2026-10-26
+
+**Merged:** PR [#42](https://github.com/yash936936/AGM/pull/42), merge commit `0d1b60bd3d27e8422c0fd31f3714d03a17fadc61`.
+**Exact-head CI:** [Run 40226444920](https://github.com/yash936936/AGM/actions/runs/40226444920) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. Jobs ran pytest, REST integration smoke, MCP fresh-session smoke, hygiene, whitespace, and wheel/package inspection.
+**Interpretation:** Repository CI is green for this docs-only tracking change. No external evidence was generated: held-out consented real-history evaluation is NOT RUN; independent security/privacy review is NOT PERFORMED; third-party host integration is NOT VERIFIED. Do not mark the overall production release gate complete.
 
 ---
 
