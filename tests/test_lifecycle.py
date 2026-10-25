@@ -283,3 +283,48 @@ def test_before_turn_rejects_blank_query(ctx):
         lifecycle.before_turn(
             BeforeTurnRequest(ctx=ctx, query="   ")
         )
+
+
+def test_before_turn_context_is_bounded_and_item_ids_match_included_records(ctx):
+    store = MemoryStore(":memory:")
+    lifecycle = MemoryLifecycle(store)
+    short = store.write(
+        ctx,
+        WriteItem(kind="episode", text="AGM bounded context short marker 2fa1"),
+    )
+    long_marker = "AGM bounded context oversized marker 91bd"
+    store.write(
+        ctx,
+        WriteItem(kind="episode", text=(long_marker + " ") + ("long-context-detail " * 1200)),
+    )
+
+    result = lifecycle.before_turn(
+        BeforeTurnRequest(
+            ctx=ctx,
+            query="AGM bounded context marker",
+            token_budget=180,
+        )
+    )
+
+    assert len(result.context_text) <= 180 * 4
+    assert MEMORY_NOTICE in result.context_text
+    assert short.item_id in result.item_ids
+    assert short.item_id in result.context_text
+    assert long_marker not in result.context_text
+    assert all(item_id in result.context_text for item_id in result.item_ids)
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("top_k", 0, "top_k must be a positive integer"),
+        ("top_k", True, "top_k must be a positive integer"),
+        ("top_k", 1.5, "top_k must be a positive integer"),
+        ("token_budget", 0, "token_budget must be a positive integer"),
+        ("token_budget", True, "token_budget must be a positive integer"),
+    ],
+)
+def test_before_turn_rejects_invalid_limits(ctx, field, value, message):
+    kwargs = {field: value}
+    with pytest.raises(ValueError, match=message):
+        BeforeTurnRequest(ctx=ctx, query="valid query", **kwargs)
