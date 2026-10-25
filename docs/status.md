@@ -1,3 +1,13 @@
+## 2026-10-25 — M1 connection input-validation follow-up
+
+**Branch:** `fix/hub-connection-validation`.
+
+**Finding/change:** Explicit `scopes=[]` previously defaulted silently to `memory:read`; malformed scope types could raise inconsistent exceptions, and invalid diagnostic timeouts were not rejected at the API-helper boundary. The candidate distinguishes omitted scopes from explicit empty lists, validates scope types, and requires finite positive diagnostic timeouts.
+
+**Validation:** Local tests NOT RUN. Exact-head CI, package inspection, repository hygiene and whitespace checks are required before acceptance. M1 remains PARTIAL / VERIFY; M0 remains IN PROGRESS. Real-history evaluation and independent security/privacy review remain open.
+
+---
+
 ## 2026-10-25 — Benchmark acceptance suite and keyword baseline in review
 
 **Current branch:** `work/benchmark-acceptance-baselines`, based on PR #15's peak-RSS/concurrency candidate.
