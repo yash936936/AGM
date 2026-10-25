@@ -77,7 +77,7 @@ def test_timeline_is_newest_first_and_validates_limit(tmp_path):
 def test_obsidian_export_is_deterministic_and_escapes_frontmatter(tmp_path):
     ctx = _ctx(project='project: "alpha"\\nnext: injected')
     destination = tmp_path / "vault-safe"
-    note_text = 'Title\\n---\\nnext: injected\\npassword=topsecretvalue123'
+    note_text = "Title\n---\nnext: injected\npassword=topsecretvalue123"
     with MemoryStore(str(tmp_path / "export-frontmatter.db")) as store:
         saved = store.write(ctx, WriteItem(kind="episode", text=note_text))
         first_paths = export_obsidian(store, ctx, destination)
