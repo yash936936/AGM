@@ -1330,15 +1330,27 @@ class MemoryStore:
             writer_id = str(revoke_payload.get("writer_id", ""))
             since = revoke_payload.get("since")
             since_key = _iso_key(str(since)) if since is not None else None
+            # Inspect source events, not just replayed nodes: a revocation
+            # can be replayed after its target was deleted from the materialized
+            # view, and querying nodes here would then miss that target. The event
+            # log retains the node ID and creation timestamp needed to enforce the
+            # cutoff deterministically.
             source_rows = self.conn.execute(
-                """SELECT n.id, ev.created_at FROM nodes n
-                   JOIN events ev ON ev.id = n.event_id
-                   WHERE n.tenant = ? AND n.writer_id = ?""",
+                """SELECT id, type, payload, created_at FROM events
+                   WHERE tenant = ? AND writer_id = ?
+                     AND type IN ('add', 'quarantined', 'supersede', 'contested')
+                   ORDER BY id ASC""",
                 (tenant_id, writer_id),
             ).fetchall()
             for source_row in source_rows:
-                if since_key is None or _iso_key(str(source_row["created_at"])) >= since_key:
-                    revoked_node_ids.add(str(source_row["id"]))
+                if since_key is not None and _iso_key(str(source_row["created_at"])) < since_key:
+                    continue
+                source_payload = decode_payload(source_row)
+                if source_payload.get("scrubbed"):
+                    continue
+                node_id = source_payload.get("node_id")
+                if node_id:
+                    revoked_node_ids.add(str(node_id))
 
         # Revocation is a final-state constraint on the materialized view. Apply
         # the collected tombstones after all event handlers have run so no
