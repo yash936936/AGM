@@ -73,3 +73,6 @@ PR #19's exact-head CI passed all six matrix jobs and it was merged. The next ac
 ## Latest validated candidate — 2026-10-25
 
 PR #20 was merged at `d4eff63b74c0ed37cdf52c1b71c7b951a26d4547` after exact-head CI run [40214773052](https://github.com/yash936936/AGM/actions/runs/40214773052) passed all six Linux/Windows Python 3.11–3.13 jobs. The added REST identity-isolation and session-list query validation tests are validated for that commit. Continue with the consolidated remaining M0/M1 code audit, but preserve the release blockers: held-out real-history evaluation is NOT RUN and independent security/privacy review is NOT ESTABLISHED. Never label AGM production-ready while those gates are open.
+## Current M0 retention candidate — revoked pinned source payloads
+
+Branch `fix/retention-preserve-revoked-pins` addresses a retention-policy edge case found in the source-event scrub path. After writer revocation removes a pinned memory's materialized node, the default expiry sweep could scrub its aged source payload because it no longer had a node row to reveal its pinned status. The candidate checks the source event's stored item pin flag and preserves it unless `include_pinned=True`. A regression verifies default sweep, replay, and explicit opt-in. Exact-head CI is required; do not mark M0 accepted yet.
