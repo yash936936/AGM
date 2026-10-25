@@ -8,8 +8,9 @@ AGM is a model-agnostic memory layer for AI agents, based on `Adaptive_Graph_Mem
 
 ## Latest implementation audit
 
-PR #23 merged the revoked-pinned retention fix; its exact-head CI passed all six Linux/Windows Python 3.11–3.13 jobs. PR #24 merged strict connection-scope and diagnostic-timeout validation; exact-head CI also passed all six jobs. Post-merge review found the PR #24 parameterized test block duplicated; branch `chore/post-merge-audit-cleanup` removes the duplicate and requires its own exact-head CI before acceptance. M0 remains IN PROGRESS and M1 remains PARTIAL / VERIFY. Held-out real-history evaluation and independent security/privacy review remain open.
+PR #25 merged at `42632cc6a6a4490c29270f92b1b84b91e5b5746d`. Its exact-head GitHub Actions run [40217157531](https://github.com/yash936936/AGM/actions/runs/40217157531) passed all six Ubuntu/Windows Python 3.11–3.13 jobs, including tests, repository hygiene, patch whitespace, and wheel/package inspection. PR #25 removes duplicate parameterized connection scope/timeout test definitions while preserving the cases. Local tests were not run in this remote editing environment.
 
+PR #23 merged the revoked-pinned retention fix, and PR #24 merged strict connection-scope and diagnostic-timeout validation; both passed their six-job exact-head CI matrices. M0 remains IN PROGRESS and M1 remains PARTIAL / VERIFY. Held-out consented real-history evaluation is NOT RUN, and independent security/privacy review is NOT ESTABLISHED. Do not claim production readiness while those release gates remain open.
 ## Roles
 
 - **Supervisor:** owns the docs, frozen contracts, phase briefs and code review.
