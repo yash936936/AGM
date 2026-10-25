@@ -15,6 +15,16 @@
 **Change:** Append the new field after all prior fields, include provenance in `_render_item`, normalize untrusted field values to one line, escape angle-bracket delimiters, and test positional compatibility, provenance retention and boundary escaping.
 
 **Validation:** Prior PR #32 exact-head CI run [40221564276](https://github.com/yash936936/AGM/actions/runs/40221564276) passed all six matrix jobs. New follow-up tests NOT RUN locally; follow-up exact-head CI pending. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY.
+## DBG-054 — Repair M1 lifecycle review findings — 2026-10-26
+
+**Finding:** Review of merged PR #32 surfaced a positional API compatibility break, dropped `Node.provenance` in shared context rendering, and a record-boundary injection risk when memory text contains embedded line breaks.
+
+**Change candidate:** Append `token_budget` after all existing `BeforeTurnRequest` fields; include stable JSON-serialized provenance in each rendered record; flatten carriage returns/newlines in untrusted record text; add regression tests for the three behaviors.
+
+**Baseline evidence:** PR #32 merged at `63826e826a2de02ec83fb284acae687f17293025`; exact-head CI run [40221564276](https://github.com/yash936936/AGM/actions/runs/40221564276) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. That run predates this fix and is not evidence for it.
+
+**Validation:** Exact-head CI run [40222174178](https://github.com/yash936936/AGM/actions/runs/40222174178) failed on Ubuntu Python 3.11 and 3.13: the budget test's short record no longer fit after provenance metadata was added, and the injection fixture encoded literal `\
+` text rather than actual line breaks. The budget was increased while retaining oversized-record exclusion; the fixture now uses real line breaks, and a focused renderer test verifies provenance serialization. This correction is committed after the failed run; a fresh exact-head CI run is required. Local tests NOT RUN in this remote editing environment. M0 IN PROGRESS; M1 PARTIAL / VERIFY.
 
 ---
 
