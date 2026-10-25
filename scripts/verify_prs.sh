@@ -19,8 +19,8 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 echo "Fetching PR head refs..."
-git fetch --no-tags origin refs/pull/10/head:refs/verify/pr10
-git fetch --no-tags origin refs/pull/11/head:refs/verify/pr11
+git fetch --no-tags origin +refs/pull/10/head:refs/verify/pr10
+git fetch --no-tags origin +refs/pull/11/head:refs/verify/pr11
 
 verify_pr() {
   local number="$1"
