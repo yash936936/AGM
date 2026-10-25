@@ -130,3 +130,15 @@
 
 ---
 **Next:** Return to [`context.md`](../context.md) before starting a new task — it routes you to the right file for what you are about to do.
+
+
+## DBG-016 — Revoked node reappears after replay — 2026-10-25
+**Symptom:** `revoke_writer(..., since=cutoff)` removes the selected post-cutoff node from the live materialized view, but the node is present again after closing/reopening the database and calling `rebuild_views()`.
+
+**Evidence:** The persisted `revoke_writer` event payload contains the expected node ID in `node_ids`; the cutoff test confirms the earlier node is preserved and the later node is removed before replay. The failure is specifically observed after view rebuild.
+
+**Change under review:** Replay all persisted `revoke_writer` events once more after source events have been replayed, applying their tombstones to the rebuilt view. Acceptance tests cover the cutoff case and cross-tenant deletion/revocation boundaries.
+
+**Validation:** NOT RUN against the PR branch. The initial local run reported 1 failed and 2 passed before this change; the attempted patch download was malformed, so it did not validate the candidate fix. Run focused acceptance tests and the full suite before merge.
+
+**Next:** Verify PR #7; do not claim this issue fixed until the regression test and full suite pass.

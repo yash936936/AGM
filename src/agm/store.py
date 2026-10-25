@@ -1309,6 +1309,17 @@ class MemoryStore:
             else:
                 self._apply_event(row)
 
+        # Reapply revocation tombstones after replaying all source events. This
+        # makes revocation durable even if another replay path materializes a
+        # revoked node while rebuilding derived views.
+        revoke_rows = self.conn.execute(
+            "SELECT * FROM events WHERE type = 'revoke_writer' ORDER BY id ASC"
+        ).fetchall()
+        for revoke_row in revoke_rows:
+            revoke_payload = decode_payload(revoke_row)
+            if not revoke_payload.get("scrubbed"):
+                self._apply_revoke_payload(revoke_payload)
+
     @_atomic_mutation(checkpoint=True)
     def revoke_writer(self, ctx: Ctx, writer_id: str, since: str | None = None) -> RevokeResult:
         """Revoke a writer in this tenant and roll back dependent graph items.
