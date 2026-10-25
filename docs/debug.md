@@ -1,3 +1,15 @@
+## DBG-046 — M0 retention orphan-scrub isolation merged — 2026-10-25
+
+**Merged:** PR [#26](https://github.com/yash936936/AGM/pull/26), merge commit `f68aa2878e662ee7cb46099612aef27d60cfb4d1`.
+
+**Evidence:** Exact-head CI run [40217991980](https://github.com/yash936936/AGM/actions/runs/40217991980) passed all six Linux/Windows Python 3.11–3.13 jobs, including tests, repository hygiene, whitespace, and wheel/package inspection.
+
+**Regression:** Aged source events in the target tenant/project, a sibling project, and a sibling tenant are created. After target-writer revocation, expiry scrubs only the target orphan, a second expiry scrubs zero additional events, and reopen/rebuild preserves the expected retrieval visibility boundary.
+
+**Limits:** Synthetic test evidence only. Local tests were not run in this remote editing environment; the test does not establish real-history quality, compliance, or external backup/WAL erasure. M0 remains IN PROGRESS; held-out real-history evaluation and independent security/privacy review remain open.
+
+---
+
 ## DBG-045 — M0 retention orphan-scrub tenant/project isolation — 2026-10-25
 
 **Task:** Strengthen M0 acceptance coverage for aged content-bearing source events that become orphans after writer revocation.
