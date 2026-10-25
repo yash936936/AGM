@@ -1,3 +1,13 @@
+## 2026-10-26 — M1 cross-session lifecycle acceptance candidate
+
+**Branch:** `acceptance/m1-cross-session-lifecycle-closure`.
+
+**Change:** Adds `test_cross_session_recall_correction_delete_and_rebuild`, covering recall from a fresh `MemoryStore`, correction history, hard deletion of both versions, and no retrieval or source-payload resurfacing after rebuild and reopen.
+
+**Validation:** Exact-head CI pending. Existing merged CI verifies the bounded before-turn context, positional API compatibility, provenance, boundary escaping, quarantine snapshot filtering, and Obsidian source-span metadata. The full M1 matrix is not yet closed: local Windows smoke clients, held-out consented real-history evaluation, and independent security/privacy review remain open.
+
+---
+
 ## 2026-10-26 — M1 Obsidian export provenance merged
 
 **Merged:** PR [#37](https://github.com/yash936936/AGM/pull/37), merge commit `f19aa818a00dc9995077721fc108c08d295362a7`.
