@@ -1,3 +1,13 @@
+## D-034 — Strict connection scope and diagnostic timeout validation — 2026-10-25
+
+**Decision:** A missing (`None`) connection scope argument defaults to the least-privilege `memory:read` scope. An explicitly supplied empty list, non-list, or list containing non-string members is invalid; accepted scopes must be a non-empty subset of `memory:read`, `memory:write`, and `memory:delete`. Diagnostic timeouts must be finite positive numbers; booleans are rejected despite Python's boolean/integer relationship.
+
+**Why:** Explicit invalid permission input must not silently grant a default scope, and timeout errors should fail at the helper boundary with a predictable validation exception.
+
+**Affects:** `src/agm/hub_state.py`, `tests/test_hub_state.py`. No dependency or public route changes.
+
+---
+
 ## D-032 — Frozen synthetic acceptance suite, repeatability, and lexical baseline — 2026-10-25
 
 **Decision:** Keep a 10-case labelled synthetic JSONL suite for repeatable development checks across recall, relevance, abstention, temporal correction, deletion, revocation, expiry, and tenant isolation. Add an opt-in full-run repetition count to expose run-to-run load variance. Add a transparent casefolded token-overlap lexical baseline, available in the paired report and standalone CLI.
