@@ -13,6 +13,7 @@ import json
 import math
 import sys
 import tempfile
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -233,6 +234,7 @@ def evaluate_case(case: dict[str, Any], db_path: Path) -> dict[str, Any]:
     query_ctx = _ctx(query, f"case {case_id}.query")
     with MemoryStore(str(db_path)) as store:
         store.rebuild_views()
+        retrieval_started = time.perf_counter()
         result = store.retrieve(
             query_ctx,
             query["text"],
@@ -242,6 +244,8 @@ def evaluate_case(case: dict[str, Any], db_path: Path) -> dict[str, Any]:
             expand=query.get("expand", True),
             high_stakes=query.get("high_stakes", False),
         )
+        retrieve_latency_ms = (time.perf_counter() - retrieval_started) * 1000.0
+    database_size_bytes = db_path.stat().st_size if db_path.exists() else 0
     retrieved_values = {str(node.value) for node in result.items if node.value is not None}
     expected = set(case.get("expected_values", []))
     forbidden = set(case.get("forbidden_values", []))
@@ -254,6 +258,8 @@ def evaluate_case(case: dict[str, Any], db_path: Path) -> dict[str, Any]:
     return {
         "case_id": case_id,
         "scenario": scenario,
+        "retrieve_latency_ms": retrieve_latency_ms,
+        "database_size_bytes": database_size_bytes,
         "expected_count": len(expected),
         "missing_count": len(missing),
         "forbidden_count": len(forbidden),

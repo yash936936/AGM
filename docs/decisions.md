@@ -1,3 +1,13 @@
+## D-031 — Paired retrieval benchmark runner and privacy-minimized reports — 2026-10-25
+
+**Decision:** Add a paired runner for flat (`expand=False`) and graph (`expand=True`) retrieval over the existing JSONL evaluation schema. Each mode uses a separate temporary database per case; mode order alternates by case. Report retrieval/end-to-end latency percentiles, expected-value recall, pass rate, abstention accuracy, forbidden-value leakage, cases/second and maximum SQLite file size. Default output omits case IDs and memory content.
+
+**Why:** The lifecycle evaluator enforces correctness thresholds but did not provide a paired flat-vs-graph latency comparison.
+
+**Limits:** Wall-clock results depend on the environment. This does not measure process RSS, concurrent-load throughput or an independent keyword baseline, and does not supply real user histories or independent security review. No new dependencies or frozen API changes.
+
+**Affects:** `eval/benchmark_runner.py`, `scripts/evaluate_real_history.py`, `tests/test_benchmark_runner.py`, `docs/core_benchmarking.md`.
+
 ## D-030 — Add local hub read views and snapshot export
 **Decision:** Add a dependency-free `agm.local_hub` module for a tenant/project-filtered event timeline that excludes raw payloads, deterministic read-only graph snapshots, and guarded Obsidian Markdown export. Snapshot exports are copies and are not automatically deleted when the source memory is deleted. Quarantined nodes are excluded from Obsidian export; exported user text/value/attribute fields pass through the existing core secret redactor.
 **Why:** M1 needs local inspection and export surfaces without introducing a new web framework or changing frozen REST/MCP contracts.

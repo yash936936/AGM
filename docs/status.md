@@ -1,3 +1,13 @@
+## 2026-10-25 — Paired retrieval benchmark runner added
+
+**PR:** [pending review](https://github.com/yash936936/AGM/pull/new/work/release-gates-benchmark-runner).
+
+**Change:** Added `eval/benchmark_runner.py` to compare flat and graph retrieval on the same labelled JSONL cases, reporting retrieval/end-to-end latency percentiles, recall/pass rates, abstention accuracy, forbidden-value leakage, cases/second and SQLite file size. Default output omits case IDs and raw memory content. The existing evaluator now captures retrieval-call latency and database file size.
+
+**Verification:** Base commit `f7def22501b12693488354ea8e37a1476e6f67a7` passed all six Ubuntu/Windows Python 3.11–3.13 jobs in [run 40202107198](https://github.com/yash936936/AGM/actions/runs/40202107198). New code/tests have NOT RUN locally because this environment cannot resolve GitHub for cloning; candidate exact-head CI must pass before merge.
+
+**Still blocked:** No consented, de-identified held-out dataset was supplied, so real-history results remain NOT RUN. Independent security/privacy review remains NOT ESTABLISHED. Process RSS, concurrent-load throughput and a standalone keyword baseline are not measured by this increment. Do not claim production readiness.
+
 ## 2026-10-25 — M1 owner/session/connection increment in review
 
 **PR:** [#11](https://github.com/yash936936/AGM/pull/11), branch `feat/m1-owner-sessions-connections`, draft; exact-head CI pending.
