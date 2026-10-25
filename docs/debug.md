@@ -1,3 +1,13 @@
+## DBG-050 — Multi-item expiry sweep rollback regression — 2026-10-25
+
+**Task:** Extend atomicity coverage beyond a single expired item. A one-item test can prove rollback of that item's nested mutation but cannot prove that earlier deletes in the same sweep are restored if a later delete fails.
+
+**Test added:** `test_expiry_rolls_back_prior_items_when_later_nested_delete_fails` creates two aged items in one tenant/project, snapshots source payloads and event count, calls the real delete handler for each nested delete, and injects failure after the second handler has mutated views. It asserts both source payloads, event count, and both active nodes are restored, no transaction remains open, and both markers remain retrievable after reopen/rebuild.
+
+**Validation:** Candidate branch `test/m0-multi-item-expiry-rollback`; exact-head CI pending. Local tests NOT RUN in this remote editing environment. M0 remains IN PROGRESS; held-out real-history evaluation and independent security/privacy review remain open.
+
+---
+
 ## DBG-049 — Post-mutation expiry rollback regression merged — 2026-10-25
 
 **Merged:** PR [#28](https://github.com/yash936936/AGM/pull/28), merge commit `9db3fbaf9dc3a039f2198b6c61e9340619df7f9b).
