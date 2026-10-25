@@ -259,12 +259,32 @@ def evaluate_keyword_baseline(cases: list[dict[str, Any]]) -> dict[str, Any]:
                         "item": dict(operation["item"]), "created_at": None, "active": True,
                     })
             elif op_type == "revoke_writer":
+                from datetime import datetime, timezone
                 op_ctx = operation["context"]
+                since_text = operation.get("since")
+                since = None
+                if since_text:
+                    since = datetime.fromisoformat(since_text[:-1] + "+00:00" if since_text.endswith("Z") else since_text)
+                    if since.tzinfo is None:
+                        since = since.replace(tzinfo=timezone.utc)
                 for memory in active:
-                    if (memory["context"]["tenant_id"] == op_ctx["tenant_id"]
-                        and memory["context"]["project"] == op_ctx.get("project", "eval")
-                        and memory["context"]["writer_id"] == operation["writer_id"]):
-                        memory["active"] = False
+                    if (memory["context"]["tenant_id"] != op_ctx["tenant_id"]
+                        or memory["context"]["writer_id"] != operation["writer_id"]):
+                        continue
+                    created_text = memory["created_at"]
+                    if since is not None and created_text:
+                        created_text = created_text[:-1] + "+00:00" if created_text.endswith("Z") else created_text
+                        created = datetime.fromisoformat(created_text)
+                        if created.tzinfo is None:
+                            created = created.replace(tzinfo=timezone.utc)
+                        if created < since:
+                            continue
+                    elif since is not None and not created_text:
+                        # Seeded writes without an explicit timestamp are created "now"
+                        # by AGM, so only include them when the cutoff is not in the future.
+                        if since > datetime.now(timezone.utc):
+                            continue
+                    memory["active"] = False
             elif op_type == "expire_before":
                 from datetime import datetime, timezone
                 cutoff_text = operation["cutoff"]
