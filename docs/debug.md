@@ -1,3 +1,15 @@
+## DBG-059 — External release-gate protocols merged — 2026-10-26
+
+**Change:** PR #41 merged at `73b56aa7b9a98cbe185c3d27c736667cb42e9d5a`, adding protocols for held-out consented real-history evaluation, independent security/privacy review, and real third-party host integration under `docs/acceptance/`.
+
+**Safety constraints:** The evaluation protocol prohibits raw user histories in Git/CI/report artifacts, requires consent and de-identification before ingestion, freezes split/labels/thresholds before held-out evaluation, and specifies stop conditions for disclosure or data escape. The host test uses synthetic records and dedicated least-privilege credentials. The security checklist requires an independent reviewer and explicit sign-off.
+
+**Validation:** No test suite was run in this environment. Exact-head GitHub Actions workflow results were not visible when checked.
+
+**Not completed:** No real-history evaluation, independent review, or external-host test was performed. All three release gates remain open.
+
+---
+
 ## DBG-058 — M0/M1 acceptance closure CI — 2026-10-26
 
 **M0:** PR #39 merged at `ff74460daf3c6585c5820e380320cb8cfc134475`. Exact-head run [40224653021](https://github.com/yash936936/AGM/actions/runs/40224653021) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. Regression covers revoked pinned source retention across default expiry/replay and explicit scrubbing while preserving revocation audit.

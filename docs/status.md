@@ -1,3 +1,18 @@
+## 2026-10-26 — External release-gate protocols merged
+
+**PR:** [#41](https://github.com/yash936936/AGM/pull/41), merge commit `73b56aa7b9a98cbe185c3d27c736667cb42e9d5a`.
+
+Added:
+- `docs/acceptance/real_history_evaluation_protocol.md`: consent, minimization, held-out split hygiene, frozen thresholds, baselines, metrics, stop conditions, and required evidence.
+- `docs/acceptance/security_privacy_review_checklist.md`: independent reviewer scope, threat model, lifecycle/privacy/API checks, finding triage, and sign-off.
+- `docs/acceptance/third_party_host_validation.md`: safe synthetic setup, host/version record, interoperability matrix, and sanitized evidence requirements.
+
+**Status:** Protocols are documented, but all three release gates remain OPEN. No consented dataset was provided, no independent review was conducted, and no real third-party host was tested. Documentation does not substitute for external evidence.
+
+**Validation:** No tests were run in this environment. Exact-head workflow runs were not visible at the time of review. Do not infer CI success from the merge.
+
+---
+
 ## 2026-10-26 — M0 and M1 acceptance PRs merged
 
 ### M0 retention/replay
