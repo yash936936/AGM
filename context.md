@@ -8,6 +8,9 @@ AGM is a model-agnostic memory layer for AI agents, based on `Adaptive_Graph_Mem
 
 ## Latest implementation audit
 
+M1 audit found that Obsidian export omitted `source_episode`, `span_start`, and `span_end` from its node query and frontmatter, despite the roadmap requiring provenance. Branch `fix/m1-obsidian-export-provenance` adds these fields and a regression test. Exact-head CI pending; M1 remains PARTIAL / VERIFY.
+
+
 PR #31 merged at `7d44e3fdea3a7cf87319b92efd52ebcca0bb7129`. Exact-head CI run [40221085442](https://github.com/yash936936/AGM/actions/runs/40221085442) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. Graph snapshots now exclude quarantined nodes and cannot include their content through edges.
 
 Current M1 follow-up: `fix/m1-bounded-before-turn-context` routes `MemoryLifecycle.before_turn()` through the shared token-budgeted context packer and adds strict limits validation. Exact-head CI pending. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY until the full acceptance matrix is reviewed. Local Windows smoke clients, held-out real-history evaluation, and independent security/privacy review are still not established here.
