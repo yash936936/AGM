@@ -111,15 +111,16 @@ def _validate_loopback_endpoint(endpoint: str) -> str:
         raise ValueError("connection endpoint must be an http URL on loopback without userinfo")
     if parsed.query or parsed.fragment:
         raise ValueError("connection endpoint must not include a query or fragment")
+    import ipaddress
+
     host = parsed.hostname.lower().rstrip(".")
-    if host != "localhost":
-        try:
-            if not __import__("ipaddress").ip_address(host).is_loopback:
-                raise ValueError("connection endpoint must resolve to a loopback IP")
-        except ValueError as exc:
-            if "connection endpoint must resolve" in str(exc):
-                raise
-            raise ValueError("connection endpoint host must be localhost or a loopback IP") from exc
+    try:
+        if not ipaddress.ip_address(host).is_loopback:
+            raise ValueError("connection endpoint must be a loopback IP address")
+    except ValueError as exc:
+        if "connection endpoint must be a loopback IP address" in str(exc):
+            raise
+        raise ValueError("connection endpoint host must be a literal loopback IP address") from exc
     try:
         port = parsed.port
     except ValueError as exc:
