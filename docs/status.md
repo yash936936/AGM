@@ -112,3 +112,11 @@
 
 **Still blocked:** held-out consented real-history evaluation is NOT RUN; independent security/privacy review is NOT ESTABLISHED. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY.
 
+## 2026-10-25 — M1 local-hub acceptance tests expanded
+
+**Change:** Added focused tests for timeline newest-first ordering and invalid-limit rejection, plus deterministic repeat export and YAML-frontmatter injection resistance for an adversarial project label containing quotes and a newline. The export test also checks secret redaction in the exported body.
+
+**Validation:** Tests and full suite NOT RUN locally. Candidate commit `881512bc1da1a0d67874d3ed5427b3beff0f0fe9`; exact-head CI is not yet visible. Do not treat the new M1 tests as passing until CI executes on this head.
+
+**M1 status:** PARTIAL / VERIFY. Existing coverage establishes scoped metadata timeline, deterministic scoped snapshot, secret-scrubbed Obsidian export and snapshot-copy semantics. Owner-auth bootstrap, session/connection API scope isolation, connection diagnostics token secrecy, and export deletion policy still require end-to-end acceptance review on an exact candidate. 
+
