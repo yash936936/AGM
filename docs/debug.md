@@ -243,3 +243,11 @@
 **Fix:** Removed the invalid `WriteResult.event_id` assumption; the test now checks the two timeline rows and their descending event IDs. The export test now derives the expected frontmatter scalar with `json.dumps` and checks that an injected newline key is not present in frontmatter.
 
 **Validation:** Fix committed as `d8e8c7acff925d70d3167bb40f40b548bc3288e9`. Focused and full tests have not been run locally; exact-head CI must confirm the fix before this acceptance coverage is considered passing.
+
+## DBG-036 — Export test used escaped newline characters instead of line breaks
+
+**Evidence:** Exact-head run [40213224547](https://github.com/yash936936/AGM/actions/runs/40213224547) showed the timeline assertion was fixed, but the export test still failed because its fixture encoded literal backslash+n characters before `password=`. The redaction rule correctly expects a token boundary before the label, so that malformed fixture bypassed the intended boundary and did not represent a password on a new line.
+
+**Fix:** Updated the note fixture to contain actual newline characters and the adversarial project label to contain an actual newline. This now tests the intended serialization-injection and secret-redaction behavior through the normal write path rather than a literal escape sequence.
+
+**Validation:** Candidate test update `40ff30a5966b6e5539663ce9e25bd4c35f125765`. No local run; exact-head CI still required. Do not mark M1 acceptance passing until all matrix jobs complete successfully.
