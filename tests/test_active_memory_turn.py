@@ -98,8 +98,7 @@ def test_authorized_lifecycle_is_tenant_and_project_scoped(tmp_path, ctx):
         foreign_ctx = Ctx(tenant_id="other-tenant", writer_id="other-writer", tier="human_verified", project="turn-project")
         assert not store.retrieve(foreign_ctx, "TENANT-ALPHA", entity="user").items
         assert not store.history(foreign_ctx, "user", "marker")
-        with pytest.raises(KeyError):
-            store.delete(foreign_ctx, created.item_id)
+        assert not store.delete(foreign_ctx, created.item_id).deleted
         store.rebuild_views()
         assert not store.retrieve(foreign_ctx, "TENANT-ALPHA", entity="user").items
 
