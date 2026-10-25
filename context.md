@@ -68,3 +68,8 @@ CI run [40214097156](https://github.com/yash936936/AGM/actions/runs/40214097156)
 ## Current follow-up — REST identity boundary
 
 PR #19's exact-head CI passed all six matrix jobs and it was merged. The next acceptance candidate tests cross-tenant/project/writer isolation for session and connection REST routes and invalid session-list query values. See `docs/debug.md` DBG-039. Validate the exact head before accepting or merging the follow-up.
+
+
+## Latest validated candidate — 2026-10-25
+
+PR #20 was merged at `d4eff63b74c0ed37cdf52c1b71c7b951a26d4547` after exact-head CI run [40214773052](https://github.com/yash936936/AGM/actions/runs/40214773052) passed all six Linux/Windows Python 3.11–3.13 jobs. The added REST identity-isolation and session-list query validation tests are validated for that commit. Continue with the consolidated remaining M0/M1 code audit, but preserve the release blockers: held-out real-history evaluation is NOT RUN and independent security/privacy review is NOT ESTABLISHED. Never label AGM production-ready while those gates are open.
