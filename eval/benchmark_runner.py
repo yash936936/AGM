@@ -51,6 +51,10 @@ def summarize(rows: list[dict[str, Any]], elapsed: float, thresholds: tuple[floa
         failures.append("zero_tolerance_scenario_leak")
     retrieval = [float(r["retrieve_latency_ms"]) for r in rows]
     cases = [float(r["case_latency_ms"]) for r in rows]
+    operation_samples: dict[str, list[float]] = {}
+    for row in rows:
+        for sample in row.get("operation_timings", []):
+            operation_samples.setdefault(str(sample["operation"]), []).append(float(sample["latency_ms"]))
     return {
         "cases": count, "case_passes": passed, "case_pass_rate": round(case_rate, 6),
         "expected_values": expected, "missing_expected_values": missing,
@@ -61,6 +65,7 @@ def summarize(rows: list[dict[str, Any]], elapsed: float, thresholds: tuple[floa
         "abstention_accuracy": None if abstention is None else round(abstention, 6),
         "retrieval_latency_ms": {f"p{p}": percentile(retrieval, p / 100) for p in (50, 95, 99)},
         "end_to_end_case_latency_ms": {f"p{p}": percentile(cases, p / 100) for p in (50, 95, 99)},
+        "operation_latency_ms": {name: {"count": len(samples), **{f"p{p}": percentile(samples, p / 100) for p in (50, 95, 99)}} for name, samples in sorted(operation_samples.items())},
         "throughput_cases_per_second": round(count / elapsed, 4) if elapsed else None,
         "elapsed_seconds": round(elapsed, 4),
         "database_size_bytes_max": max((int(r["database_size_bytes"]) for r in rows), default=0),
@@ -106,7 +111,7 @@ def run_benchmark(path: Path, *, min_case_pass_rate: float = DEFAULT_MIN_CASE_PA
     flat_recall, graph_recall = (modes[m]["expected_value_recall"] for m in ("flat", "graph"))
     flat_p95, graph_p95 = (modes[m]["retrieval_latency_ms"]["p95"] for m in ("flat", "graph"))
     report = {
-        "protocol": "paired_flat_vs_graph_v1", "benchmark_file": path.name, "cases": len(cases),
+        "protocol": "paired_flat_vs_graph_v2", "cases": len(cases),
         "modes": modes,
         "comparison": {
             "graph_minus_flat_recall": None if flat_recall is None or graph_recall is None else round(graph_recall - flat_recall, 6),
