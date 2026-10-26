@@ -69,15 +69,17 @@ def evaluate_memory_proposal(
         )
 
     if proposal.action == "history":
-        if any(marker in folded for marker in _HISTORY_MARKERS):
-            return PolicyDecision(proposal, True, "User explicitly requested recall/history; use the authenticated history/retrieval tool.")
-        return PolicyDecision(proposal, False, "History access requires an explicit recall/history request.")
+        if not any(marker in folded for marker in _HISTORY_MARKERS):
+            return PolicyDecision(proposal, False, "History access requires an explicit recall/history request.")
+        if not proposal.entity:
+            return PolicyDecision(proposal, False, "History requires a specific entity.")
+        return PolicyDecision(proposal, True, "User explicitly requested recall/history; use the authenticated history/retrieval tool.")
 
     if proposal.action == "delete":
         if not any(marker in folded for marker in _FORGET_MARKERS):
             return PolicyDecision(proposal, False, "Deletion requires an explicit forget/delete request.")
-        if not (proposal.target_memory_id or proposal.entity):
-            return PolicyDecision(proposal, False, "Deletion requires a specific memory ID or entity target.")
-        return PolicyDecision(proposal, True, "Explicit forgetting request detected; confirm target and use the scoped deletion tool.")
+        if not proposal.target_memory_id:
+            return PolicyDecision(proposal, False, "Deletion requires an exact target memory ID.")
+        return PolicyDecision(proposal, True, "Explicit forgetting request detected; confirm the exact target and use the scoped deletion tool.")
 
     return PolicyDecision(proposal, False, "Unsupported memory action.")
