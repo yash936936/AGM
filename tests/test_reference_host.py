@@ -161,11 +161,6 @@ def test_reference_host_correction_history_delete_and_rebuild(tmp_path):
         _ctx("tenant-a", "alice", "project-a"),
         frozenset({"memory:write", "memory:read", "memory:delete"}),
     )
-    host = ReferenceHost(
-        None,  # replaced below after the store is opened
-        resolve_principal=lambda subject: principal if subject == principal.subject else None,
-        verify_confirmation=lambda subject, proposal: True,
-    )
     with MemoryStore(db) as store:
         host = ReferenceHost(
             store,
