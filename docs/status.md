@@ -1,8 +1,8 @@
-## 2026-10-26 — Consolidated M0/M1/M2 acceptance audit PR in progress
+## 2026-10-26 — Consolidated M0/M1/M2 acceptance audit merged
 
-Single branch: `acceptance/m0-m1-m2-single-pr`. Adds an M0/M1/M2 requirement-to-test traceability matrix, same-tenant cross-project active-context isolation regression, M2 authorized correction/delete replay/reopen regression, and configurable synthetic archive-size benchmark sweeps. Exact-head CI is pending; local pytest NOT RUN in the remote editing environment. Do not mark the new coverage verified until the six-job workflow passes.
+PR [#56](https://github.com/yash936936/AGM/pull/56) merged at `8a3cecbfadc9b349cc95618967298bfa85a71a2e`. Exact-head workflow [40304904729](https://github.com/yash936936/AGM/actions/runs/40304904729) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. It adds M0/M1/M2 requirement-to-test traceability, a same-tenant cross-project active-context isolation regression, an authorized correction/delete/rebuild/reopen lifecycle regression, and configurable synthetic archive-size benchmark sweeps.
 
-The matrix records existing M0 retention/replay and M1 lifecycle/privacy tests, but independent reviewer sign-off remains open. Benchmark scale sweep is synthetic and sequential; concurrent load, end-to-end latency, and uncertainty reporting remain unimplemented. External release gates remain: consented held-out real-history evaluation NOT RUN, independent security/privacy review NOT PERFORMED, and real third-party-host integration NOT VERIFIED. M2 remains NOT ACCEPTED.
+Local pytest was NOT RUN in the remote editing environment. The traceability matrix needs independent reviewer sign-off. Benchmark sweeps remain synthetic and sequential; concurrent load, end-to-end latency and uncertainty reporting remain unimplemented. External release gates remain: consented held-out real-history evaluation NOT RUN, independent security/privacy review NOT PERFORMED, and real third-party-host integration NOT VERIFIED. **M2 remains NOT ACCEPTED; production readiness is not established.**
 
 ---
 

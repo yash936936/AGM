@@ -1,10 +1,10 @@
-## 2026-10-26 — Consolidated M0/M1/M2 acceptance audit PR in progress
+## 2026-10-26 — Consolidated M0/M1/M2 acceptance audit merged
 
-Branch: `acceptance/m0-m1-m2-single-pr`. This single PR combines the current repository acceptance traceability audit, targeted M1/M2 regressions, and a configurable synthetic archive-size sweep. It adds `--archive-size` to `eval/stale_facts.py`, a same-tenant cross-project active-context test, and a correction→delete→rebuild/reopen M2 lifecycle test. Exact-head CI is required before calling these new tests verified.
+PR [#56](https://github.com/yash936936/AGM/pull/56) merged at `8a3cecbfadc9b349cc95618967298bfa85a71a2e`. Exact-head GitHub Actions run [40304904729](https://github.com/yash936936/AGM/actions/runs/40304904729) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. The change adds `--archive-size` to `eval/stale_facts.py`, benchmark metadata/tests, a same-tenant cross-project active-context isolation regression, an authorized correction→delete→rebuild/reopen M2 lifecycle regression, and an M0/M1/M2 requirement-to-test traceability audit.
 
-Audit document: `docs/acceptance/m0_m1_m2_traceability_audit.md`. Report: `REPORT_2026-10-26_M0_M1_M2_ACCEPTANCE_AUDIT.md`.
+Audit: `docs/acceptance/m0_m1_m2_traceability_audit.md`. Report: `REPORT_2026-10-26_M0_M1_M2_ACCEPTANCE_AUDIT.md`.
 
-The external release gates are still open and cannot be completed through code changes alone: held-out explicitly consented real-history evaluation NOT RUN; independent security/privacy review NOT PERFORMED; real third-party-host integration NOT VERIFIED. The archive-size sweep is a synthetic size-sensitivity diagnostic only, not a concurrent or end-to-end benchmark. M2 remains NOT ACCEPTED; do not claim production readiness.
+**Disposition:** repository-side tests passed on the merged exact head; local pytest was not run in the remote editing environment. The archive-size sweep remains a synthetic size-sensitivity diagnostic, not a concurrent or end-to-end benchmark. The acceptance matrix still needs independent reviewer sign-off. External release gates remain open: held-out explicitly consented real-history evaluation NOT RUN; independent security/privacy review NOT PERFORMED; real third-party-host integration NOT VERIFIED. M2 remains NOT ACCEPTED; do not claim production readiness.
 
 ---
 

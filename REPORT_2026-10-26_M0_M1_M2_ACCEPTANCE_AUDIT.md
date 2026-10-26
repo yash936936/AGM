@@ -15,8 +15,8 @@
 
 ## Validation
 - Local pytest: NOT RUN in this remote editing environment.
-- GitHub Actions exact-head matrix: pending at PR creation; report must be updated only with the observed result.
-- REST/MCP smoke clients, hygiene, whitespace and package inspection: run by the repository workflow; results pending for this PR.
+- GitHub Actions exact-head run [40304904729](https://github.com/yash936936/AGM/actions/runs/40304904729): all six Ubuntu/Windows Python 3.11–3.13 jobs passed. PR #56 merged at `8a3cecbfadc9b349cc95618967298bfa85a71a2e`.
+- The same exact-head workflow passed the repository test matrix, REST/MCP smoke clients, hygiene, whitespace, and package inspection jobs (all six jobs successful).
 - External held-out real-history evaluation: NOT RUN.
 - Independent security/privacy review: NOT PERFORMED.
 - Real third-party-host integration: NOT VERIFIED.
