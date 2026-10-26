@@ -9,9 +9,12 @@ From the repository root in an environment with AGM's development dependencies i
 ```bash
 python eval/stale_facts.py --k 5 --repeats 25
 python eval/stale_facts.py --k 5 --repeats 25 --format json > synthetic-retrieval-smoke.json
+# Compare the same synthetic scenarios at different archive sizes:
+python eval/stale_facts.py --archive-size 0 --repeats 25 --format json > smoke-0.json
+python eval/stale_facts.py --archive-size 1000 --repeats 25 --format json > smoke-1000.json
 ```
 
-The JSON output is intended for reproducible archiving and lightweight automation. It records Python/platform, top-k, repetition count, scenario count, timing scope, per-mode quality/performance metrics, and explicit caveats. Do not commit reports containing real user data; this fixture currently uses synthetic content only.
+The JSON output is intended for reproducible archiving and lightweight automation. It records Python/platform, top-k, repetition count, scenario count, synthetic archive size per mode, timing scope, per-mode quality/performance metrics, and explicit caveats. The --archive-size N option changes the count of unrelated synthetic archive memories seeded for each mode (default 60; zero is valid). This enables a simple size-sensitivity sweep, but does not make the workload representative or measure concurrent throughput. Do not commit reports containing real user data; this fixture currently uses synthetic content only.
 
 ## Metrics and interpretation
 
