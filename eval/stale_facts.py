@@ -54,7 +54,7 @@ SCENARIOS = (
 )
 
 
-def seed_store(store: MemoryStore) -> None:
+def seed_store(store: MemoryStore, *, archive_size: int = 60) -> None:
     ctx = Ctx(tenant_id="eval-tenant", writer_id="eval-curator", tier="human_verified", project="synthetic")
     store.write(ctx, WriteItem(
         kind="fact", entity="AGM", attribute="release", value="0.3.0",
@@ -77,7 +77,7 @@ def seed_store(store: MemoryStore) -> None:
         kind="fact", entity="database", attribute="engine", value="SQLite",
         text="The database engine for the service dependency is SQLite.",
     ))
-    for index in range(60):
+    for index in range(archive_size):
         store.write(ctx, WriteItem(
             kind="episode",
             text=(f"Synthetic unrelated archive note {index}: laboratory inventory "
@@ -102,7 +102,7 @@ def _percentile(samples: list[float], percentile: float) -> float:
     return ordered[index] * 1000
 
 
-def evaluate_mode(mode: str, *, k: int, repeats: int = 25) -> dict[str, float | int | str]:
+def evaluate_mode(mode: str, *, k: int, repeats: int = 25, archive_size: int = 60) -> dict[str, float | int | str]:
     expand = mode == "graph"
     total_answerable = 0
     correct = 0
@@ -117,7 +117,7 @@ def evaluate_mode(mode: str, *, k: int, repeats: int = 25) -> dict[str, float | 
         db_path = str(Path(temp_dir) / "memory.db")
         ctx = Ctx(tenant_id="eval-tenant", writer_id="eval-reader", tier="human_verified", project="synthetic")
         with MemoryStore(db_path) as store:
-            seed_store(store)
+            seed_store(store, archive_size=archive_size)
             # Score each authored scenario once, separate from repeated timing samples.
             for scenario in SCENARIOS:
                 result = store.retrieve(
@@ -150,6 +150,7 @@ def evaluate_mode(mode: str, *, k: int, repeats: int = 25) -> dict[str, float | 
     elapsed = sum(latencies)
     return {
         "mode": mode,
+        "archive_size": archive_size,
         "accuracy": correct / total_answerable if total_answerable else 0.0,
         "stale_error": stale_errors / stale_fact_queries if stale_fact_queries else 0.0,
         "abstention": abstentions / len(SCENARIOS),
@@ -169,14 +170,17 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--k", type=int, default=5, help="maximum returned memories per scenario")
     parser.add_argument("--repeats", type=int, default=25, help="timed repetitions per scenario and mode")
+    parser.add_argument("--archive-size", type=int, default=60, help="number of unrelated synthetic archive memories seeded per mode")
     parser.add_argument("--format", choices=("text", "json"), default="text", help="output format; JSON is suitable for archiving or automation")
     args = parser.parse_args(argv)
     if args.k < 1:
         parser.error("--k must be at least 1")
     if args.repeats < 1:
         parser.error("--repeats must be at least 1")
+    if args.archive_size < 0:
+        parser.error("--archive-size must be at least 0")
 
-    results = [evaluate_mode(mode, k=args.k, repeats=args.repeats) for mode in ("flat", "graph")]
+    results = [evaluate_mode(mode, k=args.k, repeats=args.repeats, archive_size=args.archive_size) for mode in ("flat", "graph")]
     if args.format == "json":
         print(json.dumps({
             "benchmark": "agm_synthetic_retrieval_smoke",
@@ -186,6 +190,7 @@ def main(argv: list[str] | None = None) -> int:
                 "platform": platform.platform(),
                 "embedder": "hash-256-v1",
                 "top_k": args.k,
+                "synthetic_archive_size_per_mode": args.archive_size,
                 "timed_repeats_per_scenario": args.repeats,
                 "scenario_count": len(SCENARIOS),
                 "timed_queries_per_mode": len(SCENARIOS) * args.repeats,
