@@ -1,3 +1,7 @@
+## 2026-10-26 — Reference host harness merged; policy alignment follow-up
+
+PR #49 merged at `5fffbb23d0591a48f0bbd82472cbc0c4f3cd52ba`; exact-head run [40298108786](https://github.com/yash936936/AGM/actions/runs/40298108786) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. The harness does not close the real third-party-host gate. Follow-up branch `m2/policy-executor-contract-alignment` makes history proposals require an entity and deletion proposals require an exact target memory ID, matching executor requirements. Local pytest NOT RUN here; follow-up CI pending. M2 and external release gates remain unaccepted.
+
 ## 2026-10-26 — Reference host integration harness candidate
 
 Added `src/agm/reference_host.py` plus `tests/test_reference_host.py` as a dependency-free host wiring example for trusted identity-to-`Ctx`/scope mapping, proposal review, host-verified mutation confirmation, and explicit execution. Report: `REPORT_M2_REFERENCE_HOST.md`. Local pytest NOT RUN here; exact-head CI pending. This harness does not itself close the real third-party-host gate. Real-history evaluation and independent security/privacy review remain open.
