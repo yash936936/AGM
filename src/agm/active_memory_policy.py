@@ -63,6 +63,8 @@ def evaluate_memory_proposal(
             return PolicyDecision(proposal, False, "Entity, attribute, and value are required.")
         if proposal.action == "correct" and not any(marker in folded for marker in _CORRECTION_MARKERS):
             return PolicyDecision(proposal, False, "Correction requires explicit correction language in the user message.")
+        if proposal.action == "correct" and not proposal.target_memory_id:
+            return PolicyDecision(proposal, False, "Correction requires an exact target memory ID.")
         return PolicyDecision(
             proposal, True,
             "Evidence is grounded in the current user message; host confirmation and scoped tool authorization are still required.",
