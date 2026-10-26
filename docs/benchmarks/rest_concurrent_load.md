@@ -5,10 +5,10 @@
 Run from an installed development environment at the repository root:
 
 ```bash
-python eval/rest_concurrent_benchmark.py --requests 200 --concurrency 8 --warmup 10 --seed-items 100 > rest-concurrent.json
+python eval/rest_concurrent_benchmark.py --requests 200 --concurrency 8 --warmup 10 --seed-items 100 > rest-concurrent.json\n# Optional 60-second sustained local load with periodic server RSS samples:\npython eval/rest_concurrent_benchmark.py --duration-seconds 60 --concurrency 8 --warmup 10 --seed-items 100 > rest-soak.json
 ```
 
-The script launches the actual AGM REST API in a separate local process, seeds synthetic facts through the public write endpoint, warms retrieval, and sends concurrent HTTP requests to `POST /v1/memory/retrieve`. It emits JSON with client-observed p50/p95/p99/min/max/mean latency, successful-request throughput, request/error counts, concurrency, elapsed time, environment metadata, and explicit limitations. Use the same machine, dependency set, commit, workload and server configuration for comparisons.
+The script launches the actual AGM REST API in a separate local process, seeds synthetic facts through the public write endpoint, warms retrieval, and sends concurrent HTTP requests to `POST /v1/memory/retrieve`. It emits JSON with client-observed p50/p95/p99/min/max/mean latency, successful-request throughput, request/error counts, concurrency, elapsed time, environment metadata, and explicit limitations. Optional duration mode keeps concurrent workers active for the requested number of seconds rather than stopping at a fixed request count. Server RSS/working-set is sampled periodically when the operating system supports querying the child process; values are approximate and may be unavailable. Use the same machine, dependency set, commit, workload and server configuration for comparisons.
 
 For a small integration check, run:
 
