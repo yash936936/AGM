@@ -2,7 +2,7 @@
 
 **Implementation:** Added `src/agm/reference_host.py` and `tests/test_reference_host.py`. The harness resolves a host-authenticated session handle into a trusted principal, derives scopes and `Ctx` from that principal, reviews proposals against the current message, and requires a host confirmation verifier before mutations.
 
-**Tests authored:** unknown/forged session denied; unconfirmed mutation remains pending with zero event-log writes; cross-tenant context does not reveal another tenant's synthetic marker; policy-rejected proposal leaves the event log unchanged.
+**Tests authored:** unknown/forged session denied; unconfirmed mutation remains pending with zero event-log writes; cross-tenant context does not reveal another tenant's synthetic marker; policy-rejected proposal leaves the event log unchanged; correction/history/delete is exercised through the host seam and deletion is checked after rebuild.
 
 **Validation:** Local pytest NOT RUN in this remote editing environment. Exact-head GitHub Actions pending. Do not claim the external host gate is closed: no actual third-party host has yet run this harness.
 
