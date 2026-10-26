@@ -1,3 +1,9 @@
+## 2026-10-26 — Concurrent REST retrieval benchmark candidate
+
+Branch `bench/rest-concurrent-load` adds `eval/rest_concurrent_benchmark.py`, which launches the real local REST API in a subprocess and measures concurrent client-observed retrieval latency over loopback HTTP. It reports p50/p95/p99, successful throughput, request/error counts, workload/environment metadata, and limitations. Tests and `docs/benchmarks/rest_concurrent_load.md` cover the workload and interpretation. This is a candidate pending exact-head CI; it is synthetic, single-process and diagnostic only. It does not cover memory/RSS, cold start, sustained soak, real histories, external network, model inference, or third-party host integration. All external release gates remain open.
+
+---
+
 ## 2026-10-26 — Repeated-run synthetic benchmark candidate
 
 Branch `bench/repeated-run-uncertainty` adds `eval/repeated_retrieval_benchmark.py`, which launches independent synthetic benchmark processes, retains raw per-run JSON, and summarizes run-level medians with deterministic 95% percentile-bootstrap intervals. It also adds `tests/test_repeated_retrieval_benchmark.py` and usage/limitations documentation. This is a candidate until exact-head CI passes. It remains sequential retrieval-only synthetic timing; concurrency, host/API end-to-end latency, sustained load, real-history evaluation, and release gates are not covered.
