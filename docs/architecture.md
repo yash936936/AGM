@@ -145,6 +145,10 @@ eval/stale_facts.py  — Phase 5 flat vs graph mini eval
 examples/            — python_client.py, curl.md, claude_code_mcp.md, chatgpt_actions.md
 ```
 
+## Active-memory host integration
+
+`src/agm/reference_host.py` is an additive reference harness. A real host must resolve authenticated sessions to trusted `Ctx` and scopes and verify mutation confirmation using trusted host state. The harness does not authenticate users, expose a network listener, or change REST/MCP contracts.
+
 ## External dependencies
 sqlite3 (stdlib): single-file store, FTS5 gives keyword search with no extra service. fastapi/uvicorn: automatic OpenAPI, which ChatGPT Actions can import. mcp (official SDK): one server, many clients. numpy: vector math at prototype scale (brute-force cosine is fine below ~50k items).
 

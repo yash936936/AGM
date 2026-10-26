@@ -1,3 +1,15 @@
+## D-038 — Add a reference host harness without claiming external-host closure
+
+**Decision:** Add an additive Python reference-host harness that resolves an opaque authenticated-session handle to a trusted principal, derives the scoped `Ctx` and permissions from that principal, reviews proposals against the current user message, and requires a host confirmation verifier for mutations before invoking the library-only executor.
+
+**Why:** The active-memory executor needs a concrete integration example that tests the host-owned identity and confirmation boundary without silently changing frozen REST/MCP contracts.
+
+**Limits:** This is a harness, not production authentication. The resolver and confirmation verifier must be backed by the actual host's trusted session and UI/workflow state. The harness opens no network listener, uses no new dependency, and does not close the real third-party-host gate until an actual host is tested and reviewed.
+
+**Affects:** `src/agm/reference_host.py`, `tests/test_reference_host.py`, and `REPORT_M2_REFERENCE_HOST.md`. No schema or adapter contract change.
+
+---
+
 ## D-037 — Keep proposal executor library-only; adapters retain frozen contracts
 
 **Decision:** Treat `execute_authorized_memory_proposal()` as an additive Python library API for M2. Do not silently route REST or MCP mutation tools through proposal review or change their request/response contracts. REST and MCP remain direct authenticated adapters over the existing scoped `MemoryStore` operations. Integrators using the new proposal lifecycle must call the executor with trusted host authorization, the real scoped `Ctx`, and explicit mutation confirmation.

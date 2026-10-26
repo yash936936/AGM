@@ -1,3 +1,7 @@
+## 2026-10-26 — Reference host integration harness candidate
+
+Added `src/agm/reference_host.py` plus `tests/test_reference_host.py` as a dependency-free host wiring example for trusted identity-to-`Ctx`/scope mapping, proposal review, host-verified mutation confirmation, and explicit execution. Report: `REPORT_M2_REFERENCE_HOST.md`. Local pytest NOT RUN here; exact-head CI pending. This harness does not itself close the real third-party-host gate. Real-history evaluation and independent security/privacy review remain open.
+
 ## 2026-10-26 — M2 guardrail tests validated; executor surface boundary recorded
 
 PR #47 merged at `4641796ef1a7ac6b3dfbac6abb33e04c63fb2f70`. Exact-head CI run [40229139385](https://github.com/yash936936/AGM/actions/runs/40229139385) passed all six Ubuntu/Windows Python 3.11–3.13 jobs, including full pytest, REST/MCP smoke clients, hygiene, whitespace, and package inspection. The added tests cover action-specific scopes, history reads without mutation confirmation, and re-evaluation of proposal evidence against the current user message.
