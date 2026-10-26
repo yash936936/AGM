@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 """Synthetic smoke evaluation comparing AGM's flat and graph retrieval paths.
 
-The scenarios and scores are illustrative only. They are not evidence for H1-H7;
-see decisions D-007 and D-020 before interpreting any difference between modes.
+Latency measurements are local smoke diagnostics, not production benchmarks.
+The scenarios and scores are illustrative only; they are not evidence for H1-H7.
+See decisions D-007 and D-020 before interpreting differences between modes.
 """
 from __future__ import annotations
 
 import argparse
 import tempfile
+import time
 from dataclasses import dataclass
 from pathlib import Path
+from statistics import median
 
 from agm import Ctx, MemoryStore, Relation, WriteItem
 
@@ -89,7 +92,16 @@ def _contains_answer(result, expected: str) -> bool:
     )
 
 
-def evaluate_mode(mode: str, *, k: int) -> dict[str, float | int | str]:
+def _percentile(samples: list[float], percentile: float) -> float:
+    """Return a nearest-rank percentile in milliseconds."""
+    if not samples:
+        return 0.0
+    ordered = sorted(samples)
+    index = max(0, min(len(ordered) - 1, int((percentile / 100) * len(ordered) + 0.999999) - 1))
+    return ordered[index] * 1000
+
+
+def evaluate_mode(mode: str, *, k: int, repeats: int = 25) -> dict[str, float | int | str]:
     expand = mode == "graph"
     total_answerable = 0
     correct = 0
@@ -97,11 +109,15 @@ def evaluate_mode(mode: str, *, k: int) -> dict[str, float | int | str]:
     stale_errors = 0
     abstentions = 0
     expanded_items = 0
+    latencies: list[float] = []
+    errors = 0
+    query_count = 0
     with tempfile.TemporaryDirectory(prefix=f"agm-eval-{mode}-") as temp_dir:
         db_path = str(Path(temp_dir) / "memory.db")
         ctx = Ctx(tenant_id="eval-tenant", writer_id="eval-reader", tier="human_verified", project="synthetic")
         with MemoryStore(db_path) as store:
             seed_store(store)
+            # Score each authored scenario once, separate from repeated timing samples.
             for scenario in SCENARIOS:
                 result = store.retrieve(
                     ctx, scenario.query, entity=scenario.entity, k=k, expand=expand,
@@ -115,6 +131,22 @@ def evaluate_mode(mode: str, *, k: int) -> dict[str, float | int | str]:
                     stale_fact_queries += 1
                     surfaced_values = [str(item.value or "") for item in result.items]
                     stale_errors += int(any(scenario.stale_value.casefold() == value.casefold() for value in surfaced_values))
+
+            # Warm each query once, then collect retrieval-only timings.
+            for scenario in SCENARIOS:
+                store.retrieve(ctx, scenario.query, entity=scenario.entity, k=k, expand=expand)
+            for _ in range(repeats):
+                for scenario in SCENARIOS:
+                    started = time.perf_counter()
+                    try:
+                        store.retrieve(ctx, scenario.query, entity=scenario.entity, k=k, expand=expand)
+                    except Exception:
+                        errors += 1
+                    else:
+                        latencies.append(time.perf_counter() - started)
+                    query_count += 1
+
+    elapsed = sum(latencies)
     return {
         "mode": mode,
         "accuracy": correct / total_answerable if total_answerable else 0.0,
@@ -123,32 +155,44 @@ def evaluate_mode(mode: str, *, k: int) -> dict[str, float | int | str]:
         "expanded_items": expanded_items,
         "answerable": total_answerable,
         "scenarios": len(SCENARIOS),
+        "queries": query_count,
+        "errors": errors,
+        "latency_p50_ms": _percentile(latencies, 50),
+        "latency_p95_ms": _percentile(latencies, 95),
+        "latency_p99_ms": _percentile(latencies, 99),
+        "throughput_qps": len(latencies) / elapsed if elapsed > 0 else 0.0,
     }
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--k", type=int, default=5, help="maximum returned memories per scenario")
+    parser.add_argument("--repeats", type=int, default=25, help="timed repetitions per scenario and mode")
     args = parser.parse_args(argv)
     if args.k < 1:
         parser.error("--k must be at least 1")
+    if args.repeats < 1:
+        parser.error("--repeats must be at least 1")
 
-    results = [evaluate_mode(mode, k=args.k) for mode in ("flat", "graph")]
-    print("AGM synthetic retrieval smoke evaluation")
-    print(f"Scenarios: {len(SCENARIOS)}; top-k: {args.k}; embedder: hash-256-v1")
-    print("Metrics: accuracy = expected answer present in returned items; stale error = old value returned for corrected-fact case; abstention = abstained scenarios / all scenarios.")
+    results = [evaluate_mode(mode, k=args.k, repeats=args.repeats) for mode in ("flat", "graph")]
+    print("AGM synthetic retrieval smoke evaluation (not a production benchmark)")
+    print(f"Scenarios: {len(SCENARIOS)}; top-k: {args.k}; timed repeats/scenario: {args.repeats}; embedder: hash-256-v1")
+    print("Quality metrics: accuracy = expected answer present in returned items; stale error = old value returned for corrected-fact case; abstention = abstained scenarios / all scenarios.")
+    print("Performance metrics time retrieval calls only after one warm-up per scenario; seed/setup and process startup are excluded.")
     print()
-    print(f"{'mode':<9} {'accuracy':>10} {'stale-error':>13} {'abstention':>12} {'expanded':>10}")
-    print("-" * 58)
+    print(f"{'mode':<7} {'accuracy':>9} {'stale-error':>12} {'abstention':>11} {'p50 ms':>9} {'p95 ms':>9} {'p99 ms':>9} {'q/s':>9} {'errors':>8}")
+    print("-" * 96)
     for result in results:
         print(
-            f"{result['mode']:<9} {result['accuracy']:>9.1%} "
-            f"{result['stale_error']:>12.1%} {result['abstention']:>11.1%} "
-            f"{result['expanded_items']:>10d}"
+            f"{result['mode']:<7} {result['accuracy']:>8.1%} "
+            f"{result['stale_error']:>11.1%} {result['abstention']:>10.1%} "
+            f"{result['latency_p50_ms']:>9.3f} {result['latency_p95_ms']:>9.3f} "
+            f"{result['latency_p99_ms']:>9.3f} {result['throughput_qps']:>9.1f} "
+            f"{result['errors']:>8d}"
         )
     print()
     print("Caveat (D-007): this synthetic smoke test is not evidence for or against hypotheses H1-H7.")
-    print("Scores are affected by hand-authored cases and the weak hashing embedder; do not treat them as benchmark results.")
+    print("Scores and timings are affected by hand-authored cases, the weak hashing embedder, machine load, and small sample size; do not treat them as benchmark results.")
     return 0
 
 
