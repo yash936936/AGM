@@ -1,8 +1,8 @@
-## 2026-10-26 — M2 closure audit checkpoint
+## 2026-10-26 — M2 closure audit merged; external gates remain open
 
-PR #50 merged at `cd1f5d43bb155041129e100c1737d5c5360a7fb0`; exact-head GitHub Actions run [40299531993](https://github.com/yash936936/AGM/actions/runs/40299531993) passed all six Ubuntu/Windows Python 3.11–3.13 jobs, including pytest, REST/MCP smoke clients, hygiene, whitespace, and package inspection. Policy now rejects history proposals without an entity and correction/delete proposals without exact target memory IDs. The acceptance audit records repository-level implementation coverage and preserves D-037's library-only executor boundary. Local pytest was NOT RUN in this remote editing environment.
+PR #51 merged at `28fd9f5030f670ee16ff363d3594ad3b4a80914f`. Its corrected exact-head CI run [40300716725](https://github.com/yash936936/AGM/actions/runs/40300716725) passed all six Ubuntu/Windows Python 3.11–3.13 jobs, including pytest, REST/MCP smoke clients, hygiene, whitespace, and wheel/package inspection. Policy rejects history proposals without an entity and correction/delete proposals without exact target memory IDs. Local pytest was NOT RUN in the remote editing environment.
 
-**Status: M2 IMPLEMENTATION CANDIDATE / NOT ACCEPTED.** Held-out consented real-history evaluation, independent security/privacy review, and an actual third-party-host integration run remain OPEN / PENDING. A reference harness and passing CI do not close these gates. See `REPORT_M2_ACTIVE_MEMORY.md`, `REPORT_M2_REFERENCE_HOST.md`, `docs/status.md`, and `docs/debug.md`.
+**Status: M2 IMPLEMENTATION VERIFIED BY REPOSITORY CI; M2 NOT ACCEPTED.** Three external gates remain OPEN / PENDING: held-out consented real-history evaluation, independent security/privacy review, and an actual third-party-host integration run. The reference host is a harness, not production authentication. D-037 intentionally keeps the proposal executor library-only; REST/MCP smoke tests do not establish executor parity. See `REPORT_M2_ACTIVE_MEMORY.md`, `REPORT_M2_REFERENCE_HOST.md`, `docs/status.md`, and `docs/debug.md`.
 
 ---
 
