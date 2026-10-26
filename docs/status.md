@@ -1,3 +1,11 @@
+## 2026-10-26 — Consolidated M0/M1/M2 acceptance audit PR in progress
+
+Single branch: `acceptance/m0-m1-m2-single-pr`. Adds an M0/M1/M2 requirement-to-test traceability matrix, same-tenant cross-project active-context isolation regression, M2 authorized correction/delete replay/reopen regression, and configurable synthetic archive-size benchmark sweeps. Exact-head CI is pending; local pytest NOT RUN in the remote editing environment. Do not mark the new coverage verified until the six-job workflow passes.
+
+The matrix records existing M0 retention/replay and M1 lifecycle/privacy tests, but independent reviewer sign-off remains open. Benchmark scale sweep is synthetic and sequential; concurrent load, end-to-end latency, and uncertainty reporting remain unimplemented. External release gates remain: consented held-out real-history evaluation NOT RUN, independent security/privacy review NOT PERFORMED, and real third-party-host integration NOT VERIFIED. M2 remains NOT ACCEPTED.
+
+---
+
 ## 2026-10-26 — M2 closure audit merged; external gates remain open
 
 **Status: M2 IMPLEMENTATION VERIFIED BY REPOSITORY CI; M2 NOT ACCEPTED.** PR #51 merged at `28fd9f5030f670ee16ff363d3594ad3b4a80914f`. Corrected exact-head GitHub Actions run [40300716725](https://github.com/yash936936/AGM/actions/runs/40300716725) passed all six Ubuntu/Windows Python 3.11–3.13 jobs, covering the full test suite, REST/MCP smoke clients, repository hygiene, whitespace, and wheel/package inspection. Local pytest was NOT RUN in the remote editing environment.
