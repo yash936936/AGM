@@ -1,3 +1,13 @@
+## D-040 — M2 repository CI is not external release acceptance
+
+**Decision:** Treat the M2 implementation as repository-CI-verified but NOT ACCEPTED until the acceptance review and required external evidence are complete. A green six-job CI matrix verifies repository tests and smoke clients only; it does not stand in for a held-out consented real-history evaluation, independent security/privacy review, or a real third-party host run.
+
+**Why:** The reference host is an integration harness, not an authentication system or independently maintained host. The proposal executor is intentionally library-only under D-037, so REST/MCP smoke results must not be presented as executor surface parity.
+
+**Affects:** M2 reports and release status only; no runtime behavior or frozen API contracts change.
+
+---
+
 ## D-039 — Require executor-compatible targets during proposal policy review
 
 **Decision:** History proposals must include an explicit entity; delete proposals must include an exact target memory ID. Entity-only deletion is rejected at policy review rather than being marked eligible and failing later in the executor.
