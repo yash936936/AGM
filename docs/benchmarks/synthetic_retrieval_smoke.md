@@ -38,3 +38,17 @@ Each scenario is warmed once before timing. Seeding, database creation, and proc
 - Statistical confidence intervals or pass/fail release thresholds.
 
 Do not compare numbers across machines or commits as if controlled unless the environment, commit SHA, dependency set, configuration, and run protocol are recorded and controlled. For release acceptance, follow the [held-out real-history evaluation protocol](../acceptance/real_history_evaluation_protocol.md), freeze thresholds before testing, and have an independent evaluator review the aggregate results. Any forbidden-value disclosure, cross-scope leakage, or deleted/revoked content resurfacing is a stop-and-triage failure, not something average latency or accuracy can offset.
+
+
+## Repeated-run wrapper and uncertainty summaries
+
+Use the repeated-run wrapper when comparing builds or archive sizes:
+
+```bash
+python eval/repeated_retrieval_benchmark.py --runs 10 --repeats 25 --archive-size 60 --format json > repeated-60.json
+python eval/repeated_retrieval_benchmark.py --runs 10 --repeats 25 --archive-size 1000 --format json > repeated-1000.json
+```
+
+Each run launches a fresh benchmark process and database. The wrapper retains raw per-run results and reports the median of run-level metrics plus a deterministic 95% percentile-bootstrap interval for the median. Use at least 10 independent runs for comparisons; the bootstrap interval is descriptive and is not a substitute for a preregistered statistical plan. It reflects only run-to-run variability under this synthetic setup, not variability across users, datasets, hosts, or machines. Record the exact commit and environment outside CI as well; `GITHUB_SHA` is included when the environment provides it.
+
+The wrapper still measures the underlying **sequential retrieval-only** timings. It does not implement concurrent request load, HTTP/MCP end-to-end timing, model latency, cold start, memory/RSS, or sustained soak. Do not describe these intervals as production confidence intervals. Those require a separate workload design and an independently reviewed host/service environment. Real-history evaluation and the external release gates remain unchanged.
