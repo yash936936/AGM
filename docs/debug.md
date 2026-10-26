@@ -1,3 +1,17 @@
+## DBG-068 — REST soak/RSS benchmark syntax and CLI fix — 2026-10-26
+
+**Branch:** `bench/soak-rss-followup`, existing PR #60. The latest observed CI run before this fix was [40308707267](https://github.com/yash936936/AGM/actions/runs/40308707267).
+
+**Observed failure:** literal backslash-n sequences in `eval/rest_concurrent_benchmark.py` caused SyntaxError; duration/RSS CLI arguments were missing. The Windows Python 3.13 job reported 274 passed and 3 failed; the other matrix jobs failed in the same test step. Hygiene and whitespace checks completed successfully.
+
+**Fix committed:** rewrote the benchmark script to remove syntax errors, add duration-mode worker loops, validate arguments, and periodically sample process RSS/working-set on supported operating systems. Updated benchmark instructions.
+
+**Validation:** exact-head CI after fix: NOT YET VERIFIED. Local pytest: NOT RUN in this remote editing environment.
+
+**Release boundary:** M0/M1/M2 repository coverage is recorded in the acceptance traceability audit. Independent acceptance-matrix sign-off and external real-history, security/privacy, and third-party-host gates remain OPEN. M2 remains NOT ACCEPTED.
+
+---
+
 ## DBG-067 — Consolidated M0/M1/M2 acceptance audit and synthetic size sweep — 2026-10-26
 
 **Branch:** `acceptance/m0-m1-m2-single-pr` (single PR requested). Adds a traceability matrix, configurable unrelated archive size in the synthetic retrieval smoke CLI/JSON metadata, a project-boundary regression for active-memory context preparation, and an M2 correction/delete/rebuild/reopen lifecycle regression.

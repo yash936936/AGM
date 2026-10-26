@@ -39,3 +39,20 @@ def test_rest_concurrent_benchmark_reports_end_to_end_http_metrics() -> None:
     assert report["latency_ms"]["p99"] is not None
     assert report["throughput"]["successful_requests_per_second"] > 0
     assert report["limitations"]
+
+
+
+def test_rest_benchmark_supports_duration_mode_and_rss_metadata() -> None:
+    env = {**os.environ, "PYTHONPATH": str(ROOT / "src")}
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT), "--requests", "1", "--concurrency", "1",
+         "--warmup", "0", "--seed-items", "0", "--duration-seconds", "0.5",
+         "--sample-interval", "0.1"],
+        cwd=ROOT, env=env, capture_output=True, text=True, timeout=60,
+    )
+    assert result.returncode == 0, result.stderr + result.stdout
+    report = json.loads(result.stdout)
+    assert report["workload"]["duration_seconds"] == 0.5
+    assert report["workload"]["requests_succeeded"] >= 1
+    assert report["throughput"]["elapsed_seconds"] >= 0.5
+    assert "mean" in report["server_rss_bytes"]

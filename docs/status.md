@@ -1,3 +1,11 @@
+## 2026-10-26 — REST soak/RSS benchmark CI repair submitted
+
+PR #60 branch `bench/soak-rss-followup` had failing exact-head CI run [40308707267](https://github.com/yash936936/AGM/actions/runs/40308707267). Literal backslash-n characters caused SyntaxError and duration/RSS CLI arguments were missing. The script and instructions have been corrected on the same PR branch. New exact-head CI is NOT YET VERIFIED.
+
+M0/M1/M2 repository regression coverage is already merged in PR #56 with exact-head CI [40304904729](https://github.com/yash936936/AGM/actions/runs/40304904729) passing all six Ubuntu/Windows Python 3.11–3.13 jobs. Independent acceptance-matrix sign-off remains OPEN. External gates remain OPEN: held-out consented real-history evaluation NOT RUN, independent security/privacy review NOT PERFORMED, and actual third-party-host integration NOT VERIFIED. M2 is NOT ACCEPTED; production readiness is not established.
+
+---
+
 ## 2026-10-26 — Concurrent REST retrieval benchmark candidate
 
 Branch `bench/rest-concurrent-load` adds `eval/rest_concurrent_benchmark.py`, which launches the real local REST API and measures concurrent HTTP retrieval endpoint latency, p50/p95/p99, successful throughput, request/error counts, and workload/environment metadata. Includes an integration test and scope/limitations documentation. Exact-head CI is pending. This is synthetic loopback diagnostic evidence only, not a production benchmark; memory/RSS, cold start, sustained load, real-history evaluation and external host integration are not measured. Held-out consented real-history evaluation, independent security/privacy review, real third-party-host integration, and independent acceptance-matrix sign-off remain OPEN. M2 remains NOT ACCEPTED; do not claim production readiness.
