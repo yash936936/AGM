@@ -1,3 +1,13 @@
+## DBG-067 — Consolidated M0/M1/M2 acceptance audit and synthetic size sweep — 2026-10-26
+
+**Branch:** `acceptance/m0-m1-m2-single-pr` (single PR requested). Adds a traceability matrix, configurable unrelated archive size in the synthetic retrieval smoke CLI/JSON metadata, a project-boundary regression for active-memory context preparation, and an M2 correction/delete/rebuild/reopen lifecycle regression.
+
+**Validation:** Local pytest NOT RUN in this remote editing environment. Exact-head GitHub Actions matrix pending. Do not report these new tests as passed until observed CI results are available. External real-history evaluation NOT RUN; independent security/privacy review NOT PERFORMED; actual third-party host NOT VERIFIED.
+
+**Limitations:** Archive-size sweep remains synthetic and sequential; it is not concurrent-load or end-to-end latency evidence. No public REST/MCP contract or executor-surface changes are intended. D-037 remains in force; M2 and production readiness remain NOT ACCEPTED.
+
+---
+
 ## DBG-066 — M2 policy alignment and closure audit — 2026-10-26
 
 **Merged implementation:** PR #50 merged at `cd1f5d43bb155041129e100c1737d5c5360a7fb0`. Policy now rejects history proposals without an entity, correction proposals without an exact target memory ID, and deletion proposals without an exact target memory ID, matching executor requirements. Regression tests cover missing history entity, correction target, and deletion target.
