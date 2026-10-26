@@ -6,7 +6,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "eval" / "rest_concurrent_benchmark.py"
@@ -21,7 +20,6 @@ def test_rest_concurrent_benchmark_rejects_invalid_workload() -> None:
     assert "requests/concurrency must be positive" in result.stderr
 
 
-@pytest.mark.integration
 def test_rest_concurrent_benchmark_reports_end_to_end_http_metrics() -> None:
     env = {**os.environ, "PYTHONPATH": str(ROOT / "src")}
     result = subprocess.run(
