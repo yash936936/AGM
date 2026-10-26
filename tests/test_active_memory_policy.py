@@ -8,9 +8,13 @@ def test_write_requires_exact_user_quote_and_complete_fields():
 
 
 def test_correction_requires_explicit_correction_language():
-    base = dict(action="correct", evidence_quote="my timezone is UTC+5:30", entity="user", attribute="timezone", value="UTC+5:30")
+    base = dict(action="correct", evidence_quote="my timezone is UTC+5:30", entity="user", attribute="timezone", value="UTC+5:30", target_memory_id="mem-existing")
     assert evaluate_memory_proposal(MemoryProposal(**base), current_user_message="Actually, my timezone is UTC+5:30").eligible
     assert not evaluate_memory_proposal(MemoryProposal(**base), current_user_message="My timezone is UTC+5:30").eligible
+    assert not evaluate_memory_proposal(
+        MemoryProposal(action="correct", evidence_quote="Actually, I use Neovim", entity="user", attribute="editor", value="Neovim"),
+        current_user_message="Actually, I use Neovim",
+    ).eligible
 
 
 def test_history_requires_explicit_recall_intent_and_entity():

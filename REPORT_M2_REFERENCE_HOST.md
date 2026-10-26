@@ -20,13 +20,16 @@ The harness does not authenticate users itself. The host must provide a resolver
 
 ## Validation
 
-- Local pytest: **NOT RUN** in this remote editing session.
-- PR #49 exact-head GitHub Actions run [40298108786](https://github.com/yash936936/AGM/actions/runs/40298108786): all six Ubuntu/Windows Python 3.11–3.13 jobs completed successfully, including the full pytest suite, REST/MCP smoke clients, hygiene, whitespace, and package inspection.
-- Real third-party host validation: **NOT RUN**. A local reference harness is preparation for, not proof of, the external-host release gate.
+- PR #49 reference-host implementation exact-head run [40298108786](https://github.com/yash936936/AGM/actions/runs/40298108786): all six Ubuntu/Windows Python 3.11–3.13 jobs passed, including pytest, REST/MCP smoke clients, hygiene, whitespace, and package inspection.
+- PR #50 policy/executor target-alignment exact-head run [40299531993](https://github.com/yash936936/AGM/actions/runs/40299531993): all six Ubuntu/Windows Python 3.11–3.13 jobs passed.
+- Local pytest in this remote editing environment: **NOT RUN**. Do not represent CI as a local test run.
+- Real third-party host validation: **NOT RUN**. The harness is preparation for, not proof of, the external-host release gate.
 
 ## Acceptance still required
 
-- Follow-up policy/executor contract-alignment PR must pass exact-head CI; the merged reference-host commit itself passed the six-job matrix.
-- Review confirms identity and confirmation callbacks are wired only to trusted host mechanisms.
+- [x] Policy/executor contract alignment merged and exact-head CI passed; history needs an entity and delete needs an exact target memory ID.
+- [x] Code review of the harness establishes the intended trust boundary: identity and confirmation callbacks must be wired to trusted host mechanisms; this harness is not an authentication system.
+- [ ] Independent security/privacy reviewer sign-off.
+- [ ] Run the acceptance scenarios in an actual separately maintained third-party host and preserve sanitized evidence.
 - A real third-party host runs the acceptance scenarios with synthetic data and produces a reproducible report.
 - Held-out consented real-history evaluation and independent security/privacy review remain separate open gates.

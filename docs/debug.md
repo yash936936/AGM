@@ -1,3 +1,15 @@
+## DBG-066 — M2 policy alignment and closure audit — 2026-10-26
+
+**Merged implementation:** PR #50 merged at `cd1f5d43bb155041129e100c1737d5c5360a7fb0`. Policy now rejects history proposals without an entity, correction proposals without an exact target memory ID, and deletion proposals without an exact target memory ID, matching executor requirements. Regression tests cover missing history entity, correction target, and deletion target.
+
+**Validation evidence:** Exact-head GitHub Actions run [40299531993](https://github.com/yash936936/AGM/actions/runs/40299531993) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. The workflow includes the full pytest suite, REST smoke, MCP fresh-session smoke, repository hygiene, patch whitespace, and wheel/package inspection. Prior reference-host run [40298108786](https://github.com/yash936936/AGM/actions/runs/40298108786) also passed all six jobs. Local pytest was NOT RUN in this remote editing environment.
+
+**Audit outcome:** Repository-level M2 behavior and the policy/executor mismatch are covered by code/tests/CI. REST/MCP smoke does not establish proposal executor parity; D-037 intentionally defines the executor as library-only. The reference host is a harness, not an authentication implementation.
+
+**Not verified / not complete:** no held-out consented real-history evaluation; no independent security/privacy review; no actual third-party host acceptance run. M2 remains NOT ACCEPTED. No claim of production readiness.
+
+---
+
 ## DBG-065 — Reference host harness merged and validated — 2026-10-26
 
 **Implementation:** Added `src/agm/reference_host.py` and `tests/test_reference_host.py`. The harness resolves a host-authenticated session handle into a trusted principal, derives scopes and `Ctx` from that principal, reviews proposals against the current message, and requires a host confirmation verifier before mutations.
