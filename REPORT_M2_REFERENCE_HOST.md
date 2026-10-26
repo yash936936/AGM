@@ -21,7 +21,7 @@ The harness does not authenticate users itself. The host must provide a resolver
 ## Validation
 
 - Local pytest: **NOT RUN** in this remote editing session.
-- Exact-head GitHub Actions: **PENDING** until the new branch's run completes.
+- Exact-head GitHub Actions: **PENDING** for the latest branch head; the lifecycle test was added after the initial CI trigger.
 - Real third-party host validation: **NOT RUN**. A local reference harness is preparation for, not proof of, the external-host release gate.
 
 ## Acceptance still required
