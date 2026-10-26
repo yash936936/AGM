@@ -1,3 +1,13 @@
+## 2026-10-26 — M2 closure audit: repository CI green, external gates open
+
+**Status: M2 IMPLEMENTATION CANDIDATE / NOT ACCEPTED.** PR #50 merged at `cd1f5d43bb155041129e100c1737d5c5360a7fb0`. Exact-head GitHub Actions run [40299531993](https://github.com/yash936936/AGM/actions/runs/40299531993) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. The run covers full pytest, REST/MCP smoke clients, hygiene, whitespace, and package inspection. PR #50 aligns policy with executor requirements: history proposals require an entity and delete proposals require an exact target memory ID.
+
+**Audit result:** The read-only preparation, policy review, explicit host authorization/scope checks, mutation confirmation, write/correction/history/delete executor, reference-host wiring, and replay/reopen/deletion-scrubbing/tenant-isolation regressions are implemented and covered by repository tests. REST/MCP smoke clients remain adapter smoke tests only; D-037 intentionally keeps proposal execution library-only, so no REST/MCP executor parity is claimed. Local pytest was NOT RUN in this remote editing environment.
+
+**Still open:** independent security/privacy review; actual integration run by a real third-party host; held-out consented real-history evaluation. The reference harness is not a production authentication system. M2 and production readiness remain NOT ACCEPTED until remaining acceptance review and required evidence are supplied. See `REPORT_M2_ACTIVE_MEMORY.md` and `REPORT_M2_REFERENCE_HOST.md`.
+
+---
+
 ## 2026-10-26 — Reference host integration harness candidate
 
 **Status: MERGED REFERENCE HARNESS; M2 NOT ACCEPTED.** PR #49 merged at `5fffbb23d0591a48f0bbd82472cbc0c4f3cd52ba`; exact-head run [40298108786](https://github.com/yash936936/AGM/actions/runs/40298108786) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. Added `src/agm/reference_host.py` as a dependency-free example of trusted host identity resolution, scoped `Ctx`/permissions, current-message proposal review, host-verified mutation confirmation, and explicit executor invocation. Added tests for missing identity, confirmation denial, tenant isolation, rejected proposals not mutating the event log, and the correction/history/delete/rebuild lifecycle.
