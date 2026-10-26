@@ -38,6 +38,26 @@ def percentile(values: list[float], p: float) -> float | None:
     return round(ordered[index], 3)
 
 
+def process_rss_bytes(pid: int) -> int | None:
+    """Return server RSS bytes where the current OS exposes a stable process interface."""
+    try:
+        if sys.platform.startswith("linux"):
+            for line in Path(f"/proc/{pid}/status").read_text(encoding="utf-8").splitlines():
+                if line.startswith("VmRSS:"):
+                    return int(line.split()[1]) * 1024
+        if sys.platform == "darwin":
+            output = subprocess.check_output(["ps", "-o", "rss=", "-p", str(pid)], text=True, timeout=2).strip()
+            return int(output) * 1024 if output else None
+        if os.name == "nt":
+            # PowerShell reads the process working set without adding a Python dependency.
+            script = f"(Get-Process -Id {pid} -ErrorAction Stop).WorkingSet64"
+            output = subprocess.check_output(["powershell", "-NoProfile", "-NonInteractive", "-Command", script], text=True, timeout=3).strip()
+            return int(output) if output else None
+    except (OSError, ValueError, subprocess.SubprocessError):
+        return None
+    return None
+
+
 async def main_async(args: argparse.Namespace) -> int:
     with tempfile.TemporaryDirectory(prefix="agm-rest-bench-") as directory:
         root = Path(directory)
@@ -122,7 +142,7 @@ async def main_async(args: argparse.Namespace) -> int:
                         "transport": "HTTP loopback", "server": "separate AGM serve-api subprocess",
                     },
                     "workload": {
-                        "endpoint": "POST /v1/memory/retrieve", "requests_requested": args.requests,
+                        "endpoint": "POST /v1/memory/retrieve", "requests_requested": args.requests,\n                        "duration_seconds": args.duration_seconds, "sample_interval_seconds": args.sample_interval,
                         "requests_succeeded": len(latencies), "errors": len(errors),
                         "concurrency": workers, "warmup_requests": args.warmup,
                         "seed_items": args.seed_items, "timeout_seconds": 10,
@@ -137,7 +157,7 @@ async def main_async(args: argparse.Namespace) -> int:
                         "elapsed_seconds": round(elapsed_s, 4),
                         "successful_requests_per_second": round(len(latencies) / elapsed_s, 3) if elapsed_s else 0,
                     },
-                    "error_types": {kind: errors.count(kind) for kind in sorted(set(errors))},
+                    "error_types": {kind: errors.count(kind) for kind in sorted(set(errors))},\n                    "server_rss_bytes": {\n                        "samples": len(rss_samples), "min": min(rss_samples) if rss_samples else None,\n                        "max": max(rss_samples) if rss_samples else None,\n                        "mean": round(statistics.fmean(rss_samples)) if rss_samples else None,\n                        "measurement": "process working-set/RSS sampled periodically; null when OS query unavailable",\n                    },
                     "limitations": [
                         "Synthetic data and loopback HTTP only; no network, model inference, or real host.",
                         "Measures retrieval endpoint client-observed latency, not full assistant-turn latency.",
