@@ -12,7 +12,6 @@ import tempfile
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from statistics import median
 
 from agm import Ctx, MemoryStore, Relation, WriteItem
 
