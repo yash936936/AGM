@@ -32,7 +32,7 @@
 - [x] Current-head REST/MCP smoke clients, hygiene, whitespace, and package inspection pass.
 - [x] Library-only boundary is formally documented in D-037; REST/MCP proposal-execution parity is intentionally not claimed.
 - [x] Reference-host code review confirms the intended trust boundary is explicit: resolver and confirmation verifier are host-provided trusted callbacks, not an authentication system.
-- [x] Policy/executor target contract alignment: history requires an entity and delete requires an exact target ID; PR #50 exact-head CI passes.
+- [x] Policy/executor target contract alignment: history requires an entity, and correction/delete require exact target IDs; PR #50 exact-head CI passes.
 - [x] Reference-host trust boundary reviewed as a harness: host callbacks must resolve trusted identity/scopes and confirmation.
 - [ ] Independent code/security review and end-to-end integration in a real third-party host.
 
