@@ -8,6 +8,8 @@ See decisions D-007 and D-020 before interpreting differences between modes.
 from __future__ import annotations
 
 import argparse
+import json
+import platform
 import tempfile
 import time
 from dataclasses import dataclass
@@ -167,6 +169,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--k", type=int, default=5, help="maximum returned memories per scenario")
     parser.add_argument("--repeats", type=int, default=25, help="timed repetitions per scenario and mode")
+    parser.add_argument("--format", choices=("text", "json"), default="text", help="output format; JSON is suitable for archiving or automation")
     args = parser.parse_args(argv)
     if args.k < 1:
         parser.error("--k must be at least 1")
@@ -174,6 +177,29 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--repeats must be at least 1")
 
     results = [evaluate_mode(mode, k=args.k, repeats=args.repeats) for mode in ("flat", "graph")]
+    if args.format == "json":
+        print(json.dumps({
+            "benchmark": "agm_synthetic_retrieval_smoke",
+            "benchmark_type": "synthetic_smoke_not_production_benchmark",
+            "metadata": {
+                "python_version": platform.python_version(),
+                "platform": platform.platform(),
+                "embedder": "hash-256-v1",
+                "top_k": args.k,
+                "timed_repeats_per_scenario": args.repeats,
+                "scenario_count": len(SCENARIOS),
+                "timed_queries_per_mode": len(SCENARIOS) * args.repeats,
+                "timing_scope": "retrieval calls only after one warm-up per scenario; excludes setup and process startup",
+            },
+            "results": results,
+            "caveats": [
+                "Synthetic hand-authored cases are not evidence for or against hypotheses H1-H7 (D-007).",
+                "Small sample size, weak hashing embedder, machine load, and hand-authored scenarios limit interpretation.",
+                "Throughput is successful retrieval calls divided by the sum of measured retrieval-call durations; it is not end-to-end concurrent service throughput.",
+                "No held-out consented real-history evaluation is represented by this output.",
+            ],
+        }, indent=2, sort_keys=True))
+        return 0
     print("AGM synthetic retrieval smoke evaluation (not a production benchmark)")
     print(f"Scenarios: {len(SCENARIOS)}; top-k: {args.k}; timed repeats/scenario: {args.repeats}; embedder: hash-256-v1")
     print("Quality metrics: accuracy = expected answer present in returned items; stale error = old value returned for corrected-fact case; abstention = abstained scenarios / all scenarios.")
