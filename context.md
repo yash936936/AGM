@@ -1,3 +1,11 @@
+## 2026-10-26 — M2 guardrail tests validated; executor surface boundary recorded
+
+PR #47 merged at `4641796ef1a7ac6b3dfbac6abb33e04c63fb2f70`. Exact-head CI run [40229139385](https://github.com/yash936936/AGM/actions/runs/40229139385) passed all six Ubuntu/Windows Python 3.11–3.13 jobs, including full pytest, REST/MCP smoke clients, hygiene, whitespace, and package inspection. The added tests cover action-specific scopes, history reads without mutation confirmation, and re-evaluation of proposal evidence against the current user message.
+
+D-037 now records that `execute_authorized_memory_proposal()` is intentionally library-only for this iteration. REST/MCP remain on frozen direct-store contracts; their smoke tests do not establish parity for the proposal-policy/confirmation path. See `REPORT_M2_ACTIVE_MEMORY.md`. M2 remains an implementation candidate, not accepted. Held-out consented real-history evaluation, independent security/privacy review, and third-party host integration remain OPEN / PENDING.
+
+---
+
 ## 2026-10-26 — M2 kickoff: active memory behavior
 
 M0/M1 repository acceptance changes are merged and their cited CI runs passed. The three external release gates are **OPEN / PENDING**: held-out consented real-history evaluation, independent security/privacy review, and real third-party host integration. Do not treat pending evidence as passed.

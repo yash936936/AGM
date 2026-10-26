@@ -1,3 +1,13 @@
+## 2026-10-26 — M2 proposal executor surface boundary and guardrail CI
+
+PR #47 merged at `4641796ef1a7ac6b3dfbac6abb33e04c63fb2f70`. Exact-head GitHub Actions run [40229139385](https://github.com/yash936936/AGM/actions/runs/40229139385) passed all six Ubuntu/Windows Python 3.11–3.13 jobs, including the full test suite, REST smoke, MCP fresh-session smoke, hygiene, whitespace, and package inspection.
+
+Added D-037 to explicitly define `execute_authorized_memory_proposal()` as a library-only API while REST/MCP keep their frozen direct-store contracts. This avoids claiming parity for proposal-policy and confirmation behavior that the adapters do not expose. Any future adapter integration requires a separate contract decision and cross-surface tests.
+
+**Status:** M2 remains IMPLEMENTATION CANDIDATE / NOT ACCEPTED. Remaining code-review items include trusted-host authorization integration and any decision to expose proposal execution through adapters. Held-out real-history evaluation, independent security/privacy review, and third-party host integration remain OPEN / PENDING.
+
+---
+
 ## 2026-10-26 — M2 authorized execution candidate
 
 **Status:** IMPLEMENTATION CANDIDATE / NOT ACCEPTED. Added `execute_authorized_memory_proposal()` to connect policy review to existing scoped store methods for write, correction, history, and deletion. It re-evaluates policy, checks the required scope, requires host authorization, and requires confirmation for mutations.
