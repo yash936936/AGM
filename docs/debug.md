@@ -1,6 +1,6 @@
 ## DBG-066 — M2 policy alignment and closure audit — 2026-10-26
 
-**Merged implementation:** PR #50 merged at `cd1f5d43bb155041129e100c1737d5c5360a7fb0`. Policy now rejects history proposals without an entity and deletion proposals without an exact target memory ID, matching executor requirements. Regression tests were added for both cases.
+**Merged implementation:** PR #50 merged at `cd1f5d43bb155041129e100c1737d5c5360a7fb0`. Policy now rejects history proposals without an entity, correction proposals without an exact target memory ID, and deletion proposals without an exact target memory ID, matching executor requirements. Regression tests cover missing history entity, correction target, and deletion target.
 
 **Validation evidence:** Exact-head GitHub Actions run [40299531993](https://github.com/yash936936/AGM/actions/runs/40299531993) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. The workflow includes the full pytest suite, REST smoke, MCP fresh-session smoke, repository hygiene, patch whitespace, and wheel/package inspection. Prior reference-host run [40298108786](https://github.com/yash936936/AGM/actions/runs/40298108786) also passed all six jobs. Local pytest was NOT RUN in this remote editing environment.
 
