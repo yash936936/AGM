@@ -1,6 +1,6 @@
-## 2026-10-26 — Concurrent REST retrieval benchmark candidate
+## 2026-10-26 — Concurrent REST benchmark merged; soak/RSS follow-up candidate
 
-Branch `bench/rest-concurrent-load` adds `eval/rest_concurrent_benchmark.py`, which launches the real local REST API in a subprocess and measures concurrent client-observed retrieval latency over loopback HTTP. It reports p50/p95/p99, successful throughput, request/error counts, workload/environment metadata, and limitations. Tests and `docs/benchmarks/rest_concurrent_load.md` cover the workload and interpretation. This is a candidate pending exact-head CI; it is synthetic, single-process and diagnostic only. It does not cover memory/RSS, cold start, sustained soak, real histories, external network, model inference, or third-party host integration. All external release gates remain open.
+PR [#59](https://github.com/yash936936/AGM/pull/59) merged at `b1a9c2c128d378b9600e88cfef0f605e646d19ab`. Exact-head workflow [40307932251](https://github.com/yash936936/AGM/actions/runs/40307932251) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. It adds `eval/rest_concurrent_benchmark.py` for concurrent synthetic retrieval requests over loopback HTTP, with p50/p95/p99 and throughput reporting. The follow-up branch `bench/soak-rss-followup` adds optional duration-based load and periodic server RSS/working-set sampling, with tests and docs; exact-head CI is pending. These are diagnostic local synthetic workloads, not production capacity evidence. Real-history evaluation and all external release gates remain open.
 
 ---
 
