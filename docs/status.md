@@ -1,10 +1,10 @@
-## 2026-10-26 — M2 closure audit: repository CI green, external gates open
+## 2026-10-26 — M2 closure audit merged; external gates remain open
 
-**Status: M2 IMPLEMENTATION CANDIDATE / NOT ACCEPTED.** PR #50 merged at `cd1f5d43bb155041129e100c1737d5c5360a7fb0`. Exact-head GitHub Actions run [40299531993](https://github.com/yash936936/AGM/actions/runs/40299531993) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. The run covers full pytest, REST/MCP smoke clients, hygiene, whitespace, and package inspection. PR #50 aligns policy with executor requirements: history proposals require an entity; correction and delete proposals require exact target memory IDs.
+**Status: M2 IMPLEMENTATION VERIFIED BY REPOSITORY CI; M2 NOT ACCEPTED.** PR #51 merged at `28fd9f5030f670ee16ff363d3594ad3b4a80914f`. Corrected exact-head GitHub Actions run [40300716725](https://github.com/yash936936/AGM/actions/runs/40300716725) passed all six Ubuntu/Windows Python 3.11–3.13 jobs, covering the full test suite, REST/MCP smoke clients, repository hygiene, whitespace, and wheel/package inspection. Local pytest was NOT RUN in the remote editing environment.
 
-**Audit result:** The read-only preparation, policy review (including executor-compatible history/correction/delete targets), explicit host authorization/scope checks, mutation confirmation, write/correction/history/delete executor, reference-host wiring, and replay/reopen/deletion-scrubbing/tenant-isolation regressions are implemented and covered by repository tests. REST/MCP smoke clients remain adapter smoke tests only; D-037 intentionally keeps proposal execution library-only, so no REST/MCP executor parity is claimed. Local pytest was NOT RUN in this remote editing environment.
+**Audit result:** Policy/executor target alignment, including the correction target guard, is implemented and covered by regression tests. The proposal executor remains library-only under D-037; REST/MCP smoke tests are adapter smoke tests, not executor-parity evidence. The reference host is an integration harness, not a production authentication implementation.
 
-**Still open:** independent security/privacy review; actual integration run by a real third-party host; held-out consented real-history evaluation. The reference harness is not a production authentication system. M2 and production readiness remain NOT ACCEPTED until remaining acceptance review and required evidence are supplied. See `REPORT_M2_ACTIVE_MEMORY.md` and `REPORT_M2_REFERENCE_HOST.md`.
+**Still open:** held-out consented real-history evaluation; independent security/privacy review; actual integration acceptance by a real third-party host. M2 and production readiness remain NOT ACCEPTED until these external gates are completed.
 
 ---
 
