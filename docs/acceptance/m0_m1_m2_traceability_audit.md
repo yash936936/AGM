@@ -40,16 +40,23 @@
 
 ## Benchmark status
 
-The synthetic smoke supports text/JSON output and a configurable unrelated archive size (--archive-size) for size-sensitivity sweeps. Its four hand-authored scenarios, weak hash embedder, sequential retrieval-only timing, and lack of concurrency/end-to-end latency mean it remains a diagnostic—not a production benchmark. It does not close H1–H7 or the held-out evaluation gate.
+The repository now has two synthetic benchmark paths:
+
+- `eval/stale_facts.py` supports configurable unrelated archive-size sweeps. This remains a sequential diagnostic using hand-authored scenarios and a weak hash embedder.
+- `eval/rest_concurrent_benchmark.py` exercises the local REST retrieval endpoint over loopback HTTP with concurrent workers, client-observed p50/p95/p99 latency, throughput, and request/error counts. Optional duration mode runs sustained synthetic load and samples process RSS/working-set where the OS supports it.
+
+The sustained-load/RSS implementation and integration tests passed exact-head GitHub Actions run [40309704049](https://github.com/yash936936/AGM/actions/runs/40309704049), all six Ubuntu/Windows Python 3.11–3.13 jobs. RSS is approximate and OS-dependent. Both benchmarks use synthetic data; neither is a held-out real-history evaluation, independent security review, or third-party-host integration. They do not establish production readiness or close H1–H7.
 
 Examples:
 
 ```bash
 python eval/stale_facts.py --archive-size 0 --repeats 25 --format json
 python eval/stale_facts.py --archive-size 1000 --repeats 25 --format json
+python eval/rest_concurrent_benchmark.py --requests 200 --concurrency 8 --warmup 10 --seed-items 100 > rest-concurrent.json
+python eval/rest_concurrent_benchmark.py --duration-seconds 60 --concurrency 8 --warmup 10 --seed-items 100 > rest-soak.json
 ```
 
-For a credible comparison, pin the commit, environment and dependencies; run repeated sizes under controlled load; preserve raw aggregate output; and report variance/confidence intervals. This simple size sweep does not itself provide those controls or confidence intervals.
+For comparative claims, pin the commit, environment and dependencies, run repeated controlled workloads, preserve raw reports, and report uncertainty. The REST benchmark is local single-process SQLite workload and does not measure full assistant-turn latency, real external network behavior, or production capacity.
 
 ## External release gates — all remain open
 
