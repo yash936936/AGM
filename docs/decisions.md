@@ -1,3 +1,13 @@
+## D-041 — Validate correction target before proposal eligibility
+
+**Decision:** A correction proposal is ineligible unless it includes an exact target memory ID, matching the executor's `MemoryStore.supersede()` requirement. Reject it during policy review, before the host asks for confirmation or calls execution.
+
+**Why:** Proposal eligibility should guarantee that the executor's required target fields exist. Otherwise an incomplete correction could be presented for confirmation and fail only after execution is attempted.
+
+**Affects:** `src/agm/active_memory_policy.py` and `tests/test_active_memory_policy.py`; no store schema, REST/MCP contract, or dependency change.
+
+---
+
 ## D-040 — M2 repository CI is not external release acceptance
 
 **Decision:** Treat the M2 implementation as repository-CI-verified but NOT ACCEPTED until the acceptance review and required external evidence are complete. A green six-job CI matrix verifies repository tests and smoke clients only; it does not stand in for a held-out consented real-history evaluation, independent security/privacy review, or a real third-party host run.
