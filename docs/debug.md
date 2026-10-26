@@ -1,3 +1,15 @@
+## DBG-065 — Reference host harness added; exact-head validation pending — 2026-10-26
+
+**Implementation:** Added `src/agm/reference_host.py` and `tests/test_reference_host.py`. The harness resolves a host-authenticated session handle into a trusted principal, derives scopes and `Ctx` from that principal, reviews proposals against the current message, and requires a host confirmation verifier before mutations.
+
+**Tests authored:** unknown/forged session denied; unconfirmed mutation remains pending with zero event-log writes; cross-tenant context does not reveal another tenant's synthetic marker; policy-rejected proposal leaves the event log unchanged.
+
+**Validation:** Local pytest NOT RUN in this remote editing environment. Exact-head GitHub Actions pending. Do not claim the external host gate is closed: no actual third-party host has yet run this harness.
+
+**Limitations:** This is a reference integration seam, not an authentication system. The resolver and confirmation verifier must be wired to trusted host session/UI mechanisms. REST/MCP contracts remain unchanged.
+
+---
+
 ## DBG-064 — M2 executor guardrail CI and surface-boundary decision — 2026-10-26
 
 **Validation:** PR #47 head `200a555af4689ac698dec3289da8204fecdc481a`; GitHub Actions run [40229139385](https://github.com/yash936936/AGM/actions/runs/40229139385) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. Job steps include full pytest, REST smoke, MCP fresh-session smoke, repository hygiene, patch whitespace, and wheel/package inspection. Local pytest was NOT RUN because GitHub DNS/network access was unavailable in the editing environment.
