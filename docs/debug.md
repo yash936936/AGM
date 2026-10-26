@@ -1,10 +1,10 @@
-## DBG-065 — Reference host harness added; exact-head validation pending — 2026-10-26
+## DBG-065 — Reference host harness merged and validated — 2026-10-26
 
 **Implementation:** Added `src/agm/reference_host.py` and `tests/test_reference_host.py`. The harness resolves a host-authenticated session handle into a trusted principal, derives scopes and `Ctx` from that principal, reviews proposals against the current message, and requires a host confirmation verifier before mutations.
 
 **Tests authored:** unknown/forged session denied; unconfirmed mutation remains pending with zero event-log writes; cross-tenant context does not reveal another tenant's synthetic marker; policy-rejected proposal leaves the event log unchanged; correction/history/delete is exercised through the host seam and deletion is checked after rebuild.
 
-**Validation:** Local pytest NOT RUN in this remote editing environment. Exact-head GitHub Actions pending. Do not claim the external host gate is closed: no actual third-party host has yet run this harness.
+**Validation:** PR #49 merged at `5fffbb23d0591a48f0bbd82472cbc0c4f3cd52ba`. Exact-head run [40298108786](https://github.com/yash936936/AGM/actions/runs/40298108786) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. Local pytest was NOT RUN in this remote editing environment. Follow-up policy/executor contract-alignment changes are now pending CI. Do not claim the external host gate is closed: no actual third-party host has yet run this harness.
 
 **Limitations:** This is a reference integration seam, not an authentication system. The resolver and confirmation verifier must be wired to trusted host session/UI mechanisms. REST/MCP contracts remain unchanged.
 

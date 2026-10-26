@@ -1,6 +1,6 @@
 # M2 Reference Host Integration Report
 
-**Status:** INTEGRATION HARNESS CANDIDATE / NOT ACCEPTED  
+**Status:** REFERENCE HARNESS MERGED; M2 STILL NOT ACCEPTED  
 **Date:** 2026-10-26
 
 ## Purpose
@@ -21,12 +21,12 @@ The harness does not authenticate users itself. The host must provide a resolver
 ## Validation
 
 - Local pytest: **NOT RUN** in this remote editing session.
-- Exact-head GitHub Actions: **PENDING** for the latest branch head; the lifecycle test was added after the initial CI trigger.
+- PR #49 exact-head GitHub Actions run [40298108786](https://github.com/yash936936/AGM/actions/runs/40298108786): all six Ubuntu/Windows Python 3.11–3.13 jobs completed successfully, including the full pytest suite, REST/MCP smoke clients, hygiene, whitespace, and package inspection.
 - Real third-party host validation: **NOT RUN**. A local reference harness is preparation for, not proof of, the external-host release gate.
 
 ## Acceptance still required
 
-- Exact-head CI passes on Ubuntu and Windows, Python 3.11–3.13.
+- Follow-up policy/executor contract-alignment PR must pass exact-head CI; the merged reference-host commit itself passed the six-job matrix.
 - Review confirms identity and confirmation callbacks are wired only to trusted host mechanisms.
 - A real third-party host runs the acceptance scenarios with synthetic data and produces a reproducible report.
 - Held-out consented real-history evaluation and independent security/privacy review remain separate open gates.

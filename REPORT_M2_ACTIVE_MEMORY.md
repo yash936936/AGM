@@ -1,6 +1,6 @@
 # M2 Implementation Report — Active-turn orchestration
 
-**Status:** IMPLEMENTATION CANDIDATE / NOT ACCEPTED  
+**Status:** IMPLEMENTATION CANDIDATE / NOT ACCEPTED — targeted follow-up in progress  
 **Updated:** 2026-10-26
 
 ## Implemented in the current candidate
@@ -30,7 +30,12 @@
 - [x] Current-head full test suite and six-job CI matrix pass.
 - [x] Current-head REST/MCP smoke clients, hygiene, whitespace, and package inspection pass.
 - [x] Library-only boundary is formally documented in D-037; REST/MCP proposal-execution parity is intentionally not claimed.
-- [ ] Code review accepts the authorization contract and test evidence.
+- [x] Reference-host code review confirms the intended trust boundary is explicit: resolver and confirmation verifier are host-provided trusted callbacks, not an authentication system.
+- [ ] Follow-up policy/executor target contract alignment passes exact-head CI and review.
+
+## Follow-up found during review
+
+The reference-host CI run passed, but code review found a policy/executor mismatch: policy review previously marked entity-only delete proposals eligible even though execution requires an exact memory ID, and history proposals could be eligible without the entity required by the executor. Branch `m2/policy-executor-contract-alignment` changes policy validation and regressions so these proposals are rejected before authorization/execution. This follow-up has not yet passed exact-head CI.
 
 ## Limitations and release gates
 

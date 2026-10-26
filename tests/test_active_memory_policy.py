@@ -13,14 +13,25 @@ def test_correction_requires_explicit_correction_language():
     assert not evaluate_memory_proposal(MemoryProposal(**base), current_user_message="My timezone is UTC+5:30").eligible
 
 
-def test_history_requires_explicit_recall_intent():
-    proposal = MemoryProposal(action="history")
+def test_history_requires_explicit_recall_intent_and_entity():
+    proposal = MemoryProposal(action="history", entity="user")
     assert evaluate_memory_proposal(proposal, current_user_message="What did I say about my project?").eligible
     assert not evaluate_memory_proposal(proposal, current_user_message="Help me plan my project.").eligible
+    assert not evaluate_memory_proposal(
+        MemoryProposal(action="history"),
+        current_user_message="What did I say about my project?",
+    ).eligible
 
 
-def test_delete_requires_explicit_request_and_target():
-    proposal = MemoryProposal(action="delete", entity="old address")
-    assert evaluate_memory_proposal(proposal, current_user_message="Please forget my old address.").eligible
+def test_delete_requires_explicit_request_and_exact_target_id():
+    proposal = MemoryProposal(action="delete", target_memory_id="mem-123", entity="user")
+    assert evaluate_memory_proposal(proposal, current_user_message="Please forget that memory.").eligible
     assert not evaluate_memory_proposal(proposal, current_user_message="I moved from my old address.").eligible
-    assert not evaluate_memory_proposal(MemoryProposal(action="delete"), current_user_message="Forget that.").eligible
+    assert not evaluate_memory_proposal(
+        MemoryProposal(action="delete", entity="old address"),
+        current_user_message="Please forget my old address.",
+    ).eligible
+    assert not evaluate_memory_proposal(
+        MemoryProposal(action="delete"),
+        current_user_message="Forget that.",
+    ).eligible

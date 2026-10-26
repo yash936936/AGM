@@ -1,3 +1,13 @@
+## D-039 — Require executor-compatible targets during proposal policy review
+
+**Decision:** History proposals must include an explicit entity; delete proposals must include an exact target memory ID. Entity-only deletion is rejected at policy review rather than being marked eligible and failing later in the executor.
+
+**Why:** The executor's history path requires an entity and its delete path calls the hard-delete API with one exact ID. Policy eligibility must guarantee these required fields before the host reaches confirmation or execution.
+
+**Affects:** `src/agm/active_memory_policy.py` and `tests/test_active_memory_policy.py`. No store schema, REST/MCP contract, or dependency change.
+
+---
+
 ## D-038 — Add a reference host harness without claiming external-host closure
 
 **Decision:** Add an additive Python reference-host harness that resolves an opaque authenticated-session handle to a trusted principal, derives the scoped `Ctx` and permissions from that principal, reviews proposals against the current user message, and requires a host confirmation verifier for mutations before invoking the library-only executor.

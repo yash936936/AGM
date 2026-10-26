@@ -1,8 +1,8 @@
 ## 2026-10-26 — Reference host integration harness candidate
 
-**Status: IMPLEMENTATION CANDIDATE / NOT ACCEPTED.** Added `src/agm/reference_host.py` as a dependency-free example of trusted host identity resolution, scoped `Ctx`/permissions, current-message proposal review, host-verified mutation confirmation, and explicit executor invocation. Added tests for missing identity, confirmation denial, tenant isolation, rejected proposals not mutating the event log, and the correction/history/delete/rebuild lifecycle.
+**Status: MERGED REFERENCE HARNESS; M2 NOT ACCEPTED.** PR #49 merged at `5fffbb23d0591a48f0bbd82472cbc0c4f3cd52ba`; exact-head run [40298108786](https://github.com/yash936936/AGM/actions/runs/40298108786) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. Added `src/agm/reference_host.py` as a dependency-free example of trusted host identity resolution, scoped `Ctx`/permissions, current-message proposal review, host-verified mutation confirmation, and explicit executor invocation. Added tests for missing identity, confirmation denial, tenant isolation, rejected proposals not mutating the event log, and the correction/history/delete/rebuild lifecycle.
 
-**Validation:** Local pytest NOT RUN in this remote editing environment. Exact-head CI is pending for branch `m2/reference-host-harness`. See `REPORT_M2_REFERENCE_HOST.md`.
+**Validation:** Local pytest NOT RUN in this remote editing environment. A follow-up branch `m2/policy-executor-contract-alignment` tightens history/delete target validation; its exact-head CI is pending. See `REPORT_M2_REFERENCE_HOST.md`.
 
 **External gates:** Real third-party host integration remains OPEN; this harness is not itself a third-party host. Held-out consented real-history evaluation and independent security/privacy review remain OPEN / PENDING.
 
