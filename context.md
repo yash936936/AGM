@@ -1,3 +1,13 @@
+## 2026-10-26 — Consolidated M0/M1/M2 acceptance audit PR in progress
+
+Branch: `acceptance/m0-m1-m2-single-pr`. This single PR combines the current repository acceptance traceability audit, targeted M1/M2 regressions, and a configurable synthetic archive-size sweep. It adds `--archive-size` to `eval/stale_facts.py`, a same-tenant cross-project active-context test, and a correction→delete→rebuild/reopen M2 lifecycle test. Exact-head CI is required before calling these new tests verified.
+
+Audit document: `docs/acceptance/m0_m1_m2_traceability_audit.md`. Report: `REPORT_2026-10-26_M0_M1_M2_ACCEPTANCE_AUDIT.md`.
+
+The external release gates are still open and cannot be completed through code changes alone: held-out explicitly consented real-history evaluation NOT RUN; independent security/privacy review NOT PERFORMED; real third-party-host integration NOT VERIFIED. The archive-size sweep is a synthetic size-sensitivity diagnostic only, not a concurrent or end-to-end benchmark. M2 remains NOT ACCEPTED; do not claim production readiness.
+
+---
+
 ## 2026-10-26 — Latest benchmark and M0/M1/M2 remaining-work audit
 
 PR #54 merged at `a93d3a8ca62dce336caf36367a6ee0e5744f0349`; exact-head CI [40303228204](https://github.com/yash936936/AGM/actions/runs/40303228204) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. The synthetic benchmark supports text and JSON output, including retrieval-only latency percentiles and sequential throughput. It remains synthetic-only and does not validate H1–H7 or production readiness. See `docs/benchmarks/synthetic_retrieval_smoke.md`.

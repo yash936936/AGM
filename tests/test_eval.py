@@ -36,6 +36,8 @@ def test_synthetic_eval_json_is_machine_readable_and_caveated() -> None:
     assert payload["benchmark_type"] == "synthetic_smoke_not_production_benchmark"
     assert payload["metadata"]["timed_queries_per_mode"] == 8
     assert payload["metadata"]["top_k"] == 5
+    assert payload["metadata"]["synthetic_archive_size_per_mode"] == 60
+    assert all(mode["archive_size"] == 60 for mode in payload["results"])
     assert len(payload["results"]) == 2
     for mode in payload["results"]:
         assert mode["mode"] in {"flat", "graph"}
@@ -47,3 +49,17 @@ def test_synthetic_eval_rejects_invalid_repeats() -> None:
     result = _run_eval("--repeats", "0")
     assert result.returncode == 2
     assert "--repeats must be at least 1" in result.stderr
+
+
+def test_synthetic_eval_accepts_archive_size_and_reports_it() -> None:
+    result = _run_eval("--k", "3", "--repeats", "1", "--archive-size", "0", "--format", "json")
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["metadata"]["synthetic_archive_size_per_mode"] == 0
+    assert all(mode["archive_size"] == 0 for mode in payload["results"])
+
+
+def test_synthetic_eval_rejects_negative_archive_size() -> None:
+    result = _run_eval("--archive-size", "-1")
+    assert result.returncode == 2
+    assert "--archive-size must be at least 0" in result.stderr
