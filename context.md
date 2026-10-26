@@ -1,3 +1,9 @@
+## 2026-10-26 — Repeated-run synthetic benchmark candidate
+
+Branch `bench/repeated-run-uncertainty` adds `eval/repeated_retrieval_benchmark.py`, which launches independent synthetic benchmark processes, retains raw per-run JSON, and summarizes run-level medians with deterministic 95% percentile-bootstrap intervals. It also adds `tests/test_repeated_retrieval_benchmark.py` and usage/limitations documentation. This is a candidate until exact-head CI passes. It remains sequential retrieval-only synthetic timing; concurrency, host/API end-to-end latency, sustained load, real-history evaluation, and release gates are not covered.
+
+---
+
 ## 2026-10-26 — Consolidated M0/M1/M2 acceptance audit merged
 
 PR [#56](https://github.com/yash936936/AGM/pull/56) merged at `8a3cecbfadc9b349cc95618967298bfa85a71a2e`. Exact-head GitHub Actions run [40304904729](https://github.com/yash936936/AGM/actions/runs/40304904729) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. The change adds `--archive-size` to `eval/stale_facts.py`, benchmark metadata/tests, a same-tenant cross-project active-context isolation regression, an authorized correction→delete→rebuild/reopen M2 lifecycle regression, and an M0/M1/M2 requirement-to-test traceability audit.
