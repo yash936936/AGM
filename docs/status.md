@@ -479,3 +479,18 @@ PR #20 passed exact-head CI [run 40214773052](https://github.com/yash936936/AGM/
 **Change:** Inspect the source event's stored item pin flag when scrubbing orphan events. Preserve pinned source payloads unless `include_pinned=True`; add a regression covering default expiry, rebuild/replay, and explicit opt-in.
 
 **Validation:** Local tests NOT RUN here. Exact-head CI, full suite, package inspection, repository hygiene and whitespace checks are pending. M0 remains IN PROGRESS; M1 remains PARTIAL / VERIFY. Real-history evaluation and independent security/privacy review remain open.
+
+
+## 2026-10-26 — Synthetic benchmark JSON output merged; phase and release gates
+
+PR #54 merged at `a93d3a8ca62dce336caf36367a6ee0e5744f0349`. Exact-head CI run [40303228204](https://github.com/yash936936/AGM/actions/runs/40303228204) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. The synthetic retrieval smoke benchmark now emits machine-readable JSON with runtime/platform/configuration metadata, quality metrics, retrieval-only p50/p95/p99, sequential throughput, error counts, and explicit caveats. See `docs/benchmarks/synthetic_retrieval_smoke.md`.
+
+This is still a four-scenario synthetic smoke test using `hash-256-v1`; it is not a production benchmark, has no real-history data, and is not evidence for/against H1–H7. Local pytest was NOT RUN in the remote editing environment.
+
+### Remaining M0 / M1 / M2 work
+
+- **M0 — retention/replay:** the revoked-pinned-source regression and exact-head CI are merged/verified (PR #39). Remaining: conduct a focused review of the complete M0 acceptance matrix against current main, confirm all expiry/revocation/pinning/orphan-scrub and whole-sweep rollback cases are represented, and record any missing cases with exact-head CI evidence. The older status entries in this file are historical candidate notes; use merged PRs and current CI as the authority.
+- **M1 — lifecycle and adapters:** core cross-session recall/correction/history/delete/rebuild and REST/MCP fresh-session smoke coverage are merged/verified (PR #40 and follow-up CI). Remaining: audit the current acceptance matrix end-to-end for scope isolation, bounded before-turn context/provenance, quarantine/snapshot/export privacy, and adapter contract coverage; run the Windows smoke clients in the target integrator environment if required and capture evidence. Repository CI is not a real-host integration test.
+- **M2 — active-memory lifecycle:** implementation and guardrails are CI-verified through PRs #47, #49, #50, #51 and #52, but **M2 is NOT ACCEPTED**. Remaining code/product decision: decide whether proposal execution should stay library-only or receive a separately approved REST/MCP contract and corresponding parity tests. Current D-037 intentionally keeps it library-only.
+- **External release gates (block production acceptance):** (1) held-out evaluation on explicitly consented, de-identified real-user histories; (2) independent security/privacy review and sign-off; (3) a recorded integration test against an actual independently maintained third-party host. All three remain OPEN / NOT RUN or NOT VERIFIED. Do not mark production-ready until evidence is reviewed.
+- **Benchmarking:** synthetic JSON/text diagnostics are available; still needed for claims about retrieval quality/latency are controlled, repeated runs with pinned commit/environment and, for release acceptance, the held-out protocol's frozen baselines/thresholds, uncertainty reporting, end-to-end latency and privacy/lifecycle cases. No current synthetic result closes that gate.

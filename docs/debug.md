@@ -599,3 +599,12 @@
 **Change:** Apply the least-privilege default only when scopes are omitted (None); require explicit scopes to be a non-empty list of strings in the allowlist. Require diagnostic timeout to be a finite positive number and reject booleans.
 
 **Tests:** Added malformed/empty scope cases and timeout boundary/type cases. Exact-head CI is required; local tests were not run in this remote editing environment.
+
+
+## 2026-10-26 — Synthetic benchmark JSON output and documentation
+
+**PR:** [#54](https://github.com/yash936936/AGM/pull/54), merged at `a93d3a8ca62dce336caf36367a6ee0e5744f0349`.
+
+**Change:** Added `--format json` to `eval/stale_facts.py`, machine-readable run metadata and caveats, schema-focused tests, and `docs/benchmarks/synthetic_retrieval_smoke.md` documenting timing scope and limitations.
+
+**Validation:** Exact-head CI [40303228204](https://github.com/yash936936/AGM/actions/runs/40303228204) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. Local pytest NOT RUN in the remote editing environment. This remains a synthetic smoke diagnostic, not a production benchmark or evidence for/against H1–H7.
