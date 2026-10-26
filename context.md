@@ -1,3 +1,11 @@
+## 2026-10-26 — M2 closure audit checkpoint
+
+PR #50 merged at `cd1f5d43bb155041129e100c1737d5c5360a7fb0`; exact-head GitHub Actions run [40299531993](https://github.com/yash936936/AGM/actions/runs/40299531993) passed all six Ubuntu/Windows Python 3.11–3.13 jobs, including pytest, REST/MCP smoke clients, hygiene, whitespace, and package inspection. Policy now rejects history proposals without an entity and delete proposals without an exact target memory ID. The acceptance audit records repository-level implementation coverage and preserves D-037's library-only executor boundary. Local pytest was NOT RUN in this remote editing environment.
+
+**Status: M2 IMPLEMENTATION CANDIDATE / NOT ACCEPTED.** Held-out consented real-history evaluation, independent security/privacy review, and an actual third-party-host integration run remain OPEN / PENDING. A reference harness and passing CI do not close these gates. See `REPORT_M2_ACTIVE_MEMORY.md`, `REPORT_M2_REFERENCE_HOST.md`, `docs/status.md`, and `docs/debug.md`.
+
+---
+
 ## 2026-10-26 — Reference host harness merged; policy alignment follow-up
 
 PR #49 merged at `5fffbb23d0591a48f0bbd82472cbc0c4f3cd52ba`; exact-head run [40298108786](https://github.com/yash936936/AGM/actions/runs/40298108786) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. The harness does not close the real third-party-host gate. Follow-up branch `m2/policy-executor-contract-alignment` makes history proposals require an entity and deletion proposals require an exact target memory ID, matching executor requirements. Local pytest NOT RUN here; follow-up CI pending. M2 and external release gates remain unaccepted.
