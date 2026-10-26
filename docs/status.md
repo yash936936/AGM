@@ -1,3 +1,13 @@
+## 2026-10-26 — Reference host integration harness candidate
+
+**Status: IMPLEMENTATION CANDIDATE / NOT ACCEPTED.** Added `src/agm/reference_host.py` as a dependency-free example of trusted host identity resolution, scoped `Ctx`/permissions, current-message proposal review, host-verified mutation confirmation, and explicit executor invocation. Added tests for missing identity, confirmation denial, tenant isolation, and rejected proposals not mutating the event log.
+
+**Validation:** Local pytest NOT RUN in this remote editing environment. Exact-head CI is pending for branch `m2/reference-host-harness`. See `REPORT_M2_REFERENCE_HOST.md`.
+
+**External gates:** Real third-party host integration remains OPEN; this harness is not itself a third-party host. Held-out consented real-history evaluation and independent security/privacy review remain OPEN / PENDING.
+
+---
+
 ## 2026-10-26 — M2 proposal executor surface boundary and guardrail CI
 
 PR #47 merged at `4641796ef1a7ac6b3dfbac6abb33e04c63fb2f70`. Exact-head GitHub Actions run [40229139385](https://github.com/yash936936/AGM/actions/runs/40229139385) passed all six Ubuntu/Windows Python 3.11–3.13 jobs, including the full test suite, REST smoke, MCP fresh-session smoke, hygiene, whitespace, and package inspection.
