@@ -204,3 +204,9 @@ def test_reference_host_correction_history_delete_and_rebuild(tmp_path):
             assert deleted.execution.deleted
         store.rebuild_views()
         assert not store.retrieve(principal.ctx, "user editor", entity="user").items
+    with MemoryStore(db) as reopened:
+        reopened.rebuild_views()
+        assert not reopened.retrieve(principal.ctx, "user editor", entity="user").items
+        payloads = " ".join(str(row[0]) for row in reopened.conn.execute("SELECT payload FROM events"))
+        assert "Neovim" not in payloads
+        assert "Vim" not in payloads
