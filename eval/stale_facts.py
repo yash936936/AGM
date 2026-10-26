@@ -206,7 +206,7 @@ def main(argv: list[str] | None = None) -> int:
         }, indent=2, sort_keys=True))
         return 0
     print("AGM synthetic retrieval smoke evaluation (not a production benchmark)")
-    print(f"Scenarios: {len(SCENARIOS)}; top-k: {args.k}; timed repeats/scenario: {args.repeats}; embedder: hash-256-v1")
+    print(f"Scenarios: {len(SCENARIOS)}; top-k: {args.k}; timed repeats/scenario: {args.repeats}; archive-size/mode: {args.archive_size}; embedder: hash-256-v1")
     print("Quality metrics: accuracy = expected answer present in returned items; stale error = old value returned for corrected-fact case; abstention = abstained scenarios / all scenarios.")
     print("Performance metrics time retrieval calls only after one warm-up per scenario; seed/setup and process startup are excluded.")
     print()
