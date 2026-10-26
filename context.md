@@ -1,3 +1,11 @@
+## 2026-10-26 — Latest benchmark and M0/M1/M2 remaining-work audit
+
+PR #54 merged at `a93d3a8ca62dce336caf36367a6ee0e5744f0349`; exact-head CI [40303228204](https://github.com/yash936936/AGM/actions/runs/40303228204) passed all six Ubuntu/Windows Python 3.11–3.13 jobs. The synthetic benchmark supports text and JSON output, including retrieval-only latency percentiles and sequential throughput. It remains synthetic-only and does not validate H1–H7 or production readiness. See `docs/benchmarks/synthetic_retrieval_smoke.md`.
+
+**Remaining work summary:** M0: review the complete current-main expiry/revocation/pinning/replay/rollback acceptance matrix and add evidence only for uncovered cases. M1: audit the full lifecycle, scope isolation, bounded context/provenance, quarantine/export, and REST/MCP adapter matrix; repository CI does not replace target-environment or real-host checks. M2: decide whether proposal execution remains library-only under D-037 or merits a separately approved adapter-contract change; implementation is CI-verified but M2 is NOT ACCEPTED. Release blockers: held-out consented real-history evaluation, independent security/privacy review, and actual third-party-host integration are all OPEN. Never call AGM production-ready until these are completed and reviewed. See `docs/status.md` and the three `docs/acceptance/` protocols.
+
+---
+
 ## 2026-10-26 — M2 closure audit merged; external gates remain open
 
 PR #51 merged at `28fd9f5030f670ee16ff363d3594ad3b4a80914f`. Its corrected exact-head CI run [40300716725](https://github.com/yash936936/AGM/actions/runs/40300716725) passed all six Ubuntu/Windows Python 3.11–3.13 jobs, including pytest, REST/MCP smoke clients, hygiene, whitespace, and wheel/package inspection. Policy rejects history proposals without an entity and correction/delete proposals without exact target memory IDs. Local pytest was NOT RUN in the remote editing environment.
