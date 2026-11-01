@@ -1,10 +1,20 @@
+## D-042 — Remove MCP adapter; REST + library are the only integration surfaces — 2026-11-02
+
+**Decision:** Delete `src/agm/mcp_server.py`, the `serve-mcp` CLI command, `runtime_identity_from_env`, the `mcp` dependency, MCP tests/examples and the MCP CI step. REST (`api.py`) and the Python library are the supported surfaces. Agents that cannot call HTTP directly use the REST client / CLI wrappers on the roadmap.
+
+**Why:** Speed. One adapter halves the contract and test surface and removes an SDK pin (D-015) and an env-var identity path that was unsuitable for remote use anyway. Supersedes D-004 (two adapters), D-015 (FastMCP pin) and the MCP halves of D-014, D-021 and the architecture parity table. The old code is recoverable from tag `archive/pre-cleanup-main`.
+
+**Cost accepted:** Claude Code / Claude Desktop / Codex lose native tool-call integration until a thin client or an optional MCP shim is re-added (see `docs/ROADMAP.md`, R1 and R6).
+
+**Affects:** `cli.py`, `config.py`, `pyproject.toml` (version 0.6.0), CI, docs. Frozen REST paths and the library API are unchanged. Also removed with this cleanup: Phase-8 LLM-agent harness and its optional `openai`/`gemini` extras, one-shot migration/packaging scripts, generated artifacts, and historical phase reports (all preserved in the tag).
+
 ## D-041 — Validate correction target before proposal eligibility
 
 **Decision:** A correction proposal is ineligible unless it includes an exact target memory ID, matching the executor's `MemoryStore.supersede()` requirement. Reject it during policy review, before the host asks for confirmation or calls execution.
 
 **Why:** Proposal eligibility should guarantee that the executor's required target fields exist. Otherwise an incomplete correction could be presented for confirmation and fail only after execution is attempted.
 
-**Affects:** `src/agm/active_memory_policy.py` and `tests/test_active_memory_policy.py`; no store schema, REST/MCP contract, or dependency change.
+**Affects:** `src/agm/active_memory_policy.py` and `tests/test_active_memory_policy.py`; no store schema, REST contract, or dependency change.
 
 ---
 
@@ -12,7 +22,7 @@
 
 **Decision:** Treat the M2 implementation as repository-CI-verified but NOT ACCEPTED until the acceptance review and required external evidence are complete. A green six-job CI matrix verifies repository tests and smoke clients only; it does not stand in for a held-out consented real-history evaluation, independent security/privacy review, or a real third-party host run.
 
-**Why:** The reference host is an integration harness, not an authentication system or independently maintained host. The proposal executor is intentionally library-only under D-037, so REST/MCP smoke results must not be presented as executor surface parity.
+**Why:** The reference host is an integration harness, not an authentication system or independently maintained host. The proposal executor is intentionally library-only under D-037, so REST smoke results must not be presented as executor surface parity.
 
 **Affects:** M2 reports and release status only; no runtime behavior or frozen API contracts change.
 
@@ -24,7 +34,7 @@
 
 **Why:** The executor's history path requires an entity and its delete path calls the hard-delete API with one exact ID. Policy eligibility must guarantee these required fields before the host reaches confirmation or execution.
 
-**Affects:** `src/agm/active_memory_policy.py` and `tests/test_active_memory_policy.py`. No store schema, REST/MCP contract, or dependency change.
+**Affects:** `src/agm/active_memory_policy.py` and `tests/test_active_memory_policy.py`. No store schema, REST contract, or dependency change.
 
 ---
 
@@ -32,7 +42,7 @@
 
 **Decision:** Add an additive Python reference-host harness that resolves an opaque authenticated-session handle to a trusted principal, derives the scoped `Ctx` and permissions from that principal, reviews proposals against the current user message, and requires a host confirmation verifier for mutations before invoking the library-only executor.
 
-**Why:** The active-memory executor needs a concrete integration example that tests the host-owned identity and confirmation boundary without silently changing frozen REST/MCP contracts.
+**Why:** The active-memory executor needs a concrete integration example that tests the host-owned identity and confirmation boundary without silently changing frozen REST contracts.
 
 **Limits:** This is a harness, not production authentication. The resolver and confirmation verifier must be backed by the actual host's trusted session and UI/workflow state. The harness opens no network listener, uses no new dependency, and does not close the real third-party-host gate until an actual host is tested and reviewed.
 
@@ -42,11 +52,11 @@
 
 ## D-037 — Keep proposal executor library-only; adapters retain frozen contracts
 
-**Decision:** Treat `execute_authorized_memory_proposal()` as an additive Python library API for M2. Do not silently route REST or MCP mutation tools through proposal review or change their request/response contracts. REST and MCP remain direct authenticated adapters over the existing scoped `MemoryStore` operations. Integrators using the new proposal lifecycle must call the executor with trusted host authorization, the real scoped `Ctx`, and explicit mutation confirmation.
+**Decision:** Treat `execute_authorized_memory_proposal()` as an additive Python library API for M2. Do not silently route REST or MCP mutation tools through proposal review or change their request/response contracts. REST remain direct authenticated adapters over the existing scoped `MemoryStore` operations. Integrators using the new proposal lifecycle must call the executor with trusted host authorization, the real scoped `Ctx`, and explicit mutation confirmation.
 
-**Why:** The active-turn seam has a current-message evidence/policy contract that existing REST/MCP calls do not receive. Retrofitting that contract into the existing adapters would change their semantics and require an explicit contract and compatibility review. A library-only boundary is safer than implying parity that is not implemented.
+**Why:** The active-turn seam has a current-message evidence/policy contract that existing REST calls do not receive. Retrofitting that contract into the existing adapters would change their semantics and require an explicit contract and compatibility review. A library-only boundary is safer than implying parity that is not implemented.
 
-**Verification boundary:** Shared `MemoryStore` operations have adapter smoke coverage, but the new proposal-policy/confirmation flow is not exposed through REST/MCP and therefore does not have behavioral parity across those surfaces. Any future adapter integration requires a new numbered decision, request schemas, authentication-to-context mapping, explicit confirmation semantics, and cross-surface acceptance tests.
+**Verification boundary:** Shared `MemoryStore` operations have adapter smoke coverage, but the new proposal-policy/confirmation flow is not exposed through REST and therefore does not have behavioral parity across those surfaces. Any future adapter integration requires a new numbered decision, request schemas, authentication-to-context mapping, explicit confirmation semantics, and cross-surface acceptance tests.
 
 **Affects:** M2 implementation report and status. No code behavior, REST route, MCP tool name, schema, dependency, or persisted data change.
 
@@ -58,7 +68,7 @@
 
 **Why:** Proposal review alone does not connect the lifecycle to an execution path. Keeping the executor explicit preserves the boundary between proposal eligibility and host authorization.
 
-**Limits:** The authorization flag and scope set are trusted inputs from the host, not authentication by themselves. Callers must derive them from the actual authenticated identity and pass the matching scoped Ctx. REST/MCP contracts are unchanged; parity of this new library executor with adapter execution paths must be tested or intentionally documented. Current-head tests and CI remain pending.
+**Limits:** The authorization flag and scope set are trusted inputs from the host, not authentication by themselves. Callers must derive them from the actual authenticated identity and pass the matching scoped Ctx. REST contracts are unchanged; parity of this new library executor with adapter execution paths must be tested or intentionally documented. Current-head tests and CI remain pending.
 
 **Affects:** src/agm/active_memory_turn.py, active-turn tests and M2 report. No new dependency or persisted schema change.
 
@@ -68,7 +78,7 @@
 
 **Decision:** Add a small Python orchestration seam that combines pre-answer context preparation with during/after-turn proposal review, but does not execute writes, corrections, or deletion. Eligible proposals remain subject to host authorization and existing scoped core/API methods.
 
-**Why:** Active memory needs a clear before/during/after-turn integration point without granting model-generated proposals direct mutation authority or changing frozen REST/MCP contracts.
+**Why:** Active memory needs a clear before/during/after-turn integration point without granting model-generated proposals direct mutation authority or changing frozen REST contracts.
 
 **Affects:** New `src/agm/active_memory_turn.py` and focused tests. No new dependency, no schema change, and no public REST path or MCP tool-name change. This is an additive Python library API.
 
@@ -106,7 +116,7 @@
 
 ## D-030 — Add local hub read views and snapshot export
 **Decision:** Add a dependency-free `agm.local_hub` module for a tenant/project-filtered event timeline that excludes raw payloads, deterministic read-only graph snapshots, and guarded Obsidian Markdown export. Snapshot exports are copies and are not automatically deleted when the source memory is deleted. Quarantined nodes are excluded from Obsidian export; exported user text/value/attribute fields pass through the existing core secret redactor.
-**Why:** M1 needs local inspection and export surfaces without introducing a new web framework or changing frozen REST/MCP contracts.
+**Why:** M1 needs local inspection and export surfaces without introducing a new web framework or changing frozen REST contracts.
 **Limits:** These helpers receive an already-authenticated `Ctx`. They do not implement owner bootstrap/login, session lifecycle, connection registration or live connectivity checks; those remain separate M1 requirements. A snapshot is not authoritative state.
 **Affects:** `src/agm/local_hub.py`, `tests/test_local_hub.py`, M0/M1 review notes. No new dependencies or frozen contract changes.
 
@@ -118,7 +128,7 @@
 ## D-028 — Add explicit tenant/project-scoped retention purge
 **Decision:** Add `MemoryStore.expire_before(ctx, cutoff, *, include_pinned=False)` returning `ExpiryResult`. Select eligible memories by source event `created_at`, not `valid_from`; scope the sweep to the caller's tenant and project; skip pinned memories unless explicitly included. Use hard-delete semantics rather than writer revocation.
 **Why:** The M1 lifecycle definition calls for a real expiry/retention operation. The existing decay lifecycle only reports candidates and does not mutate stored data.
-**Affects:** `src/agm/models.py`, `src/agm/store.py`, `src/agm/__init__.py`, lifecycle tests and docs. No REST/MCP/CLI API or new dependency.
+**Affects:** `src/agm/models.py`, `src/agm/store.py`, `src/agm/__init__.py`, lifecycle tests and docs. No REST/CLI API or new dependency.
 
 
 # Decisions — AGM prototype
@@ -153,7 +163,7 @@
 
 ## D-023 — Standing builder guidelines and an expanded review checklist — 2026-10-23
 **Decision:** `AGENTS.md` (root) holds the standing rules for any builder agent (ChatGPT, Codex, Claude Code); `prompts/builder_system_prompt.md` is the general prompt to paste once into a ChatGPT project or custom GPT; `prompts/phase_brief_template.md` is the template for each phase brief. The supervisor review checklist in `docs/workflow.md` now includes direct-library parity, surface parity, on-disk delete checks and a mandatory run of both smoke clients.
-**Why:** The guard drifted into the adapters unnoticed for three phases because no checklist item compared the library surface with REST/MCP. Standing rules in the repo mean each new builder session starts from the same invariants instead of relying on a pasted prompt.
+**Why:** The guard drifted into the adapters unnoticed for three phases because no checklist item compared the library surface with REST. Standing rules in the repo mean each new builder session starts from the same invariants instead of relying on a pasted prompt.
 **Affects:** `AGENTS.md`, `prompts/`, `docs/workflow.md`, `context.md`.
 
 ## D-022 — Flush the WAL after delete and revoke; enable secure_delete — 2026-10-23
@@ -162,7 +172,7 @@
 **Affects:** `db.py`, `store.py`, `tests/test_delete_ondisk.py`.
 
 ## D-021 — The guard runs inside MemoryStore, not only at the adapters — 2026-10-23
-**Decision:** `MemoryStore.write` and `MemoryStore.supersede` always call `inspect_write_item` (redact, then quarantine if instruction-like) before any event is appended or text embedded. `supersede` also redacts its `reason`, and `handoff_save` redacts every string in `TaskState` and the `session_id`. `guarded_write` remains as a thin wrapper that calls `store.write`. `write_quarantined` re-sanitizes its input. REST and MCP no longer contain safety logic. This supersedes the placement chosen in D-014 (boundary guard); the behaviour of D-014 is unchanged for REST and MCP callers.
+**Decision:** `MemoryStore.write` and `MemoryStore.supersede` always call `inspect_write_item` (redact, then quarantine if instruction-like) before any event is appended or text embedded. `supersede` also redacts its `reason`, and `handoff_save` redacts every string in `TaskState` and the `session_id`. `guarded_write` remains as a thin wrapper that calls `store.write`. `write_quarantined` re-sanitizes its input. REST no longer contain safety logic. This supersedes the placement chosen in D-014 (boundary guard); the behaviour of D-014 is unchanged for REST callers.
 **Why:** Direct library calls bypassed the guard. A key-shaped string written through the library was stored unredacted in `events` and `nodes`. The architecture's write path places redaction in the core. The supersede `reason` and handoff task state were unguarded on every surface.
 **Affects:** `guard.py`, `store.py`, `api.py`, `mcp_server.py`, `tests/test_guard_core.py`.
 
@@ -188,7 +198,7 @@
 **Affects:** `events.py`, `store.py`, `trust.py`, `handoff.py`, replay and trust tests.
 
 ## D-016 — Add an explicit high-stakes gate and usable handoff result — 2026-10-23
-**Decision:** Add the optional `high_stakes=False` argument to `MemoryStore.retrieve`, and pass it through REST and MCP. In high-stakes mode, `trusted_agent` and `untrusted` memories are probationary until at least one different writer independently confirms the same active fact. Extend `ResumeResult` with `context`, `readback_prompt`, `target_model`, `token_budget`, and `estimated_tokens`. Estimate context tokens as `ceil(characters / 4)` and cap the returned context at four characters per budget token.
+**Decision:** Add the optional `high_stakes=False` argument to `MemoryStore.retrieve`, and pass it through REST. In high-stakes mode, `trusted_agent` and `untrusted` memories are probationary until at least one different writer independently confirms the same active fact. Extend `ResumeResult` with `context`, `readback_prompt`, `target_model`, `token_budget`, and `estimated_tokens`. Estimate context tokens as `ceil(characters / 4)` and cap the returned context at four characters per budget token.
 **Why:** the previous retrieval contract had no way to request the Phase 4 probation rule, and `ResumeResult(goal, packet_id)` could not return the assembled context needed to continue work. Existing default retrieval and the flat-baseline toggle remain unchanged.
 **Affects:** the frozen contract addendum, `models.py`, `store.py`, `retrieve.py`, `trust.py`, `api.py`, `mcp_server.py`, handoff tests.
 
@@ -197,8 +207,8 @@
 **Why:** The frozen Phase 3 brief explicitly names FastMCP. The official SDK's 2.x line renamed that server API, so pinning the maintained 1.x line avoids an unreviewed breaking API shift while preserving a standards-based MCP server/client interface.
 **Affects:** `pyproject.toml`, `src/agm/mcp_server.py`, MCP integration tests.
 
-## D-014 — Guard inputs at the REST/MCP boundary — 2026-10-23
-**Decision:** REST and MCP writes pass through the same guard before the event append. Recognized secret patterns are replaced with `[REDACTED]`; instruction-like writes are recorded with `status="quarantined"` and are excluded from default retrieval and history responses. Services bind to loopback only.
+## D-014 — Guard inputs at the REST boundary — 2026-10-23
+**Decision:** REST writes pass through the same guard before the event append. Recognized secret patterns are replaced with `[REDACTED]`; instruction-like writes are recorded with `status="quarantined"` and are excluded from default retrieval and history responses. Services bind to loopback only.
 **Why:** Redaction after persistence is too late because the raw value would remain in the event log or embedding input. Local-only exposure is the safe prototype default until a separate review approves remote deployment.
 **Affects:** `config.py`, `guard.py`, `api.py`, `mcp_server.py`, `store.py`, interface tests.
 
@@ -247,7 +257,7 @@
 **Why:** Two different models drift apart without a shared spec. Contract-first keeps review mechanical.
 **Affects:** workflow, all phases.
 
-## D-004 — One core, two adapters (REST and MCP) — 2026-10-22
+## D-004 — One core, two adapters (REST) — 2026-10-22
 **Decision:** All logic in `MemoryStore`; `api.py` and `mcp_server.py` only authenticate and translate.
 **Why:** REST covers local agents and ChatGPT Actions; MCP covers Claude Code, Codex and Desktop. One core means one set of tests.
 **Affects:** architecture, Phase 3.

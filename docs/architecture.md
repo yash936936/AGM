@@ -1,7 +1,7 @@
 # Architecture — AGM prototype
 
 ## System overview
-One core library (`agm.store.MemoryStore`) holds all behaviour. The REST API and MCP server
+One core library (`agm.store.MemoryStore`) holds all behaviour. The REST API
 are thin adapters that authenticate, build a `Ctx`, and call the core. All writes append an
 event to an immutable log; `nodes`, `edges`, FTS and vectors are views that `rebuild_views()`
 can regenerate by replay (v5 section 5.1). Retrieval is two-stage: **seed** (FTS5 keyword plus
@@ -25,7 +25,7 @@ then rank, check sufficiency, and either return or abstain.
 - **Responsibility:** task state, packet build, context assembly under a token budget, readback comparison.
 - **Location:** `src/agm/handoff.py`
 ### Adapters
-- **Location:** `src/agm/api.py` (FastAPI), `src/agm/mcp_server.py` (FastMCP), `src/agm/cli.py`, `src/agm/config.py`
+- **Location:** `src/agm/api.py` (FastAPI), `src/agm/cli.py`, `src/agm/config.py`
 
 ## Core contracts (FROZEN — change only via a decisions.md entry)
 ```python
@@ -90,8 +90,8 @@ class TaskState:  goal: str; plan: list[str]; progress: list[str]; decisions: li
 class Readback:   goal: str; decisions: list[str]; open_items: list[str]
 ```
 
-## Tool / endpoint parity (REST path ↔ MCP tool name)
-| MCP tool | REST | Maps to |
+## Endpoint map (REST path ↔ library method)
+| Operation | REST | Maps to |
 |---|---|---|
 | `memory_write` | POST /v1/memory | `write` |
 | `memory_retrieve` | POST /v1/memory/retrieve | `retrieve` |
@@ -102,7 +102,7 @@ class Readback:   goal: str; decisions: list[str]; open_items: list[str]
 | `handoff_resume` | POST /v1/handoff/{id}/resume | `handoff_resume` |
 | `handoff_readback` | POST /v1/handoff/{id}/readback | `handoff_readback` |
 | `memory_revoke_writer` | POST /v1/admin/revoke | `revoke_writer` (admin scope) |
-MCP tool descriptions must say plainly what each tool is for, so an agent picks the right one.
+Endpoint descriptions in the OpenAPI schema must say plainly what each is for, so an agent picks the right one. (MCP removed in D-042.)
 
 ## SQLite schema (views marked V are rebuildable from `events`)
 - `events`(id INTEGER PK, tenant, writer_id, tier, hlc TEXT, idem_key, base_version, type, payload JSON, created_at; UNIQUE(tenant, writer_id, idem_key))  — **source of truth**
@@ -138,11 +138,10 @@ src/agm/
 ├── handoff.py       — task state, packet, assembly, readback
 ├── config.py        — keys file, env identity
 ├── api.py           — FastAPI adapter
-├── mcp_server.py    — FastMCP adapter (stdio and streamable HTTP)
-└── cli.py           — agm serve-api | serve-mcp | demo | rebuild
+└── cli.py           — agm serve-api | demo | rebuild | bootstrap-owner | lifecycle | doctor
 tests/               — one test file per module plus test_replay.py, test_e2e_rest.py
 eval/stale_facts.py  — Phase 5 flat vs graph mini eval
-examples/            — python_client.py, curl.md, claude_code_mcp.md, chatgpt_actions.md
+examples/            — python_client.py, curl.md, chatgpt_actions.md
 ```
 
 ## Active-memory host integration

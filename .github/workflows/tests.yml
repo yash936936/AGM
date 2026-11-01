@@ -32,7 +32,5 @@ jobs:
         run: python -m pytest -q
       - name: Run REST integration smoke client
         run: python examples/rest_smoke_client.py
-      - name: Run MCP fresh-session smoke client
-        run: python examples/mcp_smoke_client.py
       - name: Build wheel and inspect package contents
         run: python scripts/check_package.py

@@ -18,3 +18,4 @@ agm.keys.json
 .env.*
 !.env.example
 eval/results/
+logs/

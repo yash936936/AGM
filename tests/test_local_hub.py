@@ -154,3 +154,35 @@ def test_obsidian_export_preserves_source_span_provenance(tmp_path):
         assert "source_span_start: 12" in exported
         assert "source_span_end: 27" in exported
 
+def test_graph_snapshot_is_reproducible_after_view_rebuild(tmp_path):
+    ctx = _ctx()
+    with MemoryStore(str(tmp_path / "snapshot-rebuild.db")) as store:
+        first = store.write(ctx, WriteItem(kind="episode", text="Rebuildable snapshot marker"))
+        fact = store.write(
+            ctx,
+            WriteItem(
+                kind="fact",
+                text="Rebuildable snapshot fact",
+                entity="service",
+                attribute="state",
+                value="healthy",
+                source_span={"episode_id": first.item_id, "start": 0, "end": 20},
+            ),
+        )
+        before = graph_snapshot(store, ctx)
+        assert before["snapshot"] is True
+        assert first.item_id in {node["id"] for node in before["nodes"]}
+        assert any(
+            edge["src"] == fact.item_id
+            and edge["dst"] == first.item_id
+            and edge["type"] == "derived_from"
+            for edge in before["edges"]
+        )
+
+        store.rebuild_views()
+
+        after = graph_snapshot(store, ctx)
+        assert after["snapshot"] is True
+        assert after == before
+        assert any(edge["type"] == "derived_from" for edge in after["edges"])
+

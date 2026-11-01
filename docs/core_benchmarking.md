@@ -10,7 +10,7 @@ This document defines the measurements needed to compare AGM retrieval modes and
 
 The current `eval/stale_facts.py` is a synthetic smoke evaluation with four hand-authored scenarios and 60 unrelated synthetic archive notes. It compares flat retrieval (`expand=False`) with graph retrieval (`expand=True`) using the hash embedder. Its code explicitly warns that the results are not evidence for hypotheses H1–H7.
 
-The Phase 5 record in `docs/phases.md` reports the following historical smoke-test output:
+The Phase 5 record (git tag `archive/pre-cleanup-main`) reports the following historical smoke-test output:
 
 | Metric | Flat | Graph | Interpretation |
 |---|---:|---:|---|

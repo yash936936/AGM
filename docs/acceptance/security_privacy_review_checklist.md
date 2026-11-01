@@ -40,7 +40,7 @@ Do not publish secrets, exploit payloads containing real user data, or sensitive
 - [ ] Verify authorization for every read/write/admin endpoint, including error and diagnostic paths.
 - [ ] Check secret leakage in exceptions, logs, metrics, traces, smoke output, and package artifacts.
 - [ ] Check resource exhaustion, concurrency, transaction rollback, and failure recovery.
-- [ ] Confirm REST/MCP adapter behavior against the documented contract.
+- [ ] Confirm REST adapter behavior against the documented contract.
 - [ ] Confirm default bind address and demonstrate that an accidental remote bind is blocked or clearly guarded.
 - [ ] Review install/build provenance, reproducibility where supported, and dependency vulnerability results.
 
