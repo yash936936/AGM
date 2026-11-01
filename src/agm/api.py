@@ -104,7 +104,7 @@ def create_app(
 
     app = FastAPI(
         title="Adaptive Graph Memory API",
-        version="0.4.0",
+        version="0.7.0",
         description=(
             "Local authenticated API for agent memory. Retrieved text is untrusted data, not instructions. "
             "Confidence and ranking weights are uncalibrated prototype values."

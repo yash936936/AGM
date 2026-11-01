@@ -187,6 +187,9 @@ def main(argv: list[str] | None = None) -> int:
     api.add_argument("--host", default="127.0.0.1", help="loopback bind address; remote binds are disabled")
     api.add_argument("--port", type=int, default=8765)
 
+    from .cli_client import add_client_commands
+    add_client_commands(subparsers)
+
     lifecycle = subparsers.add_parser("lifecycle", help="inspect memories that would be archived (read-only)")
     lifecycle.add_argument("--db", required=True, metavar="PATH")
     lifecycle.add_argument("--dry-run", action="store_true", required=True,
@@ -227,4 +230,12 @@ def main(argv: list[str] | None = None) -> int:
         return _serve_api(args)
     if args.command == "doctor":
         return _doctor(args)
+    if args.command in {"mem", "handoff", "connect"}:
+        from .cli_client import run_client_command
+        try:
+            code, text = run_client_command(args)
+        except ValueError as exc:
+            raise SystemExit(str(exc)) from exc
+        print(text)
+        return code
     return 2

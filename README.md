@@ -2,15 +2,16 @@
 
 A Python memory layer for AI agents. Event-sourced SQLite core; graph, keyword and vector retrieval; provenance, trust tiers, lifecycle (supersede, delete, expire, revoke) and task handoff. Model-agnostic: the caller supplies structured memories, AGM never calls an LLM.
 
-**Status:** research prototype, v0.6.0, local-only (loopback). Not production-ready; see [`docs/ROADMAP.md`](docs/ROADMAP.md) and [`docs/status.md`](docs/status.md).
+**Status:** research prototype, v0.7.0, local-only (loopback). Not production-ready; see [`docs/ROADMAP.md`](docs/ROADMAP.md) and [`docs/status.md`](docs/status.md).
 
 ## Interfaces
 
 - **Python library:** `agm.MemoryStore`
 - **REST API:** FastAPI, `X-API-Key` auth, OpenAPI at `/docs` (works with any HTTP-capable agent, ChatGPT Actions, curl)
-- **CLI:** `python -m agm …`
+- **Python client:** `from agm import AgmClient` (standard library only)
+- **CLI:** `python -m agm …`, including `mem` / `handoff` wrappers for shell-based agents (Claude Code, Codex) and `connect` to issue a scoped agent key
 
-MCP was removed in v0.6.0 (decision D-042).
+MCP was removed in v0.6.0 (decision D-042). See [`docs/QUICKSTART.md`](docs/QUICKSTART.md) to connect an agent in 5 minutes.
 
 ## Quick start
 
@@ -39,7 +40,7 @@ The event log is the source of truth; node, edge, FTS5 and embedding tables are 
 
 ```
 src/agm/     core library, REST adapter, CLI
-tests/       264 tests (pytest)
+tests/       274 tests (pytest)
 eval/        synthetic benchmarks and stale-fact evaluation
 scripts/     repo hygiene, package check, real-history evaluator
 examples/    clients and sample data

@@ -1,6 +1,6 @@
 # AGM context (router)
 
-AGM = Adaptive Graph Memory: event-sourced, model-agnostic memory layer for agents. Spec: `docs/SPEC_v5.md`. Version 0.6.0, local-only prototype. Interfaces: Python library, REST, CLI (MCP removed, D-042).
+AGM = Adaptive Graph Memory: event-sourced, model-agnostic memory layer for agents. Spec: `docs/SPEC_v5.md`. Version 0.7.0, local-only prototype. Interfaces: Python library, REST, stdlib client (`agm.client`), CLI incl. `agm mem|handoff|connect` (MCP removed, D-042). New to the project? `docs/QUICKSTART.md`.
 
 Read order for any contributor or agent: `AGENTS.md` (rules, invariants) → this file → `docs/status.md` → `docs/ROADMAP.md`.
 

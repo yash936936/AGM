@@ -138,7 +138,10 @@ src/agm/
 ├── handoff.py       — task state, packet, assembly, readback
 ├── config.py        — keys file, env identity
 ├── api.py           — FastAPI adapter
-└── cli.py           — agm serve-api | demo | rebuild | bootstrap-owner | lifecycle | doctor
+├── client.py        — stdlib REST client (D-043)
+├── agent_keys.py    — scoped agent key creation
+├── cli_client.py    — mem/handoff/connect CLI wrappers
+└── cli.py           — agm serve-api | demo | rebuild | bootstrap-owner | connect | mem {write,retrieve,history,supersede,delete} | handoff {save,resume,readback} | lifecycle | doctor
 tests/               — one test file per module plus test_replay.py, test_e2e_rest.py
 eval/stale_facts.py  — Phase 5 flat vs graph mini eval
 examples/            — python_client.py, curl.md, chatgpt_actions.md

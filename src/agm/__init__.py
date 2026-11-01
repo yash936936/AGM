@@ -1,10 +1,11 @@
-"""Adaptive Graph Memory, Phase 5 graph memory, trust, handoff and lifecycle prototype."""
+"""Adaptive Graph Memory: event-sourced agent memory with graph retrieval, trust, handoff and lifecycle."""
 
 from .models import Ctx, DeleteResult, ExpiryResult, Relation, RetrieveResult, SourceSpan, WriteItem, WriteResult
+from .client import AgmClient, AgmError
 from .store import MemoryStore
 
 __all__ = [
-    "Ctx", "DeleteResult", "ExpiryResult", "MemoryStore", "Relation", "RetrieveResult",
+    "AgmClient", "AgmError", "Ctx", "DeleteResult", "ExpiryResult", "MemoryStore", "Relation", "RetrieveResult",
     "SourceSpan", "WriteItem", "WriteResult",
 ]
-__version__ = "0.5.1"
+__version__ = "0.7.0"

@@ -1,3 +1,15 @@
+## D-043 — Add client, `agm mem|handoff|connect` CLI commands (roadmap R1) — 2026-11-02
+
+**Decision:** Add `agm.client.AgmClient` (standard library only), `agm.agent_keys.add_agent_key`, and the CLI commands `agm mem write|retrieve|history|supersede|delete`, `agm handoff save|resume|readback`, `agm connect`. They call the existing REST routes; no route, model or store change. CLI output is JSON, or compact text with `retrieve --brief`.
+
+**Why:** After MCP removal (D-042), shell-capable agents (Claude Code, Codex) and Python agents need a zero-dependency way to reach the REST API. `connect` issues least-privilege agent keys (never `admin` or `*`) in the owner's tenant/project so agents do not share the owner key.
+
+**Safety properties:** the client never follows redirects, refuses plain http to non-loopback hosts, and hides the key in `repr`; the guard and quarantine still run in the core. `connect` validates the whole key file before an atomic replace. Keys are printed once to the terminal and live in the key file; hashing at rest is R3.1.
+
+**Not included (needs its own decision):** REST routes for the library-only active-memory executor (D-037); R1.4 therefore stays open.
+
+**Affects:** `client.py`, `agent_keys.py`, `cli_client.py`, `cli.py`, `__init__.py` (version 0.7.0), `tests/test_client.py`, docs. No new dependency.
+
 ## D-042 — Remove MCP adapter; REST + library are the only integration surfaces — 2026-11-02
 
 **Decision:** Delete `src/agm/mcp_server.py`, the `serve-mcp` CLI command, `runtime_identity_from_env`, the `mcp` dependency, MCP tests/examples and the MCP CI step. REST (`api.py`) and the Python library are the supported surfaces. Agents that cannot call HTTP directly use the REST client / CLI wrappers on the roadmap.
