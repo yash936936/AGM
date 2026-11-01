@@ -112,27 +112,6 @@ def load_key_registry(path: str | Path | None = None) -> KeyRegistry:
         raise RuntimeError(f"Invalid API key configuration in {key_path}: {exc}") from exc
 
 
-def runtime_identity_from_env() -> tuple[Ctx, frozenset[str]]:
-    """Resolve the explicitly configured identity for a local MCP process."""
-    tenant = os.environ.get("AGM_TENANT", "").strip()
-    writer = os.environ.get("AGM_WRITER", "").strip()
-    tier = os.environ.get("AGM_TIER", "").strip()
-    missing = [name for name, value in (("AGM_TENANT", tenant), ("AGM_WRITER", writer), ("AGM_TIER", tier)) if not value]
-    if missing:
-        raise RuntimeError("MCP identity is not configured; set " + ", ".join(missing) + ".")
-    if tier not in VALID_TIERS:
-        raise RuntimeError("AGM_TIER must be one of: " + ", ".join(sorted(VALID_TIERS)) + ".")
-    scopes_raw = os.environ.get("AGM_SCOPES", ",".join(DEFAULT_SCOPES))
-    scopes = frozenset(value.strip() for value in scopes_raw.split(",") if value.strip())
-    return Ctx(
-        tenant_id=tenant,
-        writer_id=writer,
-        tier=tier,  # type: ignore[arg-type]
-        project=os.environ.get("AGM_PROJECT", "default"),
-        agent=os.environ.get("AGM_AGENT", ""),
-    ), scopes
-
-
 def ensure_loopback_host(host: str) -> None:
     if host.strip().lower() not in {"127.0.0.1", "localhost", "::1"}:
         raise RuntimeError(

@@ -3,7 +3,7 @@
 > Stub. Grows as phases land; each scenario is added when its phase is done.
 
 ## Agent remembers and corrects (Phases 1–3)
-1. Agent connects (REST key or MCP stdio) and calls `memory_write` with entity, attribute, value, text.
+1. Agent connects (REST key) and calls `memory_write` with entity, attribute, value, text.
 2. Later the fact changes; agent calls `memory_write` with the new value (or `memory_supersede` with a reason).
 3. Next session the agent calls `memory_retrieve`; only the current value returns, with provenance and confidence. An unanswerable query returns `abstain: true`.
 

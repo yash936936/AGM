@@ -1,6 +1,6 @@
 # Real third-party host integration validation
 
-Status: **NOT VERIFIED.** Repository REST and MCP smoke clients passing in CI prove only that the repository's own test clients can exercise the adapters. They do not establish interoperability with an independently maintained host.
+Status: **NOT VERIFIED.** Repository REST smoke clients passing in CI prove only that the repository's own test clients can exercise the adapters. They do not establish interoperability with an independently maintained host.
 
 ## Required test record
 
@@ -34,7 +34,7 @@ Status: **NOT VERIFIED.** Repository REST and MCP smoke clients passing in CI pr
 - [ ] Host restart and AGM restart behavior are documented.
 - [ ] No secrets or sensitive payloads appear in logs, errors, telemetry, or host UI unexpectedly.
 
-For MCP, identify the host's actual MCP client/runtime and transport mode. For REST, identify the concrete host integration that calls the documented endpoints. Testing a custom script against AGM is not an external-host test.
+Identify the concrete host integration that calls the documented endpoints. Testing a custom script against AGM is not an external-host test.
 
 ## Evidence and acceptance
 

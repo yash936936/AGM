@@ -114,14 +114,6 @@ def _serve_api(args: argparse.Namespace) -> int:
     return 0
 
 
-def _serve_mcp(args: argparse.Namespace) -> int:
-    try:
-        from .mcp_server import serve_mcp
-        return serve_mcp(transport=args.transport, host=args.host, port=args.port, db_path=args.db)
-    except (ImportError, RuntimeError) as exc:
-        raise SystemExit(str(exc)) from exc
-
-
 def _doctor(args: argparse.Namespace) -> int:
     from .diagnostics import run_doctor
 
@@ -176,7 +168,7 @@ def _doctor(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="agm", description="Adaptive Graph Memory, Phase 5")
+    parser = argparse.ArgumentParser(prog="agm", description="Adaptive Graph Memory")
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("demo", help="run a temporary write/retrieve/correction/delete demo")
 
@@ -218,12 +210,6 @@ def main(argv: list[str] | None = None) -> int:
     doctor.add_argument("--include-content", action="store_true", help="include secret-redacted query/content snippets in local logs")
     doctor.add_argument("--tail-events", type=int, default=20, help="number of recent tenant events to include (0 disables; default: 20)")
 
-    mcp = subparsers.add_parser("serve-mcp", help="run the local MCP server")
-    mcp.add_argument("--transport", choices=("stdio", "streamable-http"), default="stdio")
-    mcp.add_argument("--db", default=None, metavar="PATH", help="SQLite path (default: AGM_DB_PATH or ./agm.db)")
-    mcp.add_argument("--host", default="127.0.0.1", help="loopback bind address for streamable HTTP")
-    mcp.add_argument("--port", type=int, default=8766)
-
     args = parser.parse_args(argv)
     if args.command == "demo":
         return _demo()
@@ -241,8 +227,4 @@ def main(argv: list[str] | None = None) -> int:
         return _serve_api(args)
     if args.command == "doctor":
         return _doctor(args)
-    if args.command == "serve-mcp":
-        if args.transport == "streamable-http":
-            ensure_loopback_host(args.host)
-        return _serve_mcp(args)
     return 2

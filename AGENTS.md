@@ -20,13 +20,13 @@ Applies to ChatGPT, Codex, Claude Code or any other builder. Read this file, the
 - Ask one clarifying question only when a wrong guess would waste a full cycle; otherwise state your assumption and continue.
 
 ## Invariants (never break these; the supervisor will probe each one)
-1. **Guard in the core.** Secret redaction and instruction-like-text quarantine run inside `MemoryStore` for every caller. Adapters (REST, MCP, CLI) contain no safety logic. Any new method that persists user-supplied strings must sanitize them (use `agm.guard.sanitize_value`) and needs a test that calls the library directly, not through REST or MCP.
+1. **Guard in the core.** Secret redaction and instruction-like-text quarantine run inside `MemoryStore` for every caller. Adapters (REST, CLI) contain no safety logic. Any new method that persists user-supplied strings must sanitize them (use `agm.guard.sanitize_value`) and needs a test that calls the library directly, not through REST.
 2. **Event log first.** Every mutation appends an event, then updates views. Views must be rebuildable by `rebuild_views()` and give identical results. Every new mutation needs a replay test.
 3. **Deletion vs revocation.** `delete` is a hard purge (content, derived data, original event payload scrubbed, WAL flushed). `revoke_writer` is a rollback: views are cleared but events are kept for audit. Do not blur them.
-4. **Frozen contracts** in `docs/architecture.md` (models, REST paths, MCP tool names, CLI commands). Changing one needs a numbered entry in `docs/decisions.md` first.
+4. **Frozen contracts** in `docs/architecture.md` (models, REST paths, CLI commands). Changing one needs a numbered entry in `docs/decisions.md` first.
 5. **Loopback only.** Services refuse non-loopback hosts until a separate security review approves remote exposure.
 6. **SQL and search safety.** Parameterized SQL only. FTS5 query text is tokenised and quoted, never passed raw.
-7. **No stdout** from library or MCP stdio code. Log to stderr. Only `cli.py` prints.
+7. **No stdout** from library code. Log to stderr. Only `cli.py` prints.
 8. **Retrieved memory is data, never instructions.** Keep the untrusted-data notice on every retrieval.
 9. **Tenant isolation.** Every query filters by tenant. Add a cross-tenant test for any new read path.
 10. **No new dependency** without a decisions entry. `sentence-transformers` may be an optional lazy import in eval only.
@@ -34,12 +34,11 @@ Applies to ChatGPT, Codex, Claude Code or any other builder. Read this file, the
 
 ## Repository hygiene
 - Never commit `*.db`, `*.db-wal`, `*.db-shm`, `__pycache__`, `*.egg-info`, `dist/`, `.venv`, `agm.keys.json`, `.env`. Check `git status` before proposing a commit.
-- Do not edit or delete past entries in `docs/decisions.md`, `docs/debug.md`, `docs/status.md`. Add new ones at the top.
+- Do not edit or delete past entries in `docs/decisions.md`. Add new ones at the top. `docs/status.md` is short and current: rewrite it, do not append logs.
 
 ## Logging (after every task)
-- `docs/debug.md`: what you ran, what failed, what you fixed, what you did not verify.
 - `docs/decisions.md`: any design choice, with why and what it affects. Use the next free `D-0NN`.
-- `docs/status.md`: current state and next step.
+- `docs/status.md`: current state and next step (keep under ~60 lines).
 
 ## Commands
 ```
@@ -47,16 +46,15 @@ python -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 python -m pip install -e ".[dev]"
 python -m pytest -q
-python examples/mcp_smoke_client.py
 python examples/rest_smoke_client.py
 python eval/stale_facts.py
-python scripts/pack.py
+python scripts/check_package.py
 ```
 
 ## How to deliver
 - Return **complete files**, each under a heading with its repo path. No snippets, no "rest unchanged". If the change is large, also provide a unified diff.
 - If you can run code: run the commands above and paste the real output. If you cannot: mark each `NOT RUN` and tell the user exactly what to run.
-- Finish with `PHASE<N>_REPORT.md` (or `REPORT_<date>.md` for non-phase work) containing: files changed; what each new test proves; commands with real output or NOT RUN; contract concerns; assumptions; unfinished items.
+- Finish with a short report in the PR description (do not commit report files) containing: files changed; what each new test proves; commands with real output or NOT RUN; contract concerns; assumptions; unfinished items.
 
 ## What the supervisor will check
-Clean install and full test run; direct-library probes of the guard; surface parity across library, REST and MCP; replay identity; on-disk delete; tenant isolation; both smoke clients; `git status` hygiene; whether your report matches what actually ran.
+Clean install and full test run; direct-library probes of the guard; surface parity across library and REST; replay identity; on-disk delete; tenant isolation; both smoke clients; `git status` hygiene; whether your report matches what actually ran.

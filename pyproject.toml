@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agm"
-version = "0.5.1"
-description = "Adaptive Graph Memory prototype with graph retrieval, trust, handoff, REST, MCP and lifecycle evaluation"
+version = "0.6.0"
+description = "Adaptive Graph Memory prototype with graph retrieval, trust, handoff, REST and lifecycle evaluation"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -13,13 +13,10 @@ dependencies = [
   "numpy",
   "fastapi>=0.115,<1",
   "uvicorn>=0.30,<1",
-  "mcp>=1.26,<2",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest", "httpx>=0.27,<1"]
-openai = ["openai>=1.0.0"]
-gemini = ["google-genai>=1.0.0"]
 
 [project.scripts]
 agm = "agm.cli:main"

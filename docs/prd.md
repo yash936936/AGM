@@ -9,7 +9,7 @@ real use instead of staying a document.
 
 ## Goals
 - A working local service any agent can connect to within minutes: REST API,
-  MCP server (stdio and HTTP) and a Python library, all over one core.
+  a Python library, all over one core.
 - Write and retrieve memory with provenance, confidence and writer identity.
 - Supersede changed facts so "current" answers exclude stale ones, while
   history stays queryable.
@@ -37,7 +37,7 @@ real use instead of staying a document.
 - Supersession: after a correction, `retrieve` current mode never returns the old value; `include_superseded` returns it.
 - Abstention: an unanswerable query returns `abstain=true`, not a nearest-neighbour guess.
 - Delete removes content, embedding, FTS row and edges, and the item no longer surfaces.
-- Real connection demonstrated from at least: a Python agent over REST, and one MCP client (Claude Code or Claude Desktop) over stdio.
+- Real connection demonstrated from at least: a Python agent over REST and one shell-based agent (Claude Code or Codex) through the CLI client.
 - Mini eval (Phase 5) reports flat vs graph numbers with the caveat in D-007.
 
 ## Constraints

@@ -34,7 +34,7 @@ is pure and never calls a tool or writes to storage.
 
 All real writes remain subject to existing core guards, identity, scopes,
 tenant/project filters, idempotency key/operation ID, and event-sourced audit
-contract. The existing nine MCP tools are unchanged.
+contract. The REST endpoints are unchanged.
 
 ## Controlled turn loop
 
@@ -54,4 +54,4 @@ python examples/active_memory_turn_demo.py --db ./active-memory-demo.db --tenant
 
 Tests and smoke clients are intentionally not run during implementation.
 After implementation is frozen, run focused tests, full pytest, compile checks,
-MCP and REST smoke clients, and the deterministic simulation.
+the REST smoke client, and the deterministic simulation.
