@@ -62,7 +62,7 @@ def process_rss_bytes(pid: int) -> int | None:
 
 
 async def main_async(args: argparse.Namespace) -> int:
-    with tempfile.TemporaryDirectory(prefix="agm-rest-bench-") as directory:
+    with tempfile.TemporaryDirectory(prefix="agm-rest-bench-", ignore_cleanup_errors=True) as directory:
         root = Path(directory)
         key_file, db_file = root / "keys.json", root / "bench.db"
         key_file.write_text(json.dumps({"keys": [{
