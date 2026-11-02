@@ -32,12 +32,22 @@ This is the gate most likely to change the plan, so start early.
 | # | Item | Effort | Done when |
 |---|---|---|---|
 | R2.1 | Replace the hash embedder as the default evaluated embedder with a real one (optional extra, lazy import) and re-run every benchmark with both | M | benchmark report lists embedder per run |
-| R2.2 | Hand-labelled retrieval set (≥150 queries): multi-hop, temporal/stale, entity alias, adversarial/injection, unanswerable | M | dataset hash and thresholds committed **before** results |
+| R2.2 | Labelled retrieval set. Synthetic version DONE (`eval/labelled_v3.py`, 226 queries/seed, rule pre-registered; results in `docs/benchmarks/r2_labelled_v3.md`). Remaining: a set built from your real usage (see R2.4 runbook) | M | dataset hash and thresholds committed **before** results |
 | R2.3 | Baselines that can win: ~~iterative flat retrieval~~ DONE (`eval/iterative_baseline.py`, see `docs/benchmarks/r2_post_hoc_iterative_baseline.md`: it matches graph on multi-hop). Remaining: BM25-only, vector-only, "stuff the whole log in context" for small histories | S | report includes cases where each baseline beats graph |
-| R2.4 | Consented, de-identified real-history run using `scripts/evaluate_real_history.py` and the existing protocol | M (+ data access) | aggregate-only results; otherwise status stays BLOCKED |
+| R2.4 | Consented, de-identified real-history run using `scripts/evaluate_real_history.py` and the existing protocol. Tooling ready: `scripts/build_real_history_cases.py`, `docs/acceptance/real_history_local_runbook.md` (data never leaves your machine) | M (+ data access) | aggregate-only results; otherwise status stays BLOCKED |
 | R2.5 | End-to-end agent task test (same agent, with vs without AGM, fixed tasks) | L | measured task success and token cost deltas |
 
 Decision point after R2: if graph expansion does not beat the best flat baseline by a margin fixed in advance, simplify (keep event log, trust, lifecycle, handoff; make graph expansion optional) instead of building R5–R6 around it.
+
+### R2.6 — Core issues found by the v3 benchmark (do these before more graph work)
+
+| # | Item | Effort | Done when |
+|---|---|---|---|
+| R2.6a | Make flat and graph retrieval agree on `contested` facts (documented behaviour: both returned with a warning); needs a decision entry | S | same contested handling in both modes; tests |
+| R2.6b | Entity hint should scope seeds, not block graph expansion (or document and reject the combination) | S | hint + expand reaches linked entities, or clear error |
+| R2.6c | Abstention that fires for unknown entities and for known entities lacking the asked attribute | M | unanswerable correctness ≥ 0.8 on v3 without hurting recall |
+| R2.6d | Disambiguate near-duplicate entity names (`x` vs `x-staging`) | M | hard_neg strict pass ≥ 0.8 no-hint |
+| R2.7 | Decide: make graph expansion optional (default off) unless real-data runs show it helps | S | decision recorded after R2.4 |
 
 ## R3 — Security and remote access  · ~1–2 weeks
 

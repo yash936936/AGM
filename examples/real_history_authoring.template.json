@@ -1,0 +1,19 @@
+{
+  "tenant": "my-eval",
+  "project": "eval",
+  "cases": [
+    {"id": "recall-1", "query": "Which database does the billing service use?", "entity": "billing-service",
+     "memories": [{"entity": "billing-service", "attribute": "database", "value": "postgres-14",
+                   "text": "The billing service stores its data in postgres-14."}],
+     "expected": ["postgres-14"]},
+    {"id": "stale-1", "query": "Who owns the search service now?",
+     "memories": [{"entity": "search-service", "attribute": "owner", "value": "team-old"}],
+     "correction": {"target": 0, "item": {"entity": "search-service", "attribute": "owner", "value": "team-new"},
+                    "reason": "reorg"},
+     "expected": ["team-new"], "forbidden": ["team-old"]},
+    {"id": "delete-1", "query": "What is the staging API token owner?",
+     "memories": [{"entity": "staging-api", "attribute": "token-owner", "value": "alex"}],
+     "delete": 0, "forbidden": ["alex"]},
+    {"id": "abstain-1", "query": "What is the pager rotation for the inventory service?", "abstain": true}
+  ]
+}
