@@ -33,7 +33,7 @@ This is the gate most likely to change the plan, so start early.
 |---|---|---|---|
 | R2.1 | Replace the hash embedder as the default evaluated embedder with a real one (optional extra, lazy import) and re-run every benchmark with both | M | benchmark report lists embedder per run |
 | R2.2 | Hand-labelled retrieval set (≥150 queries): multi-hop, temporal/stale, entity alias, adversarial/injection, unanswerable | M | dataset hash and thresholds committed **before** results |
-| R2.3 | Baselines that can win: BM25-only, vector-only, flat top-k, and "stuff the whole log in context" for small histories | S | report includes cases where each baseline beats graph |
+| R2.3 | Baselines that can win: ~~iterative flat retrieval~~ DONE (`eval/iterative_baseline.py`, see `docs/benchmarks/r2_post_hoc_iterative_baseline.md`: it matches graph on multi-hop). Remaining: BM25-only, vector-only, "stuff the whole log in context" for small histories | S | report includes cases where each baseline beats graph |
 | R2.4 | Consented, de-identified real-history run using `scripts/evaluate_real_history.py` and the existing protocol | M (+ data access) | aggregate-only results; otherwise status stays BLOCKED |
 | R2.5 | End-to-end agent task test (same agent, with vs without AGM, fixed tasks) | L | measured task success and token cost deltas |
 

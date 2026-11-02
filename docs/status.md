@@ -8,6 +8,8 @@ Before R1: cleanup and MCP removal. Full suite: 264 passed (Python 3.12, Linux s
 
 **Open external gates:** held-out real-history evaluation NOT RUN; independent security/privacy review NOT PERFORMED; real third-party-host integration NOT VERIFIED; independent acceptance-matrix sign-off OPEN. M2 NOT ACCEPTED. Not production-ready.
 
+**R2 so far:** a post-hoc iterative flat baseline erases graph's only synthetic win (multi_hop); graph then differs from flat mainly in retrieve calls (1 vs 3) and is slower per call. See `docs/benchmarks/r2_post_hoc_iterative_baseline.md`. The graph hypothesis is therefore still unproven.
+
 **Next:** R2 (real evidence) and R3 (security) from `ROADMAP.md`.
 
 **History:** earlier phase reports, audit logs, benchmark logs and the Phase-8 harness are in git tag `archive/pre-cleanup-main`.
