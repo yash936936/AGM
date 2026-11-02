@@ -86,6 +86,11 @@ class AgmClient:
             raise AgmError(_error_detail(exc), exc.code) from None
         except (urllib.error.URLError, OSError) as exc:
             reason = getattr(exc, "reason", exc)
+            if isinstance(reason, (ConnectionResetError, ConnectionAbortedError, BrokenPipeError)) and data is not None:
+                # The server may answer early (for example 413) and close while a large body is still being sent;
+                # on Windows the response is then lost to a connection reset.
+                raise AgmError(f"Connection closed by the server while sending the request to {self.base_url}; "
+                               "the request may have been rejected (too large?).") from None
             raise AgmError(f"Cannot reach AGM at {self.base_url}: {reason}") from None
         return json.loads(raw) if raw else None
 

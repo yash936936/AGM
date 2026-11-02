@@ -276,10 +276,21 @@ def test_delete_missing_is_404_and_existing_is_ok(env):
 
 
 def test_oversized_body_rejected(env):
+    # Deterministic on every OS: declare a huge Content-Length and send no body. The server must answer 413
+    # without reading it.
+    host, port = env["url"].removeprefix("http://").split(":")
+    with socket.create_connection((host, int(port)), timeout=5) as sock:
+        sock.sendall((f"POST /v1/memory HTTP/1.1\r\nHost: {host}\r\nX-API-Key: {env['rw']}\r\n"
+                      "Content-Type: application/json\r\nContent-Length: 2000000\r\n\r\n").encode())
+        assert sock.recv(64).startswith(b"HTTP/1.1 413")
+    # Through the client, a really oversized body is rejected: Linux sees the 413, Windows may see the connection
+    # reset while the body is still being sent. Either way the write must fail and nothing may be stored.
     c = AgmClient(env["url"], env["rw"])
     with pytest.raises(AgmError) as big:
         c.write({"kind": "episode", "text": "x" * 1_200_000})
-    assert big.value.status == 413
+    assert big.value.status in (413, None)
+    if big.value.status is None:
+        assert "rejected" in str(big.value)
 
 
 def test_active_context_and_review_are_read_only(env, monkeypatch, capsys, tmp_path):
