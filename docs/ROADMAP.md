@@ -5,7 +5,7 @@ Replaces the old M0–M4 roadmap and phase list (still in git tag `archive/pre-c
 ## Where we are (v0.7.0)
 
 - **Done and tested (264 tests):** event-sourced store, replay, graph + flat retrieval with abstention, trust tiers, contested facts, handoff/readback, delete/expiry/revocation, guard in core, REST API with scoped keys, owner bootstrap, sessions/connections, timeline/snapshot/Obsidian export, lifecycle dry-run, doctor, active-memory turn seam and policy executor (library-only, D-037), reference host harness, synthetic + REST concurrent benchmarks.
-- **R1 delivered in v0.7.0:** `AgmClient`, `agm mem/handoff/connect`, `docs/QUICKSTART.md` (R1.1, R1.2, R1.3, R1.5 partly: OpenAPI route test; no checked-in schema file). **R1.4 open:** exposing the active-memory turn loop needs a REST contract decision first (D-037).
+- **R1 delivered in v0.7.0:** `AgmClient`, `agm mem/handoff/connect`, `docs/QUICKSTART.md` (R1.1, R1.2, R1.3, R1.5 partly: OpenAPI route test; no checked-in schema file). **R1.4 done (read-only):** `agm active context|review` and `/v1/active/*` (D-044); execution stays library-only. **R3 started (D-045):** hashed keys at rest, hot reload/revocation without restart, 404 on missing delete, request-size limits.
 - **Not done:** any evidence on real data, independent security review, a real third-party host, remote access, teams, hosted storage.
 - **Deliberately cut:** MCP adapter (D-042), Phase-8 LLM-agent harness.
 
@@ -13,7 +13,7 @@ Replaces the old M0–M4 roadmap and phase list (still in git tag `archive/pre-c
 
 The design hypotheses (H1–H7, D-007) have **no real-data evidence yet**. Every feature built before that evidence exists is a bet that graph retrieval beats a good flat baseline. So the order below puts "make it usable by an agent" and "find out whether it is better" ahead of teams, Postgres and polish.
 
-## R1 — Agent-connectable v0.7 (DONE except R1.4) (usable today by Claude Code, Codex, local agents)  · ~1 week
+## R1 — Agent-connectable v0.7 (DONE) (usable today by Claude Code, Codex, local agents)  · ~1 week
 
 | # | Item | Effort | Done when |
 |---|---|---|---|
@@ -45,8 +45,8 @@ Prerequisite for ChatGPT / web-based agents, which cannot reach loopback.
 
 | # | Item | Effort | Done when |
 |---|---|---|---|
-| R3.1 | Hashed, revocable, expiring per-agent credentials (replace JSON key file as production source); one-time token display | M | revoked token fails immediately; tests |
-| R3.2 | Request size limits, rate limits, safe error bodies, audit metadata, no secrets or memory text in logs | M | negative tests |
+| R3.1 | ~~Hashed, revocable per-agent credentials~~ DONE (D-045). Remaining: expiry dates, a managed credential store instead of a JSON file | S | expired token fails; tests |
+| R3.2 | ~~Request size limits~~ DONE (D-045). Remaining: rate limits, safe error bodies, audit metadata, no secrets or memory text in logs | M | negative tests |
 | R3.3 | Tenant/project isolation test matrix incl. ID-guessing (IDOR) across every route | M | matrix in CI |
 | R3.4 | Threat model + data-flow inventory; run `docs/acceptance/security_privacy_review_checklist.md` | M | written findings |
 | R3.5 | Independent reviewer sign-off | external | signed checklist; otherwise remote stays off |

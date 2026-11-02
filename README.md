@@ -9,7 +9,7 @@ A Python memory layer for AI agents. Event-sourced SQLite core; graph, keyword a
 - **Python library:** `agm.MemoryStore`
 - **REST API:** FastAPI, `X-API-Key` auth, OpenAPI at `/docs` (works with any HTTP-capable agent, ChatGPT Actions, curl)
 - **Python client:** `from agm import AgmClient` (standard library only)
-- **CLI:** `python -m agm …`, including `mem` / `handoff` wrappers for shell-based agents (Claude Code, Codex) and `connect` to issue a scoped agent key
+- **CLI:** `python -m agm …`, including `mem` / `handoff` wrappers for shell-based agents (Claude Code, Codex) `connect` to issue a scoped agent key, and `active` read-only context helpers
 
 MCP was removed in v0.6.0 (decision D-042). See [`docs/QUICKSTART.md`](docs/QUICKSTART.md) to connect an agent in 5 minutes.
 
@@ -40,7 +40,7 @@ The event log is the source of truth; node, edge, FTS5 and embedding tables are 
 
 ```
 src/agm/     core library, REST adapter, CLI
-tests/       274 tests (pytest)
+tests/       pytest suite
 eval/        synthetic benchmarks and stale-fact evaluation
 scripts/     repo hygiene, package check, real-history evaluator
 examples/    clients and sample data

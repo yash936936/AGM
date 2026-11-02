@@ -115,6 +115,20 @@ class AgmClient:
     def delete(self, item_id: str) -> dict[str, Any]:
         return self._request("DELETE", f"/v1/memory/{urllib.parse.quote(item_id, safe='')}")
 
+    # active memory (read-only helpers; see D-044) ---------------------------
+    def active_context(self, query: str, *, profile_queries: list[str] | None = None,
+                       goal_queries: list[str] | None = None, entity: str | None = None, as_of: str | None = None,
+                       k: int = 8, token_budget: int = 2000, expand: bool = True,
+                       high_stakes: bool = False) -> dict[str, Any]:
+        body = {"query": query, "profile_queries": profile_queries or [], "goal_queries": goal_queries or [],
+                "entity": entity, "as_of": as_of, "k": k, "token_budget": token_budget, "expand": expand,
+                "high_stakes": high_stakes}
+        return self._request("POST", "/v1/active/context", {k_: v for k_, v in body.items() if v is not None})
+
+    def active_review(self, current_user_message: str, proposals: list[Mapping[str, Any]]) -> dict[str, Any]:
+        return self._request("POST", "/v1/active/review",
+                             {"current_user_message": current_user_message, "proposals": proposals})
+
     # handoff ----------------------------------------------------------------
     def handoff_save(self, session_id: str, task_state: Mapping[str, Any] | Any) -> dict[str, Any]:
         return self._request("POST", "/v1/handoff", {"session_id": session_id, "task_state": _model_to_dict(task_state)})

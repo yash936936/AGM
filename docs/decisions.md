@@ -1,3 +1,21 @@
+## D-045 — Key hardening, delete semantics, request limits — 2026-11-02
+
+**Decisions:**
+1. **Hashed keys at rest.** Key files store `api_key_hash` (`sha256:<hex>`); `bootstrap-owner` and `connect` print the key once and never store it. Plaintext `api_key` records still load (legacy). `agm hash-keys` converts a file irreversibly. SHA-256 is adequate because keys are 48 random bytes; a slow password hash is unnecessary. **Supersedes** the earlier rule that the CLI never prints the owner key: with hashing, printing once is the only way to hand it over (terminal scrollback is the accepted exposure).
+2. **Hot reload.** `serve-api` uses `ReloadingKeyRegistry`: new keys work and removed keys stop working on the next request, without restart. Missing file fails closed (nothing authenticates); a malformed file keeps the last good keys and logs a warning.
+3. **`DELETE /v1/memory/{id}` returns 404** when nothing was deleted (was 200 with `deleted: false`), matching the other memory routes. Retried deletes after a lost response now see 404. `/v1/connections/{id}` is unchanged.
+4. **Request limits.** Bodies over 1,000,000 bytes get 413; chunked uploads without Content-Length get 411.
+
+**Still open (roadmap R3):** rate limits, expiring keys, audit trail, TLS, tenancy review. The loopback bind guard is unchanged.
+
+## D-044 — Read-only active-memory REST routes — 2026-11-02
+
+**Decision:** Add `POST /v1/active/context` (bounded, conflict-aware context pack; scope `memory:read`) and `POST /v1/active/review` (pure policy check of proposed operations; scope `memory:read`). **Narrows D-037:** the *executor* (`execute_authorized_memory_proposal`) stays library-only and is not exposed over REST.
+
+**Why:** Executing a proposal requires host-verified authorization and user confirmation, which a REST caller (the agent itself) can fabricate, so REST cannot enforce it. Context assembly and policy evaluation are side-effect free and safe to expose. `review` is advisory for cooperating agents, not a security boundary: an agent can still call `/v1/memory` directly, so all real protection stays in scopes, guard and trust tiers.
+
+**Affects:** `api.py`, `client.py`, `cli_client.py` (`agm active context|review`), `docs/active_memory.md`, architecture map.
+
 ## D-043 — Add client, `agm mem|handoff|connect` CLI commands (roadmap R1) — 2026-11-02
 
 **Decision:** Add `agm.client.AgmClient` (standard library only), `agm.agent_keys.add_agent_key`, and the CLI commands `agm mem write|retrieve|history|supersede|delete`, `agm handoff save|resume|readback`, `agm connect`. They call the existing REST routes; no route, model or store change. CLI output is JSON, or compact text with `retrieve --brief`.

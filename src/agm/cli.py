@@ -5,7 +5,7 @@ import argparse
 import tempfile
 from pathlib import Path
 
-from .config import ensure_loopback_host, load_key_registry
+from .config import ReloadingKeyRegistry, ensure_loopback_host
 from .bootstrap import bootstrap_owner
 from .models import Ctx, Readback, TaskState, WriteItem
 from .store import MemoryStore
@@ -82,12 +82,14 @@ def _lifecycle(args: argparse.Namespace) -> int:
 
 def _bootstrap_owner(args: argparse.Namespace) -> int:
     try:
-        bootstrap_owner(args.keys, tenant_id=args.tenant, writer_id=args.writer, project=args.project)
+        key = bootstrap_owner(args.keys, tenant_id=args.tenant, writer_id=args.writer, project=args.project)
     except FileExistsError:
         raise SystemExit(f"Refusing to overwrite existing key file: {args.keys}")
     except ValueError as exc:
         raise SystemExit(str(exc)) from exc
-    print(f"Owner key file created at {args.keys}. Read it locally and protect it as a secret.")
+    print(f"Owner key file created at {args.keys} (it stores only a hash of the key).")
+    print("Owner API key, shown ONCE; copy it now and keep it secret:")
+    print(f"  {key}")
     print("The API remains loopback-only by default.")
     return 0
 
@@ -99,7 +101,10 @@ def _serve_api(args: argparse.Namespace) -> int:
     except ImportError as exc:
         raise SystemExit("REST API dependencies are missing. Run `python -m pip install -e '.[dev]'`.") from exc
     from .api import create_app
-    registry = load_key_registry(args.keys)
+    try:
+        registry = ReloadingKeyRegistry(args.keys)
+    except RuntimeError as exc:
+        raise SystemExit(str(exc)) from exc
     if not registry.identities:
         raise SystemExit(
             "No API keys are configured. Copy examples/agm.keys.example.json to agm.keys.json, "
@@ -190,6 +195,9 @@ def main(argv: list[str] | None = None) -> int:
     from .cli_client import add_client_commands
     add_client_commands(subparsers)
 
+    hk = subparsers.add_parser("hash-keys", help="replace plaintext keys in a key file with hashes (irreversible)")
+    hk.add_argument("--keys", default="agm.keys.json", metavar="PATH")
+
     lifecycle = subparsers.add_parser("lifecycle", help="inspect memories that would be archived (read-only)")
     lifecycle.add_argument("--db", required=True, metavar="PATH")
     lifecycle.add_argument("--dry-run", action="store_true", required=True,
@@ -230,7 +238,15 @@ def main(argv: list[str] | None = None) -> int:
         return _serve_api(args)
     if args.command == "doctor":
         return _doctor(args)
-    if args.command in {"mem", "handoff", "connect"}:
+    if args.command == "hash-keys":
+        from .agent_keys import hash_key_file
+        try:
+            count = hash_key_file(args.keys)
+        except ValueError as exc:
+            raise SystemExit(str(exc)) from exc
+        print(f"Converted {count} plaintext key(s) in {args.keys} to hashes. The plaintext keys are not recoverable from the file.")
+        return 0
+    if args.command in {"mem", "handoff", "connect", "active"}:
         from .cli_client import run_client_command
         try:
             code, text = run_client_command(args)

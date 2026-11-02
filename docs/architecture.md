@@ -94,7 +94,9 @@ class Readback:   goal: str; decisions: list[str]; open_items: list[str]
 | Operation | REST | Maps to |
 |---|---|---|
 | `memory_write` | POST /v1/memory | `write` |
-| `memory_retrieve` | POST /v1/memory/retrieve | `retrieve` |
+| `memory_retrieve` | POST /v1/memory/retrieve | `active_context` | POST /v1/active/context | prepare_turn_context (read-only, D-044) |
+| `active_review` | POST /v1/active/review | evaluate_memory_proposal (pure, D-044) |
+| `retrieve` |
 | `memory_supersede` | POST /v1/memory/{id}/supersede | `supersede` |
 | `memory_history` | GET /v1/memory/history?entity= | `history` |
 | `memory_delete` | DELETE /v1/memory/{id} | `delete` |
@@ -141,7 +143,7 @@ src/agm/
 ├── client.py        — stdlib REST client (D-043)
 ├── agent_keys.py    — scoped agent key creation
 ├── cli_client.py    — mem/handoff/connect CLI wrappers
-└── cli.py           — agm serve-api | demo | rebuild | bootstrap-owner | connect | mem {write,retrieve,history,supersede,delete} | handoff {save,resume,readback} | lifecycle | doctor
+└── cli.py           — agm hash-keys | active {context,review} | serve-api | demo | rebuild | bootstrap-owner | connect | mem {write,retrieve,history,supersede,delete} | handoff {save,resume,readback} | lifecycle | doctor
 tests/               — one test file per module plus test_replay.py, test_e2e_rest.py
 eval/stale_facts.py  — Phase 5 flat vs graph mini eval
 examples/            — python_client.py, curl.md, chatgpt_actions.md

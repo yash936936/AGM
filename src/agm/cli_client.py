@@ -57,6 +57,17 @@ def add_client_commands(subparsers: Any) -> None:
     c = hs.add_parser("readback", help="check a model's readback from a JSON file"); _common(c)
     c.add_argument("packet_id"); c.add_argument("--file", required=True)
 
+    act = subparsers.add_parser("active", help="active-memory helpers (read-only)")
+    as_ = act.add_subparsers(dest="active_command", required=True)
+    x = as_.add_parser("context", help="bounded context pack to put before the model call"); _common(x)
+    x.add_argument("query"); x.add_argument("--profile-query", action="append", default=[])
+    x.add_argument("--goal-query", action="append", default=[]); x.add_argument("--entity")
+    x.add_argument("--budget", type=int, default=2000); x.add_argument("--k", type=int, default=8)
+    x.add_argument("--brief", action="store_true", help="print only the prompt context text")
+    y = as_.add_parser("review", help="check proposed memory operations against the user's message"); _common(y)
+    y.add_argument("--message", required=True, help="the user's actual message this turn")
+    y.add_argument("--file", required=True, help="JSON list of proposals")
+
     conn = subparsers.add_parser("connect", help="create a scoped agent key and print how to use it")
     conn.add_argument("--name", required=True, help="agent name (becomes writer_id), e.g. claude-code")
     conn.add_argument("--keys", default="agm.keys.json", metavar="PATH", help="existing key file (from bootstrap-owner)")
@@ -98,7 +109,15 @@ def run_client_command(args: argparse.Namespace) -> tuple[int, str]:
         if args.command == "connect":
             return _connect(args)
         client = AgmClient(args.base_url, args.api_key)
-        if args.command == "mem":
+        if args.command == "active":
+            if args.active_command == "context":
+                out = client.active_context(args.query, profile_queries=args.profile_query, goal_queries=args.goal_query,
+                                            entity=args.entity, k=args.k, token_budget=args.budget)
+                if args.brief:
+                    return 0, out["prompt_context"]
+            else:
+                out = client.active_review(args.message, _json_file(args.file))
+        elif args.command == "mem":
             cmd = args.mem_command
             if cmd == "write":
                 out: Any = client.write(_item(args))
@@ -135,7 +154,7 @@ def _connect(args: argparse.Namespace) -> tuple[int, str]:
                         tier=args.tier, scopes=scopes)
     text = "\n".join([
         f"Agent key created for '{args.name}' in {args.keys} (scopes: {', '.join(scopes)}).",
-        "Restart `agm serve-api` so it loads the new key. Treat the key as a secret.",
+        "The running server picks the key up automatically. The key is shown only now (the file stores a hash); treat it as a secret.",
         "",
         "# bash / Git Bash / macOS / Linux",
         f'export AGM_BASE_URL="{args.base_url}"',

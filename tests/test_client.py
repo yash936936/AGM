@@ -15,7 +15,7 @@ from agm.api import create_app
 from agm.bootstrap import bootstrap_owner
 from agm.cli import main
 from agm.client import AgmClient, AgmError
-from agm.config import load_key_registry
+from agm.config import ReloadingKeyRegistry, load_key_registry, registry_from_data
 
 
 def _free_port() -> int:
@@ -27,7 +27,7 @@ def _free_port() -> int:
 class Server:
     def __init__(self, keys: Path, db: Path) -> None:
         self.port = _free_port()
-        config = uvicorn.Config(create_app(db_path=str(db), key_registry=load_key_registry(keys)),
+        config = uvicorn.Config(create_app(db_path=str(db), key_registry=ReloadingKeyRegistry(keys)),
                                 host="127.0.0.1", port=self.port, log_level="error")
         self.server = uvicorn.Server(config)
         self.thread = threading.Thread(target=self.server.run, daemon=True)
@@ -99,7 +99,9 @@ def test_errors_and_scopes(env):
     with pytest.raises(AgmError) as missing:
         rw.supersede("n_does_not_exist", {"kind": "fact", "text": "y", "entity": "e", "attribute": "a"}, "r")
     assert missing.value.status == 404
-    assert rw.delete("n_does_not_exist")["deleted"] is False  # delete is idempotent
+    with pytest.raises(AgmError) as gone:
+        rw.delete("n_does_not_exist")
+    assert gone.value.status == 404
     with pytest.raises(AgmError) as invalid:
         AgmClient(env["url"], env["rw"]).write({"kind": "bogus", "text": "x"})
     assert invalid.value.status == 422
@@ -142,8 +144,8 @@ def test_cli_mem_commands(env, monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out)["status"] == "superseded"
     assert main(["mem", "supersede", "n_nope", "--text", "t", "--entity", "e", "--attribute", "a", "--reason", "r"]) == 1
     assert "HTTP 404" in capsys.readouterr().out
-    assert main(["mem", "delete", "n_nope"]) == 0
-    assert json.loads(capsys.readouterr().out)["deleted"] is False
+    assert main(["mem", "delete", "n_nope"]) == 1
+    assert "HTTP 404" in capsys.readouterr().out
 
 
 def test_cli_bad_key_and_handoff(env, monkeypatch, capsys, tmp_path):
@@ -172,9 +174,10 @@ def test_connect_creates_working_scoped_key(tmp_path, capsys, monkeypatch):
     agent = records[-1]
     assert (agent["tenant_id"], agent["project"], agent["writer_id"]) == ("acme", "p9", "claude-code")
     assert agent["trust_tier"] == "trusted_agent" and "admin" not in agent["scopes"]
-    assert agent["api_key"] in out
+    key = next(line.split('"')[1] for line in out.splitlines() if line.startswith("export AGM_API_KEY"))
+    assert "api_key" not in agent and key not in keys.read_text(encoding="utf-8")
     with Server(keys, tmp_path / "d.db") as server:
-        c = AgmClient(server.url, agent["api_key"])
+        c = AgmClient(server.url, key)
         assert c.write({"kind": "episode", "text": "connect works"})["status"] == "added"
 
 
@@ -196,3 +199,115 @@ def test_openapi_documents_every_route(env):
                   "/v1/memory/{item_id}", "/v1/handoff", "/v1/handoff/{packet_id}/resume",
                   "/v1/handoff/{packet_id}/readback", "/v1/admin/revoke", "/healthz"):
         assert route in paths
+
+
+# --- R1 follow-ups: hashed keys, hot reload, delete 404, body limit, active memory -----------------
+
+def test_hashed_and_legacy_plaintext_keys_both_authenticate():
+    plain = "legacy-plaintext-key-0123456789"
+    from agm.config import format_key_hash
+    registry = registry_from_data({"keys": [
+        {"api_key": plain, "tenant_id": "t", "writer_id": "w1", "trust_tier": "trusted_agent"},
+        {"api_key_hash": format_key_hash("hashed-key-abcdefghijklmnop"), "tenant_id": "t", "writer_id": "w2",
+         "trust_tier": "trusted_agent"},
+    ]})
+    assert registry.authenticate(plain).ctx.writer_id == "w1"
+    assert registry.authenticate("hashed-key-abcdefghijklmnop").ctx.writer_id == "w2"
+    assert registry.authenticate("nope") is None and registry.authenticate(None) is None
+
+
+@pytest.mark.parametrize("record", [
+    {"api_key": "a" * 20, "api_key_hash": "sha256:" + "0" * 64},   # both
+    {"tenant_id": "t", "writer_id": "w"},                         # neither
+    {"api_key_hash": "sha256:xyz", "tenant_id": "t", "writer_id": "w"},
+    {"api_key_hash": "md5:" + "0" * 64, "tenant_id": "t", "writer_id": "w"},
+])
+def test_invalid_key_records_rejected(record):
+    base = {"tenant_id": "t", "writer_id": "w"}
+    with pytest.raises(ValueError):
+        registry_from_data({"keys": [{**base, **record}]})
+
+
+def test_hash_keys_migration(tmp_path, capsys):
+    keys = tmp_path / "k.json"
+    keys.write_text(json.dumps({"keys": [{"api_key": "old-plaintext-key-0123456789", "tenant_id": "t",
+                                          "writer_id": "w", "trust_tier": "trusted_agent"}]}), encoding="utf-8")
+    assert main(["hash-keys", "--keys", str(keys)]) == 0
+    assert "old-plaintext-key" not in keys.read_text(encoding="utf-8")
+    assert load_key_registry(keys).authenticate("old-plaintext-key-0123456789") is not None
+    assert main(["hash-keys", "--keys", str(keys)]) == 0  # idempotent
+    assert "Converted 0" in capsys.readouterr().out
+
+
+def test_keys_hot_reload_without_restart(env):
+    url = env["url"]
+    with pytest.raises(AgmError) as before:
+        AgmClient(url, "agm_not_yet_created").health() if False else AgmClient(url, "agm_not_yet_created").retrieve("x")
+    assert before.value.status == 401
+    new_key = add_agent_key(env["keys"], name="late-agent")          # added while the server runs
+    time.sleep(0.02)
+    assert AgmClient(url, new_key).write({"kind": "episode", "text": "hot reload ok"})["status"] == "added"
+    # remove it again: revocation takes effect on the next request
+    document = json.loads(env["keys"].read_text(encoding="utf-8"))
+    document["keys"] = [k for k in document["keys"] if k["writer_id"] != "late-agent"]
+    env["keys"].write_text(json.dumps(document), encoding="utf-8")
+    with pytest.raises(AgmError) as revoked:
+        AgmClient(url, new_key).retrieve("x")
+    assert revoked.value.status == 401
+    # a broken file keeps the last good keys; a missing file fails closed
+    env["keys"].write_text("{ not json", encoding="utf-8")
+    assert AgmClient(url, env["rw"]).retrieve("x")["items"] is not None
+    env["keys"].unlink()
+    with pytest.raises(AgmError) as closed:
+        AgmClient(url, env["rw"]).retrieve("x")
+    assert closed.value.status == 401
+
+
+def test_delete_missing_is_404_and_existing_is_ok(env):
+    c = AgmClient(env["url"], env["rw"])
+    with pytest.raises(AgmError) as missing:
+        c.delete("n_does_not_exist")
+    assert missing.value.status == 404
+    item = c.write({"kind": "episode", "text": "to be deleted"})
+    assert c.delete(item["item_id"])["deleted"] is True
+    with pytest.raises(AgmError) as again:
+        c.delete(item["item_id"])
+    assert again.value.status == 404
+
+
+def test_oversized_body_rejected(env):
+    c = AgmClient(env["url"], env["rw"])
+    with pytest.raises(AgmError) as big:
+        c.write({"kind": "episode", "text": "x" * 1_200_000})
+    assert big.value.status == 413
+
+
+def test_active_context_and_review_are_read_only(env, monkeypatch, capsys, tmp_path):
+    rw = AgmClient(env["url"], env["rw"])
+    rw.write({"kind": "fact", "text": "User prefers concise answers", "entity": "user", "attribute": "style",
+              "value": "concise"})
+    ctx = rw.active_context("how should I answer", profile_queries=["user preferences"], entity="user")
+    assert "untrusted" in ctx["notice"] and "concise" in ctx["prompt_context"] and ctx["items"]
+    before = rw.history("user", "style")
+    msg = "Actually I prefer detailed answers now"
+    review = rw.active_review(msg, [
+        {"action": "correct", "evidence_quote": "I prefer detailed answers", "entity": "user",
+         "attribute": "style", "value": "detailed", "target_memory_id": ctx["items"][0]["id"]},
+        {"action": "delete", "target_memory_id": ctx["items"][0]["id"]},               # no forget language
+        {"action": "write", "evidence_quote": "not in the message", "entity": "e", "attribute": "a", "value": "v"},
+    ])
+    assert [d["eligible"] for d in review["decisions"]] == [True, False, False]
+    assert "Advisory" in review["note"]
+    assert rw.history("user", "style") == before                                        # nothing was written
+    ro = AgmClient(env["url"], env["ro"])
+    assert ro.active_context("how should I answer")["notice"]                          # read scope suffices
+    with pytest.raises(AgmError) as bad:
+        rw.active_context("")
+    assert bad.value.status == 422
+    monkeypatch.setenv("AGM_BASE_URL", env["url"]); monkeypatch.setenv("AGM_API_KEY", env["rw"])
+    assert main(["active", "context", "how should I answer", "--brief"]) == 0
+    assert "untrusted" in capsys.readouterr().out.lower()
+    f = tmp_path / "p.json"
+    f.write_text(json.dumps([{"action": "history", "entity": "user"}]), encoding="utf-8")
+    assert main(["active", "review", "--message", "what do you remember about me", "--file", str(f)]) == 0
+    assert '"eligible": true' in capsys.readouterr().out

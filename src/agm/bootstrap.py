@@ -1,7 +1,7 @@
 """One-time local owner bootstrap for AGM API-key authentication.
 
-The generated key is shown once and persisted in a private local configuration
-file. This is local bootstrap, not a hosted login/OAuth implementation.
+The generated key is returned once (the CLI prints it once); only its SHA-256 hash is
+persisted in a private local configuration file. This is local bootstrap, not a hosted login/OAuth implementation.
 """
 from __future__ import annotations
 
@@ -9,6 +9,8 @@ import json
 import os
 import secrets
 from pathlib import Path
+
+from .config import format_key_hash
 
 
 def bootstrap_owner(
@@ -25,7 +27,7 @@ def bootstrap_owner(
     key = "agm_" + secrets.token_urlsafe(48)
     document = {
         "keys": [{
-            "api_key": key,
+            "api_key_hash": format_key_hash(key),
             "tenant_id": tenant_id.strip(),
             "writer_id": writer_id.strip(),
             "trust_tier": "human_verified",

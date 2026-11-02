@@ -42,7 +42,7 @@ def test_bootstrap_owner_rejects_blank_identity(tmp_path: Path) -> None:
         bootstrap_owner(tmp_path / "agm.keys.json", tenant_id="  ")
 
 
-def test_cli_bootstrap_owner_creates_file_without_printing_key(tmp_path: Path) -> None:
+def test_cli_bootstrap_owner_prints_key_once_and_stores_only_hash(tmp_path: Path) -> None:
     root = Path(__file__).resolve().parents[1]
     keys = tmp_path / "agm.keys.json"
     env = os.environ.copy()
@@ -54,6 +54,9 @@ def test_cli_bootstrap_owner_creates_file_without_printing_key(tmp_path: Path) -
     )
     assert result.returncode == 0, result.stderr
     assert keys.exists()
-    key = json.loads(keys.read_text(encoding="utf-8"))["keys"][0]["api_key"]
-    assert key not in result.stdout
+    record = json.loads(keys.read_text(encoding="utf-8"))["keys"][0]
+    assert "api_key" not in record and record["api_key_hash"].startswith("sha256:")
     assert "Owner key file created" in result.stdout
+    printed = [line.strip() for line in result.stdout.splitlines() if line.strip().startswith("agm_")]
+    assert len(printed) == 1 and printed[0] not in keys.read_text(encoding="utf-8")
+    assert load_key_registry(keys).authenticate(printed[0]) is not None
