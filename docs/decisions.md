@@ -1,3 +1,15 @@
+## D-047 — An entity hint scopes graph seeds; expansion may reach linked entities — 2026-11-04
+
+**Decision:** In graph retrieval (`expand=True`), `entity=` restricts the **seed** candidates to that entity, but graph neighbours are drawn from the full eligible set under the same tenant, project, time (`as_of`), trust (`high_stakes`), superseded and contested (D-046) filters. Linked entities' facts can therefore appear in the result with `via="expand"`. Flat retrieval (`expand=False`) is unchanged: `entity=` stays a hard filter on the result.
+
+**Why:** The v3 benchmark showed multi-hop accuracy of 0.000 whenever a hint was supplied, because the hint removed every other entity from the row universe before expansion ran, so the graph could not follow its own edges. Agents and `agm mem retrieve --entity` naturally pass the entity they are asking about.
+
+**Safety properties kept:** seeds from other entities never appear (an unrelated entity is not returned); other tenants and projects are never reachable; contested candidates and superseded rows stay withheld unless their flags are set; an unknown hinted entity still abstains.
+
+**Trade-off accepted:** with `expand=True`, a hinted query may return facts about entities other than the hinted one. Callers that need a strict single-entity result should use `expand=False`.
+
+**Affects:** `retrieve.py` (`graph_retrieve`), `tests/test_entity_hint_expansion.py`, `docs/code_logic.md`, QUICKSTART.
+
 ## D-046 — Contested candidates are withheld by default in every retrieval mode; the current fact carries the flag — 2026-11-03
 
 **Decision:** `retrieve` (flat and graph), `/v1/memory/retrieve`, `/v1/active/context`, `agm mem retrieve` and `agm active context` take `include_contested` (default **false**). By default a `contested` candidate is not returned; the *current* fact it conflicts with is returned with `contested_with` set to the candidate's id, so an unresolved conflict is still visible. With `include_contested=true` both sides are returned, each flagged, in both modes.

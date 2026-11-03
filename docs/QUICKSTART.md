@@ -36,7 +36,7 @@ python -m agm mem supersede <id> --kind fact --text "Atlas deadline moved to 202
 python -m agm mem delete <id>
 ```
 
-`--brief` prints compact text for agents; without it you get JSON. If a low-trust or stale-base write conflicts with a current fact, retrieval returns the current fact with a `contested_with` flag and withholds the conflicting claim; add `--include-contested` to see both. Retrieval always starts with the notice that memory is untrusted data. A fact needs `--entity`; use `--kind episode` for free text.
+`--brief` prints compact text for agents; without it you get JSON. If a low-trust or stale-base write conflicts with a current fact, retrieval returns the current fact with a `contested_with` flag and withholds the conflicting claim; add `--include-contested` to see both. Retrieval always starts with the notice that memory is untrusted data. A fact needs `--entity`; use `--kind episode` for free text. For retrieval, `--entity X` narrows where the search starts; with graph expansion (the default) the result may still include facts about entities linked to X. Use `--no-expand` for a strict single-entity result.
 
 ## From Python
 

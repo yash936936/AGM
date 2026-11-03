@@ -457,10 +457,21 @@ def graph_retrieve(
         )
 
     flat_scores, cosine, keyword_ids, relevance = _query_features(store, ctx, query, rows)
-    row_by_id = {str(row["id"]): row for row in rows}
+    # D-047: an entity hint scopes the SEEDS only. Graph neighbours are drawn from the full eligible set, under the
+    # same tenant/project/time/trust/contested filters, so a hint no longer blocks expansion to linked entities.
+    scope_by_id = {str(row["id"]): row for row in rows}
+    if entity is not None:
+        universe = _eligible_rows(
+            store, ctx, entity=None, as_of=as_of,
+            include_superseded=include_superseded, high_stakes=high_stakes, include_contested=include_contested,
+        )
+        row_by_id = {str(row["id"]): row for row in universe}
+        row_by_id.update(scope_by_id)
+    else:
+        row_by_id = scope_by_id
     seed_candidates = set(flat_scores)
     if not seed_candidates:
-        seed_candidates = set(row_by_id)
+        seed_candidates = set(scope_by_id)
     ordered_seed_candidates = sorted(
         seed_candidates,
         key=lambda node_id: (-flat_scores.get(node_id, 0.0), node_id),
@@ -471,7 +482,7 @@ def graph_retrieve(
         widened = True
         # Widen once to every eligible row, without crossing tenant/project/time filters.
         ordered_seed_candidates = sorted(
-            row_by_id,
+            scope_by_id,
             key=lambda node_id: (-relevance.get(node_id, 0.0), node_id),
         )
         best_relevance = max((relevance.get(node_id, 0.0) for node_id in ordered_seed_candidates), default=0.0)
@@ -493,19 +504,19 @@ def graph_retrieve(
     # expansion there instead of allowing a high-scoring neighbouring fact to win
     # the single-seed budget (for example, svc-14's dependency = svc-15).
     anchored_candidates = [
-        node_id for node_id, row in row_by_id.items()
+        node_id for node_id, row in scope_by_id.items()
         if row["entity_id"] is not None and str(row["entity_id"]) in mentioned_ids
     ]
     anchored_candidates.sort(key=lambda node_id: (-flat_scores.get(node_id, 0.0), node_id))
     expansion_seeds = (anchored_candidates or ordered_seed_candidates)[:seed_limit]
     selected_seed_ids = set(expansion_seeds)
-    seed_pool_ids = set(row_by_id) if widened else set(flat_scores)
+    seed_pool_ids = set(scope_by_id) if widened else set(flat_scores)
     if directed_relation_query and mentioned_ids:
         # A directed downstream question is anchored to its named entity. Do not
         # reintroduce unrelated global lexical hits (including stale former targets)
         # into the graph candidate pool after expansion.
         seed_pool_ids = set(anchored_candidates)
-    eligible_entity_ids = {str(row["entity_id"]) for row in rows if row["entity_id"]}
+    eligible_entity_ids = {str(row["entity_id"]) for row in row_by_id.values() if row["entity_id"]}
     expansion_ids: set[str] = set()
     expansion_depth: dict[str, int] = {}
     visited_ids = set(selected_seed_ids)

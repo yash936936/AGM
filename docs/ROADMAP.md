@@ -47,7 +47,8 @@ Total to v1.0 about **12–16 weeks at ~10 h/week** (6–8 full-time). The large
 | # | Item | Effort | Done when |
 |---|---|---|---|
 | R2.6a | ~~Flat and graph agree on contested candidates~~ DONE (D-046) | | |
-| R2.6b | An entity hint scopes the seeds but no longer blocks expansion to linked entities (or the combination is rejected with a clear error). Needs a decision entry | S | hint + expand reaches linked entities on the multi-hop family; tests |
+| R2.6b | ~~An entity hint scopes the seeds but no longer blocks expansion~~ DONE (D-047) | S | hint + expand reaches linked entities on the multi-hop family; tests |
+| R2.6e | **Relation-following depends on query wording.** Graph follows outgoing relation edges only when the query contains words from a fixed list (`dependent`, `dependency`, `dependencies`, `downstream`, `reachable`); "depends on" does not match. Measured with a hint: 2-hop questions 15/15, 1-hop 0/15. Replace the keyword trigger with a wording-independent rule, and validate on a **held-out** set of paraphrases (do not tune to the v3 wording) | M | 1-hop and 2-hop multi-hop both ≥ 0.8 on held-out phrasings, no new leaks |
 | R2.6c | Abstention that fires for unknown entities and for known entities lacking the asked attribute. **Riskiest item:** a stricter rule can hurt recall, so measure both on v3 before and after | M | unanswerable correctness ≥ 0.8 on v3 while single-fact recall drops by ≤ 0.02 |
 | R2.6d | Disambiguate near-duplicate names (`x` vs `x-staging`) without a hint | M | hard_neg strict pass ≥ 0.8 no-hint |
 

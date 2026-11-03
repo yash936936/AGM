@@ -14,6 +14,8 @@ Before R1: cleanup and MCP removal. Full suite: 264 passed (Python 3.12, Linux s
 
 **R2.6a done (D-046):** flat and graph now treat contested candidates identically (withheld by default, flag on the current fact, `include_contested` opt-in).
 
+**R2.6b done (D-047):** an entity hint no longer blocks graph expansion.
+
 **Next:** R2 (real evidence) and R3 (security) from `ROADMAP.md`.
 
 **History:** earlier phase reports, audit logs, benchmark logs and the Phase-8 harness are in git tag `archive/pre-cleanup-main`.

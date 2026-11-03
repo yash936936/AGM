@@ -54,3 +54,17 @@ Same generator, seeds, rule and queries; only the core changed (flat and graph b
 Poison family, graph strict pass: 0.54 → 0.81 (hash) and 0.17 → 0.43 (spaCy); its leak rate is now 0%. In the hint regime graph now equals flat everywhere except multi_hop (0.000, because the hint still blocks expansion: R2.6b).
 
 How to read it: the fix removes a real inconsistency, and it is the only change. Under the hash embedder graph is now statistically level with the best baseline (the CI includes zero) while using 1 retrieve call instead of about 7, which the pre-registered rule labels "efficiency only". That is not a win on accuracy: graph still does not beat the agent-style iterative baseline, and with the spaCy embedder it remains behind (paraphrase handling, not graph, is the limiting factor there). The rule was applied unchanged, but the verdict flip came from a core fix made *after* seeing the first results, so treat it as "the earlier gap was partly a defect", not as confirmation of the graph hypothesis.
+
+
+## Addendum 2 (2026-11-04): after D-047 (entity hint no longer blocks expansion)
+
+Same generator, seeds, rule and queries; only `graph_retrieve` changed. Raw numbers: `r2_labelled_v3_after_d047.json`. The no-hint regime is unchanged (±0.001, timestamp noise); the hint regime:
+
+| Embedder | graph pooled before → after | multi_hop (graph) before → after | best other (iterative) | graph − best (95% CI) | Verdict |
+|---|---:|---:|---:|---|---|
+| hash | 0.838 → **0.920** | 0.000 → **0.507** | 0.939 | −0.019 [−0.030, −0.008] | not justified → **efficiency only** |
+| spaCy | 0.838 → **0.925** | 0.000 → **0.540** | 0.955 | −0.029 [−0.036, −0.022] | not justified → not justified |
+
+All other families in the hint regime are unchanged (single, stale, temporal, hard_neg, poison at 1.000 with 0% leaks).
+
+**A second finding, found while explaining the remaining multi-hop gap.** With a hint, graph answers 15/15 two-hop questions and 0/15 one-hop questions (seed 0). The hint was never the whole story: graph follows outgoing relation edges only when the query contains words from a fixed list (`dependent`, `dependency`, `dependencies`, `downstream`, `reachable`). The one-hop wording "depends on" does not match, so those questions never follow the relation, with or without a hint. This is roadmap item R2.6e. The fix must be validated on held-out phrasings, not on the wording of this benchmark, or the result would be overfitted.
