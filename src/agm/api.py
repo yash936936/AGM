@@ -37,6 +37,7 @@ class RetrieveRequest(RequestModel):
     expand: bool = True
     include_superseded: bool = False
     high_stakes: bool = False
+    include_contested: bool = False
 
 
 class SupersedeRequest(RequestModel):
@@ -73,6 +74,7 @@ class ActiveContextRequest(RequestModel):
     token_budget: int = Field(default=2000, ge=1, le=100_000)
     expand: bool = True
     high_stakes: bool = False
+    include_contested: bool = False
 
 
 class ProposalModel(RequestModel):
@@ -225,7 +227,7 @@ def create_app(
             return request_store(request).retrieve(
                 identity.ctx, payload.query, entity=payload.entity, as_of=payload.as_of,
                 k=payload.k, expand=payload.expand, include_superseded=payload.include_superseded,
-                high_stakes=payload.high_stakes,
+                high_stakes=payload.high_stakes, include_contested=payload.include_contested,
             )
         except (ValueError, KeyError, NotImplementedError) as exc:
             raise api_error(exc) from exc
@@ -293,6 +295,7 @@ def create_app(
                 profile_queries=payload.profile_queries, goal_queries=payload.goal_queries,
                 entity=payload.entity, as_of=payload.as_of, k=payload.k,
                 token_budget=payload.token_budget, expand=payload.expand, high_stakes=payload.high_stakes,
+                include_contested=payload.include_contested,
             )
         except (ValueError, KeyError, NotImplementedError) as exc:
             raise api_error(exc) from exc

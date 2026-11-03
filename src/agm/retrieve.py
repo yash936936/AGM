@@ -54,8 +54,9 @@ def _eligible_rows(
     as_of: str | None,
     include_superseded: bool,
     high_stakes: bool = False,
+    include_contested: bool = False,
 ) -> list[sqlite3.Row]:
-    statuses = ["active", "contested"]
+    statuses = ["active", "contested"] if include_contested else ["active"]  # D-046: same default as flat
     if include_superseded or as_of is not None:
         statuses.append("superseded")
     where = ["n.tenant = ?", "n.project = ?", "n.status IN (" + ", ".join("?" for _ in statuses) + ")"]
@@ -430,6 +431,7 @@ def graph_retrieve(
     k: int = 8,
     include_superseded: bool = False,
     high_stakes: bool = False,
+    include_contested: bool = False,
     _hops: int = DEFAULT_HOPS,
 ) -> RetrieveResult:
     if k < 0:
@@ -441,7 +443,7 @@ def graph_retrieve(
 
     rows = _eligible_rows(
         store, ctx, entity=entity, as_of=as_of,
-        include_superseded=include_superseded, high_stakes=high_stakes,
+        include_superseded=include_superseded, high_stakes=high_stakes, include_contested=include_contested,
     )
     if not rows:
         return RetrieveResult(

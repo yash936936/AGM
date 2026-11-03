@@ -43,7 +43,7 @@ Decision point after R2: if graph expansion does not beat the best flat baseline
 
 | # | Item | Effort | Done when |
 |---|---|---|---|
-| R2.6a | Make flat and graph retrieval agree on `contested` facts (documented behaviour: both returned with a warning); needs a decision entry | S | same contested handling in both modes; tests |
+| R2.6a | ~~Make flat and graph retrieval agree on `contested` facts~~ DONE (D-046) | S | same contested handling in both modes; tests |
 | R2.6b | Entity hint should scope seeds, not block graph expansion (or document and reject the combination) | S | hint + expand reaches linked entities, or clear error |
 | R2.6c | Abstention that fires for unknown entities and for known entities lacking the asked attribute | M | unanswerable correctness ≥ 0.8 on v3 without hurting recall |
 | R2.6d | Disambiguate near-duplicate entity names (`x` vs `x-staging`) | M | hard_neg strict pass ≥ 0.8 no-hint |

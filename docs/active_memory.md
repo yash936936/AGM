@@ -34,7 +34,7 @@ is pure and never calls a tool or writes to storage.
 
 All real writes remain subject to existing core guards, identity, scopes,
 tenant/project filters, idempotency key/operation ID, and event-sourced audit
-contract. `POST /v1/active/context` and `POST /v1/active/review` expose the read-only parts over REST (D-044); the executor stays library-only.
+contract. `POST /v1/active/context` (takes `include_contested`, default false, D-046) and `POST /v1/active/review` expose the read-only parts over REST (D-044); the executor stays library-only.
 
 ## Controlled turn loop
 

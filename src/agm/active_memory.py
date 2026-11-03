@@ -133,6 +133,7 @@ def prepare_turn_context(
     token_budget: int = 2000,
     expand: bool = True,
     high_stakes: bool = False,
+    include_contested: bool = False,
 ) -> TurnMemoryContext:
     """Retrieve query, profile/preferences, and goal lanes before answering.
 
@@ -163,7 +164,7 @@ def prepare_turn_context(
     results = tuple(
         store.retrieve(
             ctx, search, entity=entity, as_of=as_of, k=k,
-            expand=expand, high_stakes=high_stakes,
+            expand=expand, high_stakes=high_stakes, include_contested=include_contested,
         )
         for _lane, search in lanes
     )

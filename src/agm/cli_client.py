@@ -41,6 +41,7 @@ def add_client_commands(subparsers: Any) -> None:
     r.add_argument("--entity"); r.add_argument("--as-of"); r.add_argument("--k", type=int, default=8)
     r.add_argument("--no-expand", action="store_true"); r.add_argument("--high-stakes", action="store_true")
     r.add_argument("--include-superseded", action="store_true")
+    r.add_argument("--include-contested", action="store_true", help="also return low-trust claims that conflict with a current fact")
     r.add_argument("--brief", action="store_true", help="compact text output for agents instead of JSON")
     h = ms.add_parser("history", help="show an entity's history"); _common(h)
     h.add_argument("--entity", required=True); h.add_argument("--attribute")
@@ -63,6 +64,7 @@ def add_client_commands(subparsers: Any) -> None:
     x.add_argument("query"); x.add_argument("--profile-query", action="append", default=[])
     x.add_argument("--goal-query", action="append", default=[]); x.add_argument("--entity")
     x.add_argument("--budget", type=int, default=2000); x.add_argument("--k", type=int, default=8)
+    x.add_argument("--include-contested", action="store_true")
     x.add_argument("--brief", action="store_true", help="print only the prompt context text")
     y = as_.add_parser("review", help="check proposed memory operations against the user's message"); _common(y)
     y.add_argument("--message", required=True, help="the user's actual message this turn")
@@ -112,7 +114,8 @@ def run_client_command(args: argparse.Namespace) -> tuple[int, str]:
         if args.command == "active":
             if args.active_command == "context":
                 out = client.active_context(args.query, profile_queries=args.profile_query, goal_queries=args.goal_query,
-                                            entity=args.entity, k=args.k, token_budget=args.budget)
+                                            entity=args.entity, k=args.k, token_budget=args.budget,
+                                            include_contested=args.include_contested)
                 if args.brief:
                     return 0, out["prompt_context"]
             else:
@@ -125,6 +128,7 @@ def run_client_command(args: argparse.Namespace) -> tuple[int, str]:
                 out = client.retrieve(
                     args.query, entity=args.entity, as_of=args.as_of, k=args.k, expand=not args.no_expand,
                     include_superseded=args.include_superseded, high_stakes=args.high_stakes,
+                    include_contested=args.include_contested,
                 )
                 if args.brief:
                     return 0, format_brief(out)

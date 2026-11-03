@@ -322,3 +322,28 @@ def test_active_context_and_review_are_read_only(env, monkeypatch, capsys, tmp_p
     f.write_text(json.dumps([{"action": "history", "entity": "user"}]), encoding="utf-8")
     assert main(["active", "review", "--message", "what do you remember about me", "--file", str(f)]) == 0
     assert '"eligible": true' in capsys.readouterr().out
+
+
+def test_contested_default_and_opt_in_over_rest_and_cli(env, monkeypatch, capsys):
+    trusted = AgmClient(env["url"], env["rw"])
+    base = trusted.write({"kind": "fact", "text": "Zeta owner is team-red", "entity": "zeta", "attribute": "owner",
+                          "value": "team-red"})
+    # a stale-base write from the same key becomes a contested candidate
+    contested = trusted.write({"kind": "fact", "text": "Zeta owner is team-evil", "entity": "zeta", "attribute": "owner",
+                               "value": "team-evil", "base_version": 0})
+    assert contested["status"] == "contested"
+    for expand in (False, True):
+        default = trusted.retrieve("zeta owner", entity="zeta", expand=expand)
+        assert [i["value"] for i in default["items"]] == ["team-red"]
+        assert default["items"][0]["contested_with"] == contested["item_id"]
+        both = trusted.retrieve("zeta owner", entity="zeta", expand=expand, include_contested=True)
+        assert {i["value"] for i in both["items"]} == {"team-red", "team-evil"}
+    assert base["item_id"]
+    ctx = trusted.active_context("zeta owner", entity="zeta")
+    assert "team-evil" not in ctx["prompt_context"]
+    assert "team-evil" in trusted.active_context("zeta owner", entity="zeta", include_contested=True)["prompt_context"]
+    monkeypatch.setenv("AGM_BASE_URL", env["url"]); monkeypatch.setenv("AGM_API_KEY", env["rw"])
+    assert main(["mem", "retrieve", "zeta owner", "--entity", "zeta", "--brief"]) == 0
+    assert "team-evil" not in capsys.readouterr().out
+    assert main(["mem", "retrieve", "zeta owner", "--entity", "zeta", "--brief", "--include-contested"]) == 0
+    assert "team-evil" in capsys.readouterr().out

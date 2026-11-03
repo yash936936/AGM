@@ -38,3 +38,19 @@ One hand-designed generator; k = 5 and strict scoring (any forbidden item in the
 ## What it means for the decision
 
 On this benchmark graph expansion does not justify itself: it matches or trails an agent-style flat baseline, wins only multi-hop, and brings extra behaviours (contested surfacing, hint interaction) that need fixing. The roadmap's stop rule therefore points toward making graph expansion **optional** and spending effort on items 1–4 above. Treat this as a strong prompt to test on real data (`docs/acceptance/real_history_local_runbook.md`) before deciding, not as a final verdict.
+
+
+## Addendum (2026-11-03): after D-046 (contested handling unified)
+
+Same generator, seeds, rule and queries; only the core changed (flat and graph both withhold contested candidates by default, D-046). Raw numbers: `r2_labelled_v3_after_d046.json`. The first run above is kept as the baseline for this comparison.
+
+| Embedder | Regime | graph before | graph after | best other (iterative) | graph − best (95% CI) | Verdict before → after |
+|---|---|---:|---:|---:|---|---|
+| hash | no-hint | 0.648 | **0.688** | 0.697 | −0.010 [−0.037, +0.019] | NOT JUSTIFIED → **EFFICIENCY ONLY** |
+| hash | hint | 0.776 | 0.838 | 0.939 | −0.102 | NOT JUSTIFIED → NOT JUSTIFIED |
+| spaCy | no-hint | 0.488 | **0.528** | 0.589 | −0.062 [−0.094, −0.021] | NOT JUSTIFIED → NOT JUSTIFIED |
+| spaCy | hint | 0.776 | 0.838 | 0.955 | −0.117 | NOT JUSTIFIED → NOT JUSTIFIED |
+
+Poison family, graph strict pass: 0.54 → 0.81 (hash) and 0.17 → 0.43 (spaCy); its leak rate is now 0%. In the hint regime graph now equals flat everywhere except multi_hop (0.000, because the hint still blocks expansion: R2.6b).
+
+How to read it: the fix removes a real inconsistency, and it is the only change. Under the hash embedder graph is now statistically level with the best baseline (the CI includes zero) while using 1 retrieve call instead of about 7, which the pre-registered rule labels "efficiency only". That is not a win on accuracy: graph still does not beat the agent-style iterative baseline, and with the spaCy embedder it remains behind (paraphrase handling, not graph, is the limiting factor there). The rule was applied unchanged, but the verdict flip came from a core fix made *after* seeing the first results, so treat it as "the earlier gap was partly a defect", not as confirmation of the graph hypothesis.

@@ -31,12 +31,13 @@ def begin_active_memory_turn(store: MemoryStore, ctx: Ctx, query: str, *,
     profile_queries: Sequence[str] = (), goal_queries: Sequence[str] = (),
     entity: str | None = None, as_of: str | None = None, k: int = 8,
     token_budget: int = 2000, expand: bool = True, high_stakes: bool = False,
+    include_contested: bool = False,
 ) -> ActiveMemoryTurn:
     """Prepare bounded, tenant-scoped context without writing."""
     return ActiveMemoryTurn(prepare_turn_context(
         store, ctx, query, profile_queries=profile_queries, goal_queries=goal_queries,
         entity=entity, as_of=as_of, k=k, token_budget=token_budget,
-        expand=expand, high_stakes=high_stakes))
+        expand=expand, high_stakes=high_stakes, include_contested=include_contested))
 
 
 def review_active_memory_proposals(proposals: Sequence[MemoryProposal], *,

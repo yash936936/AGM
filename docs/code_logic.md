@@ -5,8 +5,9 @@
 **What it does:** For a single-valued fact on the same (tenant, entity, attribute):
 1. Same value as current → NOOP. If a *different writer* with an independent source sends it, bump corroboration; same writer repeating never corroborates (v5: no error laundering).
 2. Different value and `valid_from` ≥ current's → SUPERSEDE: old node gets `valid_to` and status `superseded`, a `supersedes` edge is added.
-3. If `base_version` is given and differs from the current version → CONTESTED: both stay active, linked by a `contests` edge, both returned with a warning.
+3. If `base_version` is given and differs from the current version → CONTESTED: the current fact stays active, the candidate is stored as `contested`, linked by a `contests` edge.
 4. If the existing fact's tier outranks the new writer's by 2+ levels → CONTESTED, not overwritten.
+   Retrieval (D-046): contested candidates are withheld by default in flat and graph mode; the current fact is returned with `contested_with` set. `include_contested=true` returns both, each flagged.
 Multi-valued facts (`multi_valued=True`) just ADD.
 **Why it's non-obvious:** the trust gap rule and the "same writer never corroborates" rule are
 easy to forget and both exist to stop one bad source from rewriting memory or inflating confidence.

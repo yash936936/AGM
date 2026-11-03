@@ -105,9 +105,11 @@ class AgmClient:
     def retrieve(
         self, query: str, *, entity: str | None = None, as_of: str | None = None, k: int = 8,
         expand: bool = True, include_superseded: bool = False, high_stakes: bool = False,
+        include_contested: bool = False,
     ) -> dict[str, Any]:
         body = {"query": query, "entity": entity, "as_of": as_of, "k": k, "expand": expand,
-                "include_superseded": include_superseded, "high_stakes": high_stakes}
+                "include_superseded": include_superseded, "high_stakes": high_stakes,
+                "include_contested": include_contested}
         return self._request("POST", "/v1/memory/retrieve", {k_: v for k_, v in body.items() if v is not None})
 
     def supersede(self, item_id: str, item: Mapping[str, Any] | Any, reason: str) -> dict[str, Any]:
@@ -124,10 +126,10 @@ class AgmClient:
     def active_context(self, query: str, *, profile_queries: list[str] | None = None,
                        goal_queries: list[str] | None = None, entity: str | None = None, as_of: str | None = None,
                        k: int = 8, token_budget: int = 2000, expand: bool = True,
-                       high_stakes: bool = False) -> dict[str, Any]:
+                       high_stakes: bool = False, include_contested: bool = False) -> dict[str, Any]:
         body = {"query": query, "profile_queries": profile_queries or [], "goal_queries": goal_queries or [],
                 "entity": entity, "as_of": as_of, "k": k, "token_budget": token_budget, "expand": expand,
-                "high_stakes": high_stakes}
+                "high_stakes": high_stakes, "include_contested": include_contested}
         return self._request("POST", "/v1/active/context", {k_: v for k_, v in body.items() if v is not None})
 
     def active_review(self, current_user_message: str, proposals: list[Mapping[str, Any]]) -> dict[str, Any]:

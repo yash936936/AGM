@@ -933,7 +933,7 @@ class MemoryStore:
         self, ctx: Ctx, query: str, *, entity: str | None = None,
         as_of: str | None = None, k: int = 8, expand: bool = True,
         include_superseded: bool = False, high_stakes: bool = False,
-        graph_hops: int | None = None,
+        graph_hops: int | None = None, include_contested: bool = False,
     ) -> RetrieveResult:
         unresolved = self._unresolved_numeric_entity_reference(ctx, query)
         if unresolved:
@@ -948,13 +948,14 @@ class MemoryStore:
             return self._retrieve_flat(
                 ctx, query, entity=entity, as_of=as_of, k=k,
                 include_superseded=include_superseded, high_stakes=high_stakes,
+                include_contested=include_contested,
             )
         from .retrieve import graph_retrieve
         graph_kwargs = {} if graph_hops is None else {"_hops": graph_hops}
         return graph_retrieve(
             self, ctx, query, entity=entity, as_of=as_of, k=k,
             include_superseded=include_superseded, high_stakes=high_stakes,
-            **graph_kwargs,
+            include_contested=include_contested, **graph_kwargs,
         )
 
     def _unresolved_numeric_entity_reference(self, ctx: Ctx, query: str) -> str | None:
@@ -1001,7 +1002,7 @@ class MemoryStore:
         self, ctx: Ctx, query: str, *, entity: str | None = None,
         as_of: str | None = None, k: int = 8,
         include_superseded: bool = False, high_stakes: bool = False,
-        _track_usage: bool = True,
+        _track_usage: bool = True, include_contested: bool = False,
     ) -> RetrieveResult:
         if k < 0:
             raise ValueError("k must be non-negative")
@@ -1009,6 +1010,8 @@ class MemoryStore:
         params: list[Any] = [ctx.tenant_id, ctx.project]
         # Temporal queries must be allowed to see superseded versions that were valid at as_of.
         statuses = ["active", "superseded"] if (include_superseded or as_of is not None) else ["active"]
+        if include_contested:
+            statuses.append("contested")
         where.append("n.status IN (" + ", ".join("?" for _ in statuses) + ")")
         params.extend(statuses)
         if entity is not None:

@@ -10,7 +10,7 @@ def store(tmp_path):
     instance.close()
 
 
-def test_stale_base_version_creates_contested_candidate_and_returns_both(store):
+def test_stale_base_version_creates_contested_candidate_flagged_on_current_fact(store):
     tenant = "tenant-c"
     project = "ops"
     current_writer = Ctx(tenant_id=tenant, writer_id="writer-current", tier="human_verified", project=project)
@@ -45,13 +45,16 @@ def test_stale_base_version_creates_contested_candidate_and_returns_both(store):
     ).fetchone()[0]
     assert edge == 1
 
-    retrieved = store.retrieve(stale_writer, "service-api database", k=8, expand=True)
-    result_ids = {item.id for item in retrieved.items}
-    assert correction.item_id in result_ids
-    assert stale.item_id in result_ids
-    flagged = {item.id: item.contested_with for item in retrieved.items}
-    assert flagged[correction.item_id] == stale.item_id
-    assert flagged[stale.item_id] == correction.item_id
+    # D-046: by default only the current fact is returned, and it carries the conflict flag; flat and graph agree.
+    for expand in (False, True):
+        retrieved = store.retrieve(stale_writer, "service-api database", k=8, expand=expand)
+        assert {item.id for item in retrieved.items} == {correction.item_id}
+        assert retrieved.items[0].contested_with == stale.item_id
+    # Opting in returns both sides, each flagged, in both modes.
+    for expand in (False, True):
+        retrieved = store.retrieve(stale_writer, "service-api database", k=8, expand=expand, include_contested=True)
+        flagged = {item.id: item.contested_with for item in retrieved.items}
+        assert flagged == {correction.item_id: stale.item_id, stale.item_id: correction.item_id}
 
 
 def test_matching_base_version_allows_normal_correction(store):

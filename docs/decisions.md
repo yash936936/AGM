@@ -1,3 +1,15 @@
+## D-046 — Contested candidates are withheld by default in every retrieval mode; the current fact carries the flag — 2026-11-03
+
+**Decision:** `retrieve` (flat and graph), `/v1/memory/retrieve`, `/v1/active/context`, `agm mem retrieve` and `agm active context` take `include_contested` (default **false**). By default a `contested` candidate is not returned; the *current* fact it conflicts with is returned with `contested_with` set to the candidate's id, so an unresolved conflict is still visible. With `include_contested=true` both sides are returned, each flagged, in both modes.
+
+**Why:** The labelled v3 benchmark (`docs/benchmarks/r2_labelled_v3.md`) showed flat retrieval silently omitted contested candidates (status filter `active`) while graph retrieval returned them (status filter `active, contested`), contradicting each other and the docs. A contested candidate is, by construction, a claim that did *not* win: either the writer's tier is two or more levels below the current fact (a possibly poisoned or unreliable claim) or its `base_version` was stale. Showing such content to an agent by default invites it to act on a rejected claim; the flag on the winner keeps the conflict visible without that.
+
+**Supersedes in part:** `docs/code_logic.md` rule 3 ("both returned with a warning") and the acceptance test that asserted both items were returned; SPEC_v5 §"Return ... contested flags" and the PRD scenario ("shows as contested") are still met by the flag and by the write result's `contested` status. Opt-in preserves the old behaviour for hosts that want it (for example a conflict-resolution UI).
+
+**Trade-off accepted:** an agent that never passes `include_contested` will not see the rejected candidate's text, only that a conflict exists. Hosts that must review conflicts need the flag.
+
+**Affects:** `retrieve.py`, `store.py`, `active_memory.py`, `active_memory_turn.py`, `api.py`, `client.py`, `cli_client.py`, `tests/test_contested.py`, `tests/test_client.py`.
+
 ## D-045 — Key hardening, delete semantics, request limits — 2026-11-02
 
 **Decisions:**

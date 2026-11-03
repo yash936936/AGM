@@ -12,6 +12,8 @@ Before R1: cleanup and MCP removal. Full suite: 264 passed (Python 3.12, Linux s
 
 **R2 v3 (synthetic, pre-registered rule):** graph NOT JUSTIFIED under both hash and spaCy embeddings (best other: iterative flat). It wins only multi-hop and exposed four core issues (contested handling differs between flat and graph; entity hint blocks expansion; abstention rarely fires; sibling entities leak). See `docs/benchmarks/r2_labelled_v3.md` and roadmap R2.6. Real-data check: `docs/acceptance/real_history_local_runbook.md`.
 
+**R2.6a done (D-046):** flat and graph now treat contested candidates identically (withheld by default, flag on the current fact, `include_contested` opt-in).
+
 **Next:** R2 (real evidence) and R3 (security) from `ROADMAP.md`.
 
 **History:** earlier phase reports, audit logs, benchmark logs and the Phase-8 harness are in git tag `archive/pre-cleanup-main`.
