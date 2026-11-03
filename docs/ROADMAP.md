@@ -1,94 +1,148 @@
-# AGM roadmap (v0.6 → v1.0)
+# AGM roadmap: v0.7 → v1.0
 
-Replaces the old M0–M4 roadmap and phase list (still in git tag `archive/pre-cleanup-main`). Effort: **S** ≤ 1 day, **M** 2–4 days, **L** 1–2 weeks of focused work. These are rough estimates, not commitments.
+Updated 2026-11-04 (after D-046). Supersedes earlier roadmaps (old M0–M4 and phase lists live in git tag `archive/pre-cleanup-main`).
 
-## Where we are (v0.7.0)
+**Effort:** S ≤ 1 day, M 2–4 days, L 1–2 weeks of focused work. **Calendar** (rough, depends on your hours): at ~10 focused hours a week, double the day counts; full-time, they hold. These are estimates, not commitments.
 
-- **Done and tested (264 tests):** event-sourced store, replay, graph + flat retrieval with abstention, trust tiers, contested facts, handoff/readback, delete/expiry/revocation, guard in core, REST API with scoped keys, owner bootstrap, sessions/connections, timeline/snapshot/Obsidian export, lifecycle dry-run, doctor, active-memory turn seam and policy executor (library-only, D-037), reference host harness, synthetic + REST concurrent benchmarks.
-- **R1 delivered in v0.7.0:** `AgmClient`, `agm mem/handoff/connect`, `docs/QUICKSTART.md` (R1.1, R1.2, R1.3, R1.5 partly: OpenAPI route test; no checked-in schema file). **R1.4 done (read-only):** `agm active context|review` and `/v1/active/*` (D-044); execution stays library-only. **R3 started (D-045):** hashed keys at rest, hot reload/revocation without restart, 404 on missing delete, request-size limits.
-- **Not done:** any evidence on real data, independent security review, a real third-party host, remote access, teams, hosted storage.
-- **Deliberately cut:** MCP adapter (D-042), Phase-8 LLM-agent harness.
+## 1. Where we are
 
-## Principle for going fast
+- **Code:** v0.7.0. Event-sourced SQLite store, flat and graph retrieval, trust tiers, contested handling (D-046), handoff, lifecycle (delete/expiry/revocation), guard in core, REST API, stdlib client, CLI (`mem`, `handoff`, `active`, `connect`, `hash-keys`), read-only active-memory routes. 289 tests; CI (Ubuntu + Windows × Python 3.11–3.13) green on the latest `main` run (#642).
+- **Decided and done:** MCP removed (D-042); client/CLI (D-043); read-only active routes (D-044); hashed keys, hot reload, 404 on missing delete, body limit (D-045); contested candidates withheld by default (D-046).
+- **Evidence so far (synthetic only):** on the pre-registered v3 benchmark graph retrieval is level with agent-style flat retrieval at best (hash embedder, within noise) and behind it with real word vectors; its only clear win is multi-hop. Four core defects were found; one is fixed.
+- **Not done:** any evidence on real data; abstention; entity-hint/expansion interaction; near-duplicate entity names; independent security review; remote access; a real third-party host; scalable vector search; a licence; packaging.
+- **Known unknown:** one Windows/Python 3.13 CI failure (#641) was never diagnosed; the next run on the same code passed. Treat as a possibly flaky test until proven otherwise (R0.1).
 
-The design hypotheses (H1–H7, D-007) have **no real-data evidence yet**. Every feature built before that evidence exists is a bet that graph retrieval beats a good flat baseline. So the order below puts "make it usable by an agent" and "find out whether it is better" ahead of teams, Postgres and polish.
+## 2. The question that decides the plan
 
-## R1 — Agent-connectable v0.7 (DONE) (usable today by Claude Code, Codex, local agents)  · ~1 week
+Nothing in the design has been shown to beat a simple baseline on **your** kind of data. So the plan has two decision gates, and work after each gate depends on its outcome:
+
+- **Gate G1 (graph or not):** after R2.4 (your real-data run) and the R2 core fixes. Graph expansion stays on by default only if it beats the best flat baseline by a margin fixed in advance, with zero forbidden-value leaks. Otherwise it becomes optional (default off) and the product is "event log + trust + lifecycle + handoff + flat retrieval", which is still a coherent tool.
+- **Gate G2 (go remote):** after R3.4–R3.5 (threat model and independent review). Until it passes, the server stays loopback-only.
+
+## 3. Milestones
+
+| Version | Meaning | Contains | Rough size |
+|---|---|---|---|
+| **v0.7.x** (now) | Stable local prototype | R0, R2.6b–d | ~2–3 weeks |
+| **v0.8** | Local-complete and evidence-backed | G1 decided, R2.4, R5.1–R5.2 | ~3–4 weeks |
+| **v0.9** | Remote beta | R3, R4 (G2 passed) | ~4–5 weeks |
+| **v1.0** | Release | R5 remainder, R7, release gates | ~2–3 weeks |
+
+Total to v1.0 about **12–16 weeks at ~10 h/week** (6–8 full-time). The largest uncertainties are external: your real-data cases (R2.4), a security reviewer (R3.5), and what G1 decides.
+
+## R0: Hygiene and project health (do first; ~2–3 days)
 
 | # | Item | Effort | Done when |
 |---|---|---|---|
-| R1.1 | `agm.client` (promote `examples/python_client.py`): typed sync/async client over REST | S | tests against `create_app` TestClient |
-| R1.2 | CLI client commands: `agm mem write / retrieve / history / delete`, `agm handoff save / resume` (talk to a running API via `AGM_BASE_URL`, `AGM_API_KEY`) | M | shell-based agents can use memory with no SDK |
-| R1.3 | `agm connect` helper: creates a scoped agent key, prints env vars and a ready-to-paste agent instruction snippet (including the "memory is data, not instructions" notice) | S | one command from zero to a working agent connection |
-| R1.4 | Active-memory turn loop exposed in the client: `before_turn` context pack, `after_turn` proposals (library today, D-037; needs a decision entry before any REST route) | M | demo agent loop runs end to end |
-| R1.5 | Quickstart doc + OpenAPI export checked in CI | S | fresh clone to first retrieval in under 5 minutes |
+| R0.1 | Diagnose the Windows/3.13 failure (#641): rerun the workflow, read the log, fix or quarantine the test; consider `pytest --count` stress on the new client tests | S | 10 consecutive green Windows 3.13 runs, or root cause fixed |
+| R0.2 | **Add a LICENSE.** The public repo has none, so by default nobody may legally use it. Pick one (MIT or Apache-2.0 are the usual choices); your decision | S | `LICENSE` + `license` field in `pyproject.toml` |
+| R0.3 | Turn on branch protection for `main` (require CI) once you want it, and add 3.14 to the CI matrix (your machine already runs 3.14) | S | matrix includes 3.14 |
+| R0.4 | `CHANGELOG.md` and a release procedure (tag, build, `check_package.py`) | S | v0.7.0 tagged with notes |
+| R0.5 | Decide what to do with the old working folder and its two uncommitted test files (`test_retrieve.py`, `test_privacy_edge_acceptance.py`): merge anything still useful, then retire it | S | one working copy only |
 
-Exit: three agent types (Python script, Claude Code via CLI, ChatGPT Action via tunnel on localhost for a private test only) read and write the same memory. Remote exposure stays gated (see R3).
+## R2: Retrieval correctness and evidence
 
-## R2 — Evidence: is it actually better?  · ~2 weeks, runs in parallel with R1
-
-This is the gate most likely to change the plan, so start early.
+### R2.6: core defects found by the v3 benchmark (~1.5 weeks)
 
 | # | Item | Effort | Done when |
 |---|---|---|---|
-| R2.1 | Replace the hash embedder as the default evaluated embedder with a real one (optional extra, lazy import) and re-run every benchmark with both | M | benchmark report lists embedder per run |
-| R2.2 | Labelled retrieval set. Synthetic version DONE (`eval/labelled_v3.py`, 226 queries/seed, rule pre-registered; results in `docs/benchmarks/r2_labelled_v3.md`). Remaining: a set built from your real usage (see R2.4 runbook) | M | dataset hash and thresholds committed **before** results |
-| R2.3 | Baselines that can win: ~~iterative flat retrieval~~ DONE (`eval/iterative_baseline.py`, see `docs/benchmarks/r2_post_hoc_iterative_baseline.md`: it matches graph on multi-hop). Remaining: BM25-only, vector-only, "stuff the whole log in context" for small histories | S | report includes cases where each baseline beats graph |
-| R2.4 | Consented, de-identified real-history run using `scripts/evaluate_real_history.py` and the existing protocol. Tooling ready: `scripts/build_real_history_cases.py`, `docs/acceptance/real_history_local_runbook.md` (data never leaves your machine) | M (+ data access) | aggregate-only results; otherwise status stays BLOCKED |
-| R2.5 | End-to-end agent task test (same agent, with vs without AGM, fixed tasks) | L | measured task success and token cost deltas |
+| R2.6a | ~~Flat and graph agree on contested candidates~~ DONE (D-046) | | |
+| R2.6b | An entity hint scopes the seeds but no longer blocks expansion to linked entities (or the combination is rejected with a clear error). Needs a decision entry | S | hint + expand reaches linked entities on the multi-hop family; tests |
+| R2.6c | Abstention that fires for unknown entities and for known entities lacking the asked attribute. **Riskiest item:** a stricter rule can hurt recall, so measure both on v3 before and after | M | unanswerable correctness ≥ 0.8 on v3 while single-fact recall drops by ≤ 0.02 |
+| R2.6d | Disambiguate near-duplicate names (`x` vs `x-staging`) without a hint | M | hard_neg strict pass ≥ 0.8 no-hint |
 
-Decision point after R2: if graph expansion does not beat the best flat baseline by a margin fixed in advance, simplify (keep event log, trust, lifecycle, handoff; make graph expansion optional) instead of building R5–R6 around it.
-
-### R2.6 — Core issues found by the v3 benchmark (do these before more graph work)
+### R2.1–R2.5: evidence (runs in parallel; ~2–3 weeks, partly your time)
 
 | # | Item | Effort | Done when |
 |---|---|---|---|
-| R2.6a | ~~Make flat and graph retrieval agree on `contested` facts~~ DONE (D-046) | S | same contested handling in both modes; tests |
-| R2.6b | Entity hint should scope seeds, not block graph expansion (or document and reject the combination) | S | hint + expand reaches linked entities, or clear error |
-| R2.6c | Abstention that fires for unknown entities and for known entities lacking the asked attribute | M | unanswerable correctness ≥ 0.8 on v3 without hurting recall |
-| R2.6d | Disambiguate near-duplicate entity names (`x` vs `x-staging`) | M | hard_neg strict pass ≥ 0.8 no-hint |
-| R2.7 | Decide: make graph expansion optional (default off) unless real-data runs show it helps | S | decision recorded after R2.4 |
+| R2.1 | Re-run all benchmarks with a real sentence embedder (optional extra, lazy import). Word vectors are weaker than sentence embeddings, so this may change the paraphrase results | M | reports list the embedder per run; graph-vs-baseline verdict recorded for each |
+| R2.2 | Real-usage labelled set (20–40 cases), built by **you** locally with `scripts/build_real_history_cases.py` and `docs/acceptance/real_history_local_runbook.md` | M (your time) | cases written and frozen before any run |
+| R2.3 | Remaining baselines: BM25-only, vector-only, and "put the whole log in context" for small histories | S | report shows where each baseline beats graph |
+| R2.4 | Run the evaluator and keyword baseline on your cases; share only the two aggregate reports | S | decision margin chosen in advance; result recorded |
+| R2.5 | End-to-end agent task test: same agent, same tasks, with and without AGM; measure success and token cost | L | measured deltas, small but honest sample |
 
-## R3 — Security and remote access  · ~1–2 weeks
+**G1 decision** (R2.7): record the outcome as a decision entry. If graph is not justified, set `expand` default to off, keep the code, and drop graph-specific work from later phases.
 
-Prerequisite for ChatGPT / web-based agents, which cannot reach loopback.
+## R3: Security and remote access (~3–4 weeks; needed for ChatGPT and web agents)
 
 | # | Item | Effort | Done when |
 |---|---|---|---|
-| R3.1 | ~~Hashed, revocable per-agent credentials~~ DONE (D-045). Remaining: expiry dates, a managed credential store instead of a JSON file | S | expired token fails; tests |
-| R3.2 | ~~Request size limits~~ DONE (D-045). Remaining: rate limits, safe error bodies, audit metadata, no secrets or memory text in logs | M | negative tests |
-| R3.3 | Tenant/project isolation test matrix incl. ID-guessing (IDOR) across every route | M | matrix in CI |
-| R3.4 | Threat model + data-flow inventory; run `docs/acceptance/security_privacy_review_checklist.md` | M | written findings |
-| R3.5 | Independent reviewer sign-off | external | signed checklist; otherwise remote stays off |
-| R3.6 | Controlled MVP deploy: single instance, HTTPS ingress, persistent disk SQLite, single writer, tested backup/restore (`docs/cloud-deployment.md`) | M | two clients share one workspace remotely |
+| R3.1 | ~~Hashed keys~~ DONE (D-045). Remaining: key expiry and rotation, a managed credential store instead of a JSON file | M | expired key fails; tests |
+| R3.2 | ~~Body size limits~~ DONE (D-045). Remaining: rate limits, safe error bodies, audit log (who read/wrote/deleted what, never memory text), no secrets in logs | M | negative tests; audit trail verified |
+| R3.3 | Isolation test matrix: every route × cross-tenant, cross-project, ID guessing, wrong scope | M | matrix runs in CI |
+| R3.4 | Threat model and data-flow inventory; run `docs/acceptance/security_privacy_review_checklist.md` | M | written findings with owners |
+| R3.5 | **Independent** reviewer sign-off (external) | external | signed checklist, or remote stays off |
+| R3.6 | Controlled deploy: single instance behind HTTPS (reverse proxy), persistent disk, single writer, **tested backup and restore**, key rotation drill | M | two clients share one workspace remotely |
 
-## R4 — Real-host acceptance  · ~1 week, after R1 and R3.6
+**G2 gate:** non-loopback binding is allowed only after R3.4 and R3.5 pass.
 
-Run `docs/acceptance/third_party_host_validation.md` against at least two actual hosts (for example Claude Code via the CLI client and a ChatGPT Action). CI smoke tests do not count.
+## R4: Real-host acceptance (~1 week, after R1 and R3.6)
 
-## R5 — Quality and operability  · ~2 weeks, scope set by R2 results
+Run `docs/acceptance/third_party_host_validation.md` against at least two real hosts, for example Claude Code through the CLI client (with the `connect` instruction block in `CLAUDE.md`) and a ChatGPT Action through the deployed instance. CI smoke tests do not count.
 
-Learning/ranking improvements justified by R2 failures only; consolidation and decay tuning on real data; observability (metrics, redacted structured logs); retrieval latency work driven by the REST concurrent benchmark; CI matrix trimmed to what is needed (Ubuntu + Windows, 3.11 and 3.13).
+Also: a checked-in OpenAPI file with a CI drift check (finishes R1.5), and a short per-host setup guide.
 
-## R6 — Later, only if demanded
+## R5: Scale, quality and operability (~3 weeks; scope set by G1 and real data)
 
-- Optional MCP shim re-added as a thin client of the REST API (not a second core adapter); only if R1 shows shell/HTTP integration is a real adoption blocker.
-- Teams: workspaces, roles, permission matrix (old M3).
-- PostgreSQL + pgvector store with migrations and parity tests (old M4); needed only for multi-instance scale.
+| # | Item | Effort | Done when |
+|---|---|---|---|
+| R5.1 | **Vector search does a full scan:** each query loads every embedding for the tenant/project into Python. Measure at 10k, 100k and 1M nodes, then fix (cached matrix, sqlite-vec, or an ANN index) | M–L | p95 retrieval < 100 ms at 100k nodes (target to confirm with measurements) |
+| R5.2 | Embedder strategy: stored embedder id per vector, re-embed migration when the model changes, optional sentence-transformers extra, documented default | M | switching models does not corrupt or silently mix vectors |
+| R5.3 | Schema/event-log versioning and an upgrade path between releases, with replay tests across versions | M | old logs replay on new code in CI |
+| R5.4 | Observability: redacted structured logs, basic metrics, `doctor` extended | S | documented runbook |
+| R5.5 | Learning/ranking improvements, only where real-data failures justify them; consolidation and decay tuning | L | each change justified by a measured failure |
+
+## R6: Only if demanded
+
+- Optional MCP shim as a **thin client of the REST API** (not a second core adapter), if shell/HTTP integration proves a real adoption blocker (trigger: two or more users cannot use the CLI).
+- Teams: workspaces, roles, permission matrix. PostgreSQL + pgvector with migrations and parity tests (trigger: multi-instance scale or a team customer).
 - Web UI for the local hub.
 
-## Critical path and cuts
+## R7: Release (~1 week)
+
+PyPI package and a Docker image; tagged versions with changelog; docs trimmed to README, QUICKSTART, architecture, decisions, acceptance. v1.0 requires the four release gates below.
+
+## 4. Critical path
 
 ```
-R1 ──┐
-     ├─► R4 ─► v0.9 candidate ─► R5 ─► v1.0
-R2 ──┤        (needs R3.6)
-R3 ──┘
+R0 ─► R2.6b-d ─► G1 ◄─ R2.1–R2.5 (your cases)
+                  │
+                  ├─► R5 (scope by G1) ───────────────┐
+R3.1–R3.4 ─► R3.5 (G2) ─► R3.6 ─► R4 ─► v0.9 ─► R7 ─► v1.0
 ```
 
-Fastest honest path to a demonstrable v1.0-alpha: **R1 + R2.1–R2.3 + R3.1–R3.3 + R3.6**. Cut first if time is short: R5, R6, R2.5. Do not cut: R2.2/R2.3 (without them any claim of benefit is unsupported) and R3.5 (without it the service stays local).
+Fastest honest path to a demonstrable **v0.9**: R0 + R2.6b–d + R2.4 + G1 + R3.1–R3.6 + R4. Cut first if time is short: R5.5, R6, R2.5. **Do not cut:** R2.2–R2.4 (without them any claim of benefit is unsupported), R3.5 (without it the service stays local), R5.1 (without it it only works for small stores), R0.2 (without a licence nobody may use it).
 
-## Release gates (unchanged in spirit)
+## 5. Next two weeks (concrete)
+
+1. R0.1, R0.2, R0.4 (licence decision is yours).
+2. R2.6b, then R2.6c with before/after numbers, then R2.6d; each as a small patch with a decision entry.
+3. You write 20–40 real cases (R2.2) and run the local evaluator (R2.4), sharing only the aggregate reports.
+4. Hold G1 with whatever evidence exists, even if only partial, and record the outcome.
+
+## 6. What only you can do
+
+| Item | Why |
+|---|---|
+| Choose a licence (R0.2) | legal decision |
+| Write real cases from your usage (R2.2) | only you have the data; your own protocol forbids sending raw histories |
+| Find an independent security reviewer (R3.5) | independence cannot be supplied by the builder |
+| Choose where to deploy and pay for it (R3.6) | account and cost decisions |
+| Decide G1 and G2 | product decisions |
+
+## 7. Risks
+
+| Risk | Likelihood | Impact | Mitigation |
+|---|---|---|---|
+| Graph retrieval does not pay off on real data | Medium–high (synthetic evidence is already marginal) | Medium | G1 plan: make it optional; the rest of the product stands without it |
+| Abstention tuning trades recall for safety | Medium | Medium | measure before/after on v3 and on real cases; keep the rule configurable |
+| Remote exposure before review | Low if G2 is respected | High | loopback guard stays; tunnel tests only with throwaway data |
+| Solo maintainer, two AI assistants generating code | Medium | Medium | every change goes through CI, a decision entry for contract changes, and small patches; AGENTS.md rules stay authoritative |
+| Weak default embedder gives poor paraphrase handling | High with the hash embedder | Medium | R2.1 and R5.2; document the limit honestly until fixed |
+| Scale cliff from full vector scans | Medium | Medium | R5.1 measurement before claiming capacity |
+| Flaky CI erodes trust in tests | Medium | Low–medium | R0.1 |
+
+## 8. Release gates (unchanged in spirit)
 
 1. Exact-head CI plus package inspection on the release commit.
 2. Held-out real-history evaluation, or an explicit documented waiver naming the risk owner.
