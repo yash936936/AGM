@@ -7,6 +7,7 @@
 2. Different value and `valid_from` ≥ current's → SUPERSEDE: old node gets `valid_to` and status `superseded`, a `supersedes` edge is added.
 3. If `base_version` is given and differs from the current version → CONTESTED: the current fact stays active, the candidate is stored as `contested`, linked by a `contests` edge.
 4. If the existing fact's tier outranks the new writer's by 2+ levels → CONTESTED, not overwritten.
+   Relations (D-048): graph retrieval always follows outgoing relation edges from the anchored entity; query wording only affects ranking.
    Entity hint (D-047): with graph expansion `entity=` scopes seeds only and neighbours come from the full eligible set; with `expand=False` it is a hard filter.
    Retrieval (D-046): contested candidates are withheld by default in flat and graph mode; the current fact is returned with `contested_with` set. `include_contested=true` returns both, each flagged.
 Multi-valued facts (`multi_valued=True`) just ADD.

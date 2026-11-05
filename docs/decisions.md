@@ -1,3 +1,15 @@
+## D-048 — Graph retrieval follows outgoing relations regardless of query wording — 2026-11-05
+
+**Decision:** In graph retrieval, when the query anchors on an entity (named in the query, or hinted), the facts of entities reachable through that entity's **outgoing** `relates` edges (up to the hop limit) are always added to the candidates, under the same tenant/project/time/trust/contested filters. Previously this happened only if the query contained one of `dependent`, `dependency`, `dependencies`, `downstream`, `reachable`. Wording now affects ranking only: answer-slot facts (`attribute` matching the query's attribute intent, for example `owner`) of entities reached this way rank immediately after the anchored entity's own matching fact, and before unrelated hits.
+
+**Why:** The v3 benchmark and a frozen held-out check (`eval/relation_heldout.py`) showed relation-following depended on wording: "depends on", "relies on", "calls", "built on" scored 0.000-0.093 hit@5, while trigger wording scored 0.667-1.000. The keyword list is not a defensible interface.
+
+**Evidence (synthetic, hash embedder, frozen criteria met):** plain 1-hop and 2-hop hit@5 0.000/0.027 → 1.000/1.000 without a hint (0.093/0.080 → 1.000/1.000 with a hint); trigger-word results unchanged (≤ 0.013 lower); non-relational control question still returns the entity's own answer first (top-1 1.000).
+
+**Known limits:** (1) For relational questions without trigger words the linked entity's answer is in the top-k but not first (the system cannot tell "owner of X" from "owner of what X depends on" without understanding language); results carry `entity` and `via` so the caller can tell. (2) The answer-slot ranking still depends on attribute wording (`owner/owns/owned`); "who is in charge of…" gets no answer-slot priority (roadmap R2.6f). (3) Retrieval still abstains on low lexical similarity before expansion runs (R2.6c); one 2-hop wording is a strict expected-failure test for that.
+
+**Affects:** `retrieve.py` (`graph_retrieve`), `tests/test_relation_wording.py`, `eval/relation_heldout.py`, docs.
+
 ## D-047 — An entity hint scopes graph seeds; expansion may reach linked entities — 2026-11-04
 
 **Decision:** In graph retrieval (`expand=True`), `entity=` restricts the **seed** candidates to that entity, but graph neighbours are drawn from the full eligible set under the same tenant, project, time (`as_of`), trust (`high_stakes`), superseded and contested (D-046) filters. Linked entities' facts can therefore appear in the result with `via="expand"`. Flat retrieval (`expand=False`) is unchanged: `entity=` stays a hard filter on the result.

@@ -68,3 +68,23 @@ Same generator, seeds, rule and queries; only `graph_retrieve` changed. Raw numb
 All other families in the hint regime are unchanged (single, stale, temporal, hard_neg, poison at 1.000 with 0% leaks).
 
 **A second finding, found while explaining the remaining multi-hop gap.** With a hint, graph answers 15/15 two-hop questions and 0/15 one-hop questions (seed 0). The hint was never the whole story: graph follows outgoing relation edges only when the query contains words from a fixed list (`dependent`, `dependency`, `dependencies`, `downstream`, `reachable`). The one-hop wording "depends on" does not match, so those questions never follow the relation, with or without a hint. This is roadmap item R2.6e. The fix must be validated on held-out phrasings, not on the wording of this benchmark, or the result would be overfitted.
+
+
+## Addendum 3 (2026-11-05): after D-048 (relation-following no longer depends on wording)
+
+Raw numbers: `r2_labelled_v3_after_d048.json`; held-out check: `r2_relation_heldout.json` (`eval/relation_heldout.py`, phrasing banks and criteria frozen before the change; all met).
+
+**Held-out check (hash embedder, 5 seeds, hit@5):** plain-wording 1-hop 0.000 → 1.000 (no hint) and 0.093 → 1.000 (hint); plain 2-hop 0.027 → 1.000 and 0.080 → 1.000; trigger-word wording unchanged (within 0.013); a non-relational control question still returns the entity's own answer first (top-1 1.000). The linked entity's answer is in the top 5 but never first for plain wordings (top-1 0.000).
+
+**Regression run on the pre-registered v3 benchmark** (rule unchanged; criterion fixed before the run: graph pooled score may not fall by more than 0.01 and leaks may not rise; both held):
+
+| Embedder | Regime | graph D-047 → D-048 | best other (iterative) | graph − best (95% CI) | Verdict |
+|---|---|---:|---:|---|---|
+| hash | no-hint | 0.687 → **0.778** | 0.697 | +0.081 [+0.058, +0.104] | efficiency only → **GRAPH_JUSTIFIED** |
+| hash | hint | 0.920 → **1.000** | 0.939 | +0.061 [+0.049, +0.074] | efficiency only → **GRAPH_JUSTIFIED** |
+| spaCy | no-hint | 0.529 → **0.608** | 0.589 | +0.018 [−0.012, +0.062] | not justified → efficiency only |
+| spaCy | hint | 0.925 → **1.000** | 0.955 | +0.045 [+0.040, +0.053] | not justified → efficiency only |
+
+Multi-hop is now 1.000 for graph in every regime (it was 0.507/0.540 with a hint, 0.51/0.53 without).
+
+**How much to believe this.** (1) The v3 one-hop questions say "depends on", the very wording the old code mishandled, so the earlier verdicts understated graph because of a defect, not only because of the idea. (2) The embedders disagree: JUSTIFIED with the hash embedder, only efficiency-level with word vectors, so the synthetic evidence cannot decide gate G1. (3) The pooled score weights multi-hop at roughly 18% of the answerable queries because of how I built the generator; a different mix could change the verdict. (4) Graph still trails the iterative baseline on single-fact and stale questions without a hint (for example single 0.827 vs 0.913 with the hash embedder). (5) hit@5 is lenient: for plain-worded relational questions the answer is not ranked first. Real-data results (roadmap R2.4) remain the deciding evidence.

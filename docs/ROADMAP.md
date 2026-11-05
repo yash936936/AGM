@@ -35,7 +35,7 @@ Total to v1.0 about **12–16 weeks at ~10 h/week** (6–8 full-time). The large
 | # | Item | Effort | Done when |
 |---|---|---|---|
 | R0.1 | Windows flaky tests. **Found and fixed one cause:** the REST benchmark sampled memory by spawning PowerShell inside the event loop, freezing the load workers (0 requests in a 0.5 s window) and distorting its own latencies; fixed with a regression test. Not confirmed to be the same failure as CI #641 (its log was never read), so keep watching: if a Windows job goes red again, capture the `FAILED` lines | S | 10 consecutive green Windows runs after this fix |
-| R0.2 | **Add a LICENSE.** The public repo has none, so by default nobody may legally use it. Pick one (MIT or Apache-2.0 are the usual choices); your decision | S | `LICENSE` + `license` field in `pyproject.toml` |
+| R0.2 | ~~Add a LICENSE~~ DONE: Apache-2.0 (`LICENSE`, `NOTICE`, SPDX `license` in `pyproject.toml`). Confirm the copyright holder name in `NOTICE` | S | |
 | R0.3 | Turn on branch protection for `main` (require CI) once you want it, and add 3.14 to the CI matrix (your machine already runs 3.14) | S | matrix includes 3.14 |
 | R0.4 | `CHANGELOG.md` and a release procedure (tag, build, `check_package.py`) | S | v0.7.0 tagged with notes |
 | R0.5 | Decide what to do with the old working folder and its two uncommitted test files (`test_retrieve.py`, `test_privacy_edge_acceptance.py`): merge anything still useful, then retire it | S | one working copy only |
@@ -48,7 +48,8 @@ Total to v1.0 about **12–16 weeks at ~10 h/week** (6–8 full-time). The large
 |---|---|---|---|
 | R2.6a | ~~Flat and graph agree on contested candidates~~ DONE (D-046) | | |
 | R2.6b | ~~An entity hint scopes the seeds but no longer blocks expansion~~ DONE (D-047) | S | hint + expand reaches linked entities on the multi-hop family; tests |
-| R2.6e | **Relation-following depends on query wording.** Graph follows outgoing relation edges only when the query contains words from a fixed list (`dependent`, `dependency`, `dependencies`, `downstream`, `reachable`); "depends on" does not match. Measured with a hint: 2-hop questions 15/15, 1-hop 0/15. Replace the keyword trigger with a wording-independent rule, and validate on a **held-out** set of paraphrases (do not tune to the v3 wording) | M | 1-hop and 2-hop multi-hop both ≥ 0.8 on held-out phrasings, no new leaks |
+| R2.6e | ~~Relation-following depends on query wording~~ DONE (D-048; frozen held-out check met). Original description: **Relation-following depends on query wording.** Graph follows outgoing relation edges only when the query contains words from a fixed list (`dependent`, `dependency`, `dependencies`, `downstream`, `reachable`); "depends on" does not match. Measured with a hint: 2-hop questions 15/15, 1-hop 0/15. Replace the keyword trigger with a wording-independent rule, and validate on a **held-out** set of paraphrases (do not tune to the v3 wording) | M | 1-hop and 2-hop multi-hop both ≥ 0.8 on held-out phrasings, no new leaks |
+| R2.6f | Answer-slot detection depends on attribute wording (`owner/owns/owned`; "who is in charge of…" gets no slot priority). Replace with a wording-independent rule, validated on held-out phrasings | M | "in charge of / responsible for / maintains" phrasings reach the answer in top-k, no new leaks |
 | R2.6c | Abstention that fires for unknown entities and for known entities lacking the asked attribute. **Riskiest item:** a stricter rule can hurt recall, so measure both on v3 before and after | M | unanswerable correctness ≥ 0.8 on v3 while single-fact recall drops by ≤ 0.02 |
 | R2.6d | Disambiguate near-duplicate names (`x` vs `x-staging`) without a hint | M | hard_neg strict pass ≥ 0.8 no-hint |
 

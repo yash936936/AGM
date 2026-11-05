@@ -16,6 +16,8 @@ Before R1: cleanup and MCP removal. Full suite: 264 passed (Python 3.12, Linux s
 
 **R2.6b done (D-047):** an entity hint no longer blocks graph expansion.
 
+**R2.6e done (D-048):** relation-following no longer depends on query wording (held-out criteria met). Apache-2.0 licence added.
+
 **Next:** R2 (real evidence) and R3 (security) from `ROADMAP.md`.
 
 **History:** earlier phase reports, audit logs, benchmark logs and the Phase-8 harness are in git tag `archive/pre-cleanup-main`.

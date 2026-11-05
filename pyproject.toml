@@ -1,10 +1,12 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "agm"
 version = "0.7.0"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
 description = "Adaptive Graph Memory prototype with graph retrieval, trust, handoff, REST and lifecycle evaluation"
 readme = "README.md"
 requires-python = ">=3.11"

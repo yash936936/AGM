@@ -539,6 +539,29 @@ def graph_retrieve(
         visited_ids.update(next_ids)
         frontier_ids = next_ids
 
+    # D-048: following outgoing relation edges must not depend on query wording. From the entity the query anchors
+    # on (named in the query, or hinted), always add the facts of entities it points to, up to the hop limit, under
+    # the same eligibility filters. Wording only changes ranking (below), never reachability.
+    outgoing_ids: set[str] = set()
+    if anchored_candidates:
+        seen_ids = set(selected_seed_ids)
+        out_frontier = set(selected_seed_ids)
+        for depth in range(min(_hops, MAX_HOPS)):
+            out_next: set[str] = set()
+            for node_id in out_frontier:
+                out_next.update(_eligible_edge_neighbor_ids(
+                    store, row_by_id[node_id], set(row_by_id), eligible_entity_ids,
+                    follow_outgoing_relations=True,
+                ))
+            out_next.difference_update(seen_ids)
+            if not out_next:
+                break
+            outgoing_ids.update(out_next)
+            seen_ids.update(out_next)
+            out_frontier = out_next
+            for node_id in out_next:
+                expansion_depth.setdefault(node_id, depth + 1)
+        expansion_ids.update(outgoing_ids)
     candidate_ids = seed_pool_ids | expansion_ids | selected_seed_ids
     attribute_intent = _query_attribute_intent(query)
     hop_intent = _query_hop_intent(query)
@@ -581,7 +604,7 @@ def graph_retrieve(
 
     candidate_rows = [row_by_id[node_id] for node_id in candidate_ids]
     corroboration_counts = _batch_independent_corroborations(store.conn, candidate_rows)
-    ranked: list[tuple[sqlite3.Row, float, str, float, int, int, int, int]] = []
+    ranked: list[tuple[sqlite3.Row, float, str, float, int, int, int, int, int]] = []
     for node_id in candidate_ids:
         row = row_by_id[node_id]
         similarity = min(1.0, max(0.0, relevance.get(node_id, 0.0)))
@@ -641,18 +664,24 @@ def graph_retrieve(
             and str(row["entity_id"]) in target_entity_ids
             and row["attribute"] == attribute_intent
         )
+        # Answer-slot facts of entities reached through outgoing relations rank right after the anchored entity's
+        # own matching fact, so a plain "who owns X" keeps X's own answer first while "who owns what X relies on"
+        # still has the linked entity's answer inside the top-k.
+        relation_priority = int(
+            node_id in outgoing_ids and attribute_intent is not None and row["attribute"] == attribute_intent
+        )
         ranked.append((
             row, final_score, via, conf, intent_priority,
-            temporal_priority, entity_priority, attribute_priority,
+            temporal_priority, entity_priority, attribute_priority, relation_priority,
         ))
     ranked.sort(key=lambda item: (
-        -item[4], -item[5], -item[6], -item[7], -item[1], str(item[0]["id"]),
+        -item[4], -item[5], -item[6], -item[7], -item[8], -item[1], str(item[0]["id"]),
     ))
     ranked = ranked[:k]
 
     now = utc_now()
     items: list[Node] = []
-    for row, score, via, confidence, _intent_priority, _temporal_priority, _entity_priority, _attribute_priority in ranked:
+    for row, score, via, confidence, _intent_priority, _temporal_priority, _entity_priority, _attribute_priority, _relation_priority in ranked:
         store.conn.execute(
             "UPDATE nodes SET usage_count = usage_count + 1, last_used = ? WHERE id = ?",
             (now, row["id"]),

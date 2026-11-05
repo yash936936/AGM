@@ -52,3 +52,7 @@ Start with `context.md` if you are an agent or contributor.
 ## Limits
 
 Synthetic benchmark numbers are smoke tests, not evidence for the design hypotheses (D-007). Real-history evaluation, independent security review and third-party host integration are open. Services refuse non-loopback binds until that review is done.
+
+## License
+
+Apache License 2.0. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
