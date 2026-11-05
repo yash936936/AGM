@@ -56,3 +56,23 @@ def test_rest_benchmark_supports_duration_mode_and_rss_metadata() -> None:
     assert report["workload"]["requests_succeeded"] >= 1
     assert report["throughput"]["elapsed_seconds"] >= 0.5
     assert "mean" in report["server_rss_bytes"]
+
+
+def test_slow_rss_sampling_does_not_starve_the_load_workers(monkeypatch, capsys):
+    """Regression: a slow RSS probe (PowerShell on Windows) must not block requests in duration mode."""
+    import time
+
+    from eval import rest_concurrent_benchmark as bench
+
+    def slow_rss(pid):
+        time.sleep(1.2)  # longer than the whole 0.5 s window
+        return 4096
+
+    monkeypatch.setattr(bench, "process_rss_bytes", slow_rss)
+    monkeypatch.setattr(sys, "argv", ["rest_concurrent_benchmark.py", "--requests", "1", "--concurrency", "1",
+                                      "--warmup", "0", "--seed-items", "0", "--duration-seconds", "0.5",
+                                      "--sample-interval", "0.1"])
+    assert bench.main() == 0
+    report = json.loads(capsys.readouterr().out)
+    assert report["workload"]["requests_succeeded"] >= 1
+    assert report["workload"]["errors"] == 0

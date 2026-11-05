@@ -34,7 +34,7 @@ Total to v1.0 about **12–16 weeks at ~10 h/week** (6–8 full-time). The large
 
 | # | Item | Effort | Done when |
 |---|---|---|---|
-| R0.1 | Diagnose the Windows/3.13 failure (#641): rerun the workflow, read the log, fix or quarantine the test; consider `pytest --count` stress on the new client tests | S | 10 consecutive green Windows 3.13 runs, or root cause fixed |
+| R0.1 | Windows flaky tests. **Found and fixed one cause:** the REST benchmark sampled memory by spawning PowerShell inside the event loop, freezing the load workers (0 requests in a 0.5 s window) and distorting its own latencies; fixed with a regression test. Not confirmed to be the same failure as CI #641 (its log was never read), so keep watching: if a Windows job goes red again, capture the `FAILED` lines | S | 10 consecutive green Windows runs after this fix |
 | R0.2 | **Add a LICENSE.** The public repo has none, so by default nobody may legally use it. Pick one (MIT or Apache-2.0 are the usual choices); your decision | S | `LICENSE` + `license` field in `pyproject.toml` |
 | R0.3 | Turn on branch protection for `main` (require CI) once you want it, and add 3.14 to the CI matrix (your machine already runs 3.14) | S | matrix includes 3.14 |
 | R0.4 | `CHANGELOG.md` and a release procedure (tag, build, `check_package.py`) | S | v0.7.0 tagged with notes |

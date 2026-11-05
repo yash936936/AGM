@@ -113,7 +113,9 @@ async def main_async(args: argparse.Namespace) -> int:
 
                 async def sample_rss() -> None:
                     while not stop_sampling.is_set():
-                        rss = process_rss_bytes(proc.pid)
+                        # Off the event loop: on Windows this spawns PowerShell (can take >1 s) and would
+                        # otherwise freeze the load workers and distort the measured latencies.
+                        rss = await asyncio.to_thread(process_rss_bytes, proc.pid)
                         if rss is not None:
                             rss_samples.append(rss)
                         try:
@@ -129,7 +131,10 @@ async def main_async(args: argparse.Namespace) -> int:
                     local_latencies: list[float] = []
                     local_errors: list[str] = []
                     completed = 0
-                    while (count is None or completed < count) and (deadline is None or time.perf_counter() < deadline):
+                    # Each worker makes at least one request even if the duration window is already over.
+                    while (count is None or completed < count) and (
+                        completed == 0 or deadline is None or time.perf_counter() < deadline
+                    ):
                         began = time.perf_counter()
                         try:
                             response = await client.post("/v1/memory/retrieve", json=payload)

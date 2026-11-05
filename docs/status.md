@@ -21,3 +21,5 @@ Before R1: cleanup and MCP removal. Full suite: 264 passed (Python 3.12, Linux s
 **History:** earlier phase reports, audit logs, benchmark logs and the Phase-8 harness are in git tag `archive/pre-cleanup-main`.
 
 **CI:** run #642 (commit `7e3f571`, D-046) green on all six jobs. Run #641 (Windows, Python 3.13) failed once with an unread error and did not recur on the next commit; treated as possibly flaky until diagnosed (roadmap R0.1).
+
+**Windows flake:** a local Windows run failed `test_rest_benchmark_supports_duration_mode_and_rss_metadata` (0 requests in the 0.5 s window). Root cause: RSS sampling spawned PowerShell synchronously inside the asyncio loop, blocking the load workers (also skewing the benchmark's own latencies). Fixed (sampling in a thread; each worker makes at least one request) with a regression test that simulates a slow probe.
