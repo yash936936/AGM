@@ -1,3 +1,11 @@
+## D-049 — Batch process and builder prompts live in docs/ — 2026-11-06
+
+**Decision:** Remaining work to v1.0 is delivered in batches (`docs/BUILD_PLAN.md`). Prompts for the builder are in `docs/PROMPTS.md`; the `prompts/` folder named in D-0xx (AGENTS.md entry) was never committed and is not used. Standing rules stay only in `AGENTS.md`.
+
+**Why:** one place per fact; the old builder prompt in `workflow.md` still referred to phases and MCP stdio, which no longer exist.
+
+**Affects:** `docs/workflow.md`, `context.md`, `docs/BUILD_PLAN.md`, `docs/PROMPTS.md`.
+
 ## D-048 — Graph retrieval follows outgoing relations regardless of query wording — 2026-11-05
 
 **Decision:** In graph retrieval, when the query anchors on an entity (named in the query, or hinted), the facts of entities reachable through that entity's **outgoing** `relates` edges (up to the hop limit) are always added to the candidates, under the same tenant/project/time/trust/contested filters. Previously this happened only if the query contained one of `dependent`, `dependency`, `dependencies`, `downstream`, `reachable`. Wording now affects ranking only: answer-slot facts (`attribute` matching the query's attribute intent, for example `owner`) of entities reached this way rank immediately after the anchored entity's own matching fact, and before unrelated hits.
