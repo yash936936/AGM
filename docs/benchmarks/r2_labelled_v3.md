@@ -1,6 +1,6 @@
 # R2: noisy, paraphrased, labelled benchmark (v3) — results
 
-**Status:** synthetic smoke result, 2026-11-02. Evidence about this generator only; not evidence for H1–H7 (D-007). Raw numbers: `r2_labelled_v3_results.json`. Reproduce: `python eval/labelled_v3.py --seeds 5 --episodes 1200 [--embedder spacy]` (spaCy needs `pip install spacy` plus the `en_core_web_md` wheel).
+**Status:** synthetic smoke result, 2026-11-02. Evidence about this generator only; not evidence for H1–H7 (D-007). Raw numbers: `history/r2_labelled_v3_results.json`. Reproduce: `python eval/labelled_v3.py --seeds 5 --episodes 1200 [--embedder spacy]` (spaCy needs `pip install spacy` plus the `en_core_web_md` wheel).
 
 ## Design
 
@@ -42,7 +42,7 @@ On this benchmark graph expansion does not justify itself: it matches or trails 
 
 ## Addendum (2026-11-03): after D-046 (contested handling unified)
 
-Same generator, seeds, rule and queries; only the core changed (flat and graph both withhold contested candidates by default, D-046). Raw numbers: `r2_labelled_v3_after_d046.json`. The first run above is kept as the baseline for this comparison.
+Same generator, seeds, rule and queries; only the core changed (flat and graph both withhold contested candidates by default, D-046). Raw numbers: `history/r2_labelled_v3_after_d046.json`. The first run above is kept as the baseline for this comparison.
 
 | Embedder | Regime | graph before | graph after | best other (iterative) | graph − best (95% CI) | Verdict before → after |
 |---|---|---:|---:|---:|---|---|
@@ -58,7 +58,7 @@ How to read it: the fix removes a real inconsistency, and it is the only change.
 
 ## Addendum 2 (2026-11-04): after D-047 (entity hint no longer blocks expansion)
 
-Same generator, seeds, rule and queries; only `graph_retrieve` changed. Raw numbers: `r2_labelled_v3_after_d047.json`. The no-hint regime is unchanged (±0.001, timestamp noise); the hint regime:
+Same generator, seeds, rule and queries; only `graph_retrieve` changed. Raw numbers: `history/r2_labelled_v3_after_d047.json`. The no-hint regime is unchanged (±0.001, timestamp noise); the hint regime:
 
 | Embedder | graph pooled before → after | multi_hop (graph) before → after | best other (iterative) | graph − best (95% CI) | Verdict |
 |---|---:|---:|---:|---|---|

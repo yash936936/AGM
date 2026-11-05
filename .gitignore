@@ -19,3 +19,12 @@ agm.keys.json
 !.env.example
 eval/results/
 logs/
+
+# local artefacts
+*.patch
+*.diff
+*.orig
+*.rej
+*.bak
+_archive/
+reports/
