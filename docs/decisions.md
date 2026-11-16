@@ -1,3 +1,21 @@
+## D-050 — Documentation convention: source-of-truth table, STATE.md, components/ — 2026-11-17
+
+**Decision:** `context.md` is a short router with a source-of-truth table and reading order. Current state lives in `docs/STATE.md` (rewritten in place); `docs/status.md` becomes an append-only dated log. Component guides live in `docs/components/`. `docs/readme.md` states verified capabilities by evidence level (implemented, tests, real evidence, accepted). `docs/phases.md` is historical; the current plan is `ROADMAP.md` plus `BUILD-PLAN.md` (renamed from `BUILD_PLAN.md`, which D-049 mentions). Debug findings go to `docs/debug.md` (`DBG-0NN`).
+
+**Why:** one home per fact; a cold-start agent reads a fixed path; the supervisor and builder prompts reference stable names; the same layout is used in other projects.
+
+**Not adopted:** an event-log file and generated failure ledger with CI drift checks. `debug.md` and `decisions.md` cover repeated failures at this size; revisit if the same defect recurs across batches.
+
+**Affects:** `context.md`, `AGENTS.md`, `docs/workflow.md`, `docs/BUILD-PLAN.md`, `docs/PROMPTS.md`, `docs/STATE.md`, `docs/status.md`, `docs/readme.md`, `docs/components/`.
+
+## D-049 — Batch process and builder prompts live in docs/ — 2026-11-06
+
+**Decision:** Remaining work to v1.0 is delivered in batches (`docs/BUILD_PLAN.md`, the original filename used when D-049 was recorded; renamed to `docs/BUILD-PLAN.md` by D-050). Prompts for the builder are in `docs/PROMPTS.md`; the `prompts/` folder named in D-0xx (AGENTS.md entry) was never committed and is not used. Standing rules stay only in `AGENTS.md`.
+
+**Why:** one place per fact; the old builder prompt in `workflow.md` still referred to phases and MCP stdio, which no longer exist.
+
+**Affects:** `docs/workflow.md`, `context.md`, `docs/BUILD_PLAN.md` (renamed to `docs/BUILD-PLAN.md` by D-050), `docs/PROMPTS.md`.
+
 ## D-048 — Graph retrieval follows outgoing relations regardless of query wording — 2026-11-05
 
 **Decision:** In graph retrieval, when the query anchors on an entity (named in the query, or hinted), the facts of entities reachable through that entity's **outgoing** `relates` edges (up to the hop limit) are always added to the candidates, under the same tenant/project/time/trust/contested filters. Previously this happened only if the query contained one of `dependent`, `dependency`, `dependencies`, `downstream`, `reachable`. Wording now affects ranking only: answer-slot facts (`attribute` matching the query's attribute intent, for example `owner`) of entities reached this way rank immediately after the anchored entity's own matching fact, and before unrelated hits.
