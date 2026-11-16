@@ -17,7 +17,7 @@ Levels: **Implemented** (code exists) · **Tests** (automated tests, CI on Ubunt
 | REST API, hashed keys, hot reload, body limit (D-045) | yes | yes (CI smoke client) | n/a | no |
 | Python client and CLI (`mem`, `handoff`, `active`, `connect`) | yes | yes | one manual end-to-end CLI run on 2026-11-04 | no |
 | Read-only active-memory routes (D-044) | yes | yes | NOT RUN | no |
-| Windows | yes | CI Windows green on #642; local runs pass | n/a | no |
+| Windows | yes | Historical CI run #642 green on an earlier commit; local Windows/Python 3.14 report dated 2026-11-17: 308 passed, 2 xfailed (DBG-008). Check current branch CI separately. | n/a | no |
 
 ## Not verified or not supported
 - Real-history evaluation: NOT RUN (needs your frozen cases, R2.2).
