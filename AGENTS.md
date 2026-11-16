@@ -1,6 +1,6 @@
 # AGENTS.md — standing rules for any agent that writes code in this repo
 
-Applies to ChatGPT, Codex, Claude Code or any other builder. Read this file, then `context.md`, then `docs/STATE.md`, before changing anything. If you cannot read files (for example in a chat window), ask the user to paste `AGENTS.md`, `context.md`, `docs/STATE.md`, `docs/architecture.md` and your phase brief. Do not guess their contents.
+Applies to ChatGPT, Codex, Claude Code or any other builder. Start with `context.md` (the repository entry point), then read this file and `docs/STATE.md` before changing anything. If you cannot read files (for example in a chat window), ask the user to paste `AGENTS.md`, `context.md`, `docs/STATE.md`, `docs/architecture.md` and your phase brief. Do not guess their contents.
 
 ## Roles
 - **Supervisor (Claude)** writes specs, contracts and phase briefs, and reviews your work by running it.
