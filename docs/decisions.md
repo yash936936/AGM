@@ -10,11 +10,11 @@
 
 ## D-049 — Batch process and builder prompts live in docs/ — 2026-11-06
 
-**Decision:** Remaining work to v1.0 is delivered in batches (`docs/BUILD_PLAN.md`). Prompts for the builder are in `docs/PROMPTS.md`; the `prompts/` folder named in D-0xx (AGENTS.md entry) was never committed and is not used. Standing rules stay only in `AGENTS.md`.
+**Decision:** Remaining work to v1.0 is delivered in batches (`docs/BUILD_PLAN.md`, the original filename used when D-049 was recorded; renamed to `docs/BUILD-PLAN.md` by D-050). Prompts for the builder are in `docs/PROMPTS.md`; the `prompts/` folder named in D-0xx (AGENTS.md entry) was never committed and is not used. Standing rules stay only in `AGENTS.md`.
 
 **Why:** one place per fact; the old builder prompt in `workflow.md` still referred to phases and MCP stdio, which no longer exist.
 
-**Affects:** `docs/workflow.md`, `context.md`, `docs/BUILD_PLAN.md`, `docs/PROMPTS.md`.
+**Affects:** `docs/workflow.md`, `context.md`, `docs/BUILD_PLAN.md` (renamed to `docs/BUILD-PLAN.md` by D-050), `docs/PROMPTS.md`.
 
 ## D-048 — Graph retrieval follows outgoing relations regardless of query wording — 2026-11-05
 
