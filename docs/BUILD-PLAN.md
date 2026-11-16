@@ -54,7 +54,7 @@ Update the **Status** line when a batch closes (after review), together with `ST
 **Goal:** one working copy, tidy repo, docs that match the code.
 **Files touched:** `docs/benchmarks/history/*`, `.gitignore`, `docs/workflow.md`, `context.md`, `docs/BUILD-PLAN.md`, `docs/PROMPTS.md`, `docs/phases.md` (historical stub), `docs/debug.md`, `docs/appflow.md`, `docs/STATE.md`, `docs/status.md`, `docs/readme.md`, `docs/components/`
 **Done when:** branch `chore/repo-tidy` merged to `main`, CI green on all six jobs, old working folder retired (R0.5).
-**Status:** In progress (merge pending; open — confirm)
+**Status:** In progress. The D-050 documentation convention is proposed in PR #62. The separate `chore/repo-tidy` branch (D-049 and benchmark-folder tidy) exists but has no verified merged PR; keep Phase 0 open until that branch is reviewed and merged, the old working folder is retired (R0.5), and CI is green on the resulting main head.
 
 ### Phase 1 — Retrieval correctness (batch 1)
 **Goal:** fix the three remaining core defects found by the v3 benchmark and widen the baselines.
