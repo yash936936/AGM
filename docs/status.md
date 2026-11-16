@@ -1,5 +1,11 @@
 # Status log — AGM prototype
 
+## 2026-11-17 — PR #62 consistency review
+**Did:** reconciled the contributor reading order with `context.md` as the repository entry point; clarified that `chore/repo-tidy` is separate from merged PR #61; aligned the roadmap's current status with D-047/D-048 and the current state report; labelled CI #642 as historical evidence.
+**Tests:** documentation-only edits. Code tests and hygiene scan NOT RUN in this review. PR #62 CI must pass on its final head before merge.
+**Next:** finish the PR review, then handle `chore/repo-tidy` as a separate branch/PR.
+
+
 > Append-only. Newest entry at top. One entry per work session or review; current state lives in `STATE.md`, defects in `debug.md`, decisions in `decisions.md`.
 
 ## 2026-11-17 — Docs convention adopted (D-050)
