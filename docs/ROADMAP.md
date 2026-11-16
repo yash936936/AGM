@@ -1,15 +1,15 @@
 # AGM roadmap: v0.7 → v1.0
 
-Updated 2026-11-04 (after D-046). Supersedes earlier roadmaps (old M0–M4 and phase lists live in git tag `archive/pre-cleanup-main`).
+Updated 2026-11-17 (status reconciliation; roadmap scope and acceptance criteria retained). Supersedes earlier roadmaps (old M0–M4 and phase lists live in git tag `archive/pre-cleanup-main`).
 
 **Effort:** S ≤ 1 day, M 2–4 days, L 1–2 weeks of focused work. **Calendar** (rough, depends on your hours): at ~10 focused hours a week, double the day counts; full-time, they hold. These are estimates, not commitments.
 
 ## 1. Where we are
 
-- **Code:** v0.7.0. Event-sourced SQLite store, flat and graph retrieval, trust tiers, contested handling (D-046), handoff, lifecycle (delete/expiry/revocation), guard in core, REST API, stdlib client, CLI (`mem`, `handoff`, `active`, `connect`, `hash-keys`), read-only active-memory routes. 289 tests; CI (Ubuntu + Windows × Python 3.11–3.13) green on the latest `main` run (#642).
-- **Decided and done:** MCP removed (D-042); client/CLI (D-043); read-only active routes (D-044); hashed keys, hot reload, 404 on missing delete, body limit (D-045); contested candidates withheld by default (D-046).
-- **Evidence so far (synthetic only):** on the pre-registered v3 benchmark graph retrieval is level with agent-style flat retrieval at best (hash embedder, within noise) and behind it with real word vectors; its only clear win is multi-hop. Four core defects were found; one is fixed.
-- **Not done:** any evidence on real data; abstention; entity-hint/expansion interaction; near-duplicate entity names; independent security review; remote access; a real third-party host; scalable vector search; a licence; packaging.
+- **Code:** v0.7.0 local-only prototype. Event-sourced SQLite store, flat and graph retrieval, trust tiers, contested handling (D-046), handoff, lifecycle (delete/expiry/revocation), guard in core, REST API, stdlib client, CLI (`mem`, `handoff`, `active`, `connect`, `hash-keys`), and read-only active-memory routes. The 2026-11-17 local Windows/Python 3.14 report records 308 passed and 2 xfailed; the xfails remain unexplained (DBG-008). CI run #642 is historical and passed on an earlier commit; check the active PR's final-head matrix before treating its documentation changes as validated.
+- **Decided and done:** MCP removed (D-042); client/CLI (D-043); read-only active routes (D-044); hashed keys, hot reload, 404 on missing delete, body limit (D-045); contested candidates withheld by default (D-046); entity hints scope graph seeds without blocking expansion (D-047); relation-following is independent of query wording (D-048).
+- **Evidence so far (synthetic only):** the v3 labelled benchmark and post-hoc iterative-flat comparison remain synthetic diagnostics, not real-use evidence. The graph hypothesis is not established; see the benchmark reports and D-007. D-046 to D-048 address contested handling, entity-hint expansion and wording-independent relation-following. Answer-slot wording, abstention and sibling-entity separation remain open (DBG-007).
+- **Not done:** real-history evidence (R2.2–R2.4); answer-slot wording, abstention and near-duplicate entity handling (R2.6f/c/d); independent security review; remote access; real third-party host validation; scalable vector search; release packaging.
 - **Known unknown:** one Windows/Python 3.13 CI failure (#641) was never diagnosed; the next run on the same code passed. Treat as a possibly flaky test until proven otherwise (R0.1).
 
 ## 2. The question that decides the plan
