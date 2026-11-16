@@ -46,8 +46,9 @@ The target is a tool agents can use today through the Python library, REST, the 
 
 ## Required reading order
 
-1. `AGENTS.md`
-2. `docs/STATE.md` and the newest `docs/status.md` entry
+1. This file (`context.md`) is the entry point; follow its source-of-truth table.
+2. `AGENTS.md`
+3. `docs/STATE.md` and the newest `docs/status.md` entry
 3. Relevant decisions in `docs/decisions.md` (newest first)
 4. `docs/components/README.md`, then the guide for the area you are changing
 5. `docs/debug.md` entries for that area
