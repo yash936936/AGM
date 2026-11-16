@@ -1,6 +1,6 @@
 # AGENTS.md — standing rules for any agent that writes code in this repo
 
-Applies to ChatGPT, Codex, Claude Code or any other builder. Read this file, then `context.md`, then `docs/status.md`, before changing anything. If you cannot read files (for example in a chat window), ask the user to paste `AGENTS.md`, `context.md`, `docs/status.md`, `docs/architecture.md` and your phase brief. Do not guess their contents.
+Applies to ChatGPT, Codex, Claude Code or any other builder. Read this file, then `context.md`, then `docs/STATE.md`, before changing anything. If you cannot read files (for example in a chat window), ask the user to paste `AGENTS.md`, `context.md`, `docs/STATE.md`, `docs/architecture.md` and your phase brief. Do not guess their contents.
 
 ## Roles
 - **Supervisor (Claude)** writes specs, contracts and phase briefs, and reviews your work by running it.
@@ -34,11 +34,13 @@ Applies to ChatGPT, Codex, Claude Code or any other builder. Read this file, the
 
 ## Repository hygiene
 - Never commit `*.db`, `*.db-wal`, `*.db-shm`, `__pycache__`, `*.egg-info`, `dist/`, `.venv`, `agm.keys.json`, `.env`. Check `git status` before proposing a commit.
-- Do not edit or delete past entries in `docs/decisions.md`. Add new ones at the top. `docs/status.md` is short and current: rewrite it, do not append logs.
+- Do not edit or delete past entries in `docs/decisions.md`. Add new ones at the top. `docs/STATE.md` is short and current: rewrite it in place. `docs/status.md` is an append-only dated log, newest entry at the top.
 
 ## Logging (after every task)
 - `docs/decisions.md`: any design choice, with why and what it affects. Use the next free `D-0NN`.
-- `docs/status.md`: current state and next step (keep under ~60 lines).
+- `docs/debug.md`: any defect found or fixed, newest first, next free `DBG-0NN` (task, what was tested, found, fixed).
+- `docs/STATE.md`: rewrite current state, blockers and next step (keep under ~60 lines).
+- `docs/status.md`: add a dated entry at the top at the end of each session.
 
 ## Commands
 ```

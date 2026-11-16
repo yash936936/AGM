@@ -1,27 +1,20 @@
-# Status — 2026-11-04 (v0.7.0)
+# Status log — AGM prototype
 
-**Current:** v0.6.0 cleanup merged (PR #61, CI green on all six jobs). R1 client/CLI plus follow-up fixes (hashed keys, hot reload, delete 404, body limit, read-only active-memory routes) on branch `feat/r1-client`; full suite result is recorded in the PR; real CLI end-to-end run (bootstrap, connect, serve, write, retrieve, quarantine) verified. Windows not yet run for R1.
+> Append-only. Newest entry at top. One entry per work session or review; current state lives in `STATE.md`, defects in `debug.md`, decisions in `decisions.md`.
 
-Before R1: cleanup and MCP removal. Full suite: 264 passed (Python 3.12, Linux sandbox). Repo hygiene and wheel inspection pass. `agm demo` passes. REST smoke client passes (inside the suite).
+## 2026-11-17 — Docs convention adopted (D-050)
+**Phase:** 0 (cleanup and docs), see `BUILD-PLAN.md`.
+**Did:** moved benchmark snapshots to `docs/benchmarks/history/`; added build plan, prompts, `phases.md` (now historical), `debug.md`, rewritten `appflow.md`, `STATE.md`, `components/`, `readme.md`; context rewritten to the source-of-truth form; `status.md` changed from a rewritten summary to this log.
+**Tests:** 308 passed, 2 xfailed (Windows, Python 3.14). Hygiene PASS.
+**Last debug:** DBG-008. **Last decision:** D-050.
+**Next up:** merge, then Batch 1.
 
-**Not verified:** Windows and Python 3.11/3.13 (CI matrix will cover it once pushed); everything under external gates.
+## 2026-11-05 — D-048 and Apache-2.0 (reconstructed)
+**Did:** relation-following no longer depends on query wording (held-out criteria met); licence added. Full detail: `decisions.md` D-048, `debug.md` DBG-006.
+**Tests:** 308 passed, 2 xfailed after the patch.
 
-**Open external gates:** held-out real-history evaluation NOT RUN; independent security/privacy review NOT PERFORMED; real third-party-host integration NOT VERIFIED; independent acceptance-matrix sign-off OPEN. M2 NOT ACCEPTED. Not production-ready.
+Entries before this one are in `git log` and tag `archive/pre-cleanup-main`.
 
-**R2 so far:** a post-hoc iterative flat baseline erases graph's only synthetic win (multi_hop); graph then differs from flat mainly in retrieve calls (1 vs 3) and is slower per call. See `docs/benchmarks/r2_post_hoc_iterative_baseline.md`. The graph hypothesis is therefore still unproven.
-
-**R2 v3 (synthetic, pre-registered rule):** graph NOT JUSTIFIED under both hash and spaCy embeddings (best other: iterative flat). It wins only multi-hop and exposed four core issues (contested handling differs between flat and graph; entity hint blocks expansion; abstention rarely fires; sibling entities leak). See `docs/benchmarks/r2_labelled_v3.md` and roadmap R2.6. Real-data check: `docs/acceptance/real_history_local_runbook.md`.
-
-**R2.6a done (D-046):** flat and graph now treat contested candidates identically (withheld by default, flag on the current fact, `include_contested` opt-in).
-
-**R2.6b done (D-047):** an entity hint no longer blocks graph expansion.
-
-**R2.6e done (D-048):** relation-following no longer depends on query wording (held-out criteria met). Apache-2.0 licence added.
-
-**Next:** R2 (real evidence) and R3 (security) from `ROADMAP.md`.
-
-**History:** earlier phase reports, audit logs, benchmark logs and the Phase-8 harness are in git tag `archive/pre-cleanup-main`.
-
-**CI:** run #642 (commit `7e3f571`, D-046) green on all six jobs. Run #641 (Windows, Python 3.13) failed once with an unread error and did not recur on the next commit; treated as possibly flaky until diagnosed (roadmap R0.1).
-
-**Windows flake:** a local Windows run failed `test_rest_benchmark_supports_duration_mode_and_rss_metadata` (0 requests in the 0.5 s window). Root cause: RSS sampling spawned PowerShell synchronously inside the asyncio loop, blocking the load workers (also skewing the benchmark's own latencies). Fixed (sampling in a thread; each worker makes at least one request) with a regression test that simulates a slow probe.
+---
+**Next:** Return to [`context.md`](../context.md) before starting a new task —
+it routes you to the right file for what you are about to do.

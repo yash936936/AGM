@@ -2,7 +2,7 @@
 
 A Python memory layer for AI agents. Event-sourced SQLite core; graph, keyword and vector retrieval; provenance, trust tiers, lifecycle (supersede, delete, expire, revoke) and task handoff. Model-agnostic: the caller supplies structured memories, AGM never calls an LLM.
 
-**Status:** research prototype, v0.7.0, local-only (loopback). Not production-ready; see [`docs/ROADMAP.md`](docs/ROADMAP.md) and [`docs/status.md`](docs/status.md).
+**Status:** research prototype, v0.7.0, local-only (loopback). Not production-ready; see [`docs/ROADMAP.md`](docs/ROADMAP.md) and [`docs/STATE.md`](docs/STATE.md).
 
 ## Interfaces
 
