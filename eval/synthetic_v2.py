@@ -58,7 +58,7 @@ class FactVersion:
 class SentenceTransformerEvalEmbedder:
     """Optional eval-only adapter. Import sentence-transformers only on request."""
 
-    def __init__(self) -> None:
+    def __init__(self, revision: str | None = None) -> None:
         try:
             from sentence_transformers import SentenceTransformer
         except ImportError as exc:
@@ -67,14 +67,16 @@ class SentenceTransformerEvalEmbedder:
                 "Install it with `python -m pip install sentence-transformers`, then retry."
             ) from exc
         self.model_name = "sentence-transformers/all-MiniLM-L6-v2"
+        self.model_revision = revision or "default"
         try:
-            self.model = SentenceTransformer(self.model_name)
+            kwargs = {"revision": revision} if revision else {}
+            self.model = SentenceTransformer(self.model_name, **kwargs)
         except Exception as exc:
             raise RuntimeError(
                 "Could not load sentence-transformers model all-MiniLM-L6-v2. "
                 "Ensure the model is cached or network access is available."
             ) from exc
-        self.model_id = self.model_name
+        self.model_id = f"{self.model_name}@{self.model_revision}"
 
     def embed(self, text: str):
         import numpy as np
@@ -82,11 +84,11 @@ class SentenceTransformerEvalEmbedder:
         return np.asarray(vector, dtype=np.float32)
 
 
-def make_embedder(name: str):
+def make_embedder(name: str, *, revision: str | None = None):
     if name == "hash":
         return HashEmbedder()
     if name == "st":
-        return SentenceTransformerEvalEmbedder()
+        return SentenceTransformerEvalEmbedder(revision=revision)
     raise ValueError(f"unsupported embedder: {name}")
 
 
