@@ -27,7 +27,7 @@ For the common modes, CI prints before/after graph pass rate and leak rate for s
 
 ```bash
 python eval/labelled_v3.py --seed 0 --seeds 1 --episodes 120 --k 5 --output before-after.json
-python eval/labelled_v3.py --seed 0 --seeds 5 --episodes 1200 --k 5 --embedder st --whole-log-max-chars 200000 --output labelled-v3-st.json
+python eval/labelled_v3.py --seed 0 --seeds 5 --episodes 1200 --k 5 --embedder st --embedder-revision <immutable-model-commit> --whole-log-max-chars 200000 --output labelled-v3-st.json
 ```
 
 Install the optional sentence embedder with:
@@ -37,3 +37,6 @@ python -m pip install -e ".[eval-sentence-transformer]"
 ```
 
 Do not compare the one-seed CI smoke output with the historical five-seed numbers as if they were the same experiment. The benchmark output must be reviewed alongside the exact source revision and its generated manifest.
+
+
+The sentence-transformer adapter loads lazily. Supply an immutable Hugging Face model revision with `--embedder-revision` for a reproducible run; without it, the report records `@default` and the model revision is not pinned. No sentence-transformer result is claimed by this PR until such a revision is selected and the run is recorded.
