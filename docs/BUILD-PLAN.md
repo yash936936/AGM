@@ -54,14 +54,14 @@ Update the **Status** line when a batch closes (after review), together with `ST
 **Goal:** one working copy, tidy repo, docs that match the code.
 **Files touched:** `docs/benchmarks/history/*`, `.gitignore`, `docs/workflow.md`, `context.md`, `docs/BUILD-PLAN.md`, `docs/PROMPTS.md`, `docs/phases.md` (historical stub), `docs/debug.md`, `docs/appflow.md`, `docs/STATE.md`, `docs/status.md`, `docs/readme.md`, `docs/components/`
 **Done when:** tidy changes from `chore/repo-tidy` are represented on `main`, CI green on all eight Ubuntu/Windows Python 3.11–3.14 jobs, old working folder retired (R0.5).
-**Status:** In progress. D-050 merged in PR #62 (`6d6732b`). The remaining tidy changes were ported in PR #63 (`88044a1`); exact-head run #685 passed all eight Ubuntu/Windows Python 3.11–3.14 jobs. The old `chore/repo-tidy` branch was not merged directly because it had diverged; its D-049/build-plan/prompt work was already on main. Both formerly uncommitted test files are tracked on main and covered by CI. R0.5 remains open only because retirement of the old local working-folder copy cannot be verified remotely.
+**Status:** In progress. D-050 merged in PR #62 (`6d6732b`). Remaining tidy changes were ported in PR #63 (`88044a1`); exact-head run #685 passed all eight Ubuntu/Windows Python 3.11–3.14 jobs. The stale `chore/repo-tidy` branch was not merged directly. Both formerly uncommitted test files are tracked on main and covered by CI. R0.5 remains open until the owner retires the old local working-folder copy.
 
 ### Phase 1 — Retrieval correctness (batch 1)
 **Goal:** fix the three remaining core defects found by the v3 benchmark and widen the baselines.
 **Items:** R2.6f, R2.6c, R2.6d, R2.1, R2.3, R0.3, R0.4, X1 (explain the 2 xfails).
 **Files touched:** `src/agm/retrieve.py`, `src/agm/embed.py`, `eval/labelled_v3.py`, `eval/relation_heldout.py` (or a new held-out file), `eval/benchmark_runner.py`, `tests/test_retrieve.py`, `tests/test_labelled_v3.py`, `.github/workflows/tests.yml`, `pyproject.toml`, `CHANGELOG.md`, `docs/benchmarks/`, `docs/decisions.md`
 **Done when:** each item meets its "done when" in `ROADMAP.md`; abstention raises unanswerable correctness to ≥ 0.8 with single-fact recall down by ≤ 0.02; no forbidden-value leaks; every xfail is fixed or has a decision entry; v0.7.x tagged.
-**Status:** In progress. Implementation and regression tests are on `batch-1/retrieval-correctness`; local execution is NOT RUN. Exact-head CI and the paired before/after benchmark are required before acceptance.
+**Status:** In progress in PR #64. Retrieval changes, regression tests, BM25/vector/whole-log baselines and the optional sentence-transformer eval extra are implemented. Local execution is NOT RUN. The paired base/head benchmark workflow is enabled for PRs. The historical CI #641 Windows 3.13 failure was diagnosed as a 0.5-second duration-test flake; the test window is now 2.0 seconds, pending CI. Exact-head eight-job CI and the paired benchmark artifact are required before acceptance.
 
 ### Phase 2 — Real-data evidence and gate G1 (batch 2)
 **Goal:** find out whether graph retrieval beats the best flat baseline on real usage, and decide.
