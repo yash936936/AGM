@@ -52,3 +52,6 @@ def test_whole_log_baseline_reports_context_size_and_respects_budget():
     assert all(row["context_chars"] > 1 for row in rows)
     assert all(row["context_tokens_estimate"] > 0 for row in rows)
     assert all(row["abstain"] is False and row["context_fits"] is False and row["n"] == 0 for row in rows)
+    fits = run_seed(0, episodes=5, k=5, embedder=make_embedder("hash"), whole_log_max_chars=200000)
+    full_rows = fits[("whole_log", False)]
+    assert all(row["context_fits"] is True and row["n"] > 0 for row in full_rows)
