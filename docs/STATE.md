@@ -10,6 +10,7 @@ Local report dated 2026-11-17: 308 passed, 2 xfailed on Windows, Python 3.14; hy
 
 ## Blockers
 - R0.5: the two formerly uncommitted test files are present in `main` and run in CI, but the old local working-folder copy cannot be retired or verified from GitHub.
+- R0.4: `CHANGELOG.md` and `docs/release-procedure.md` are drafted in PR #64; the v0.7.0 tag remains gated on accepted Batch 1 and final release checks.
 - R0.5 remains open until the old local working-folder copy is retired by its owner.
 - DBG-002 is diagnosed; its timing-test stabilization is pending CI. DBG-007 and the two former xfail variants remain pending exact-head test and benchmark evidence.
 - Remote use needs an independent reviewer (R3.5) and a deploy account (R3.6).
