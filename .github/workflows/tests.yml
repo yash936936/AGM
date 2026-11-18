@@ -65,7 +65,7 @@ jobs:
       - name: Restore pull request revision for updated measurement
         run: python -m pip install --no-deps -e "$GITHUB_WORKSPACE"
       - name: Run updated retrieval benchmark
-        run: python eval/labelled_v3.py --seed 0 --seeds 5 --episodes 1200 --k 5 --whole-log-max-chars 50000 --output "$RUNNER_TEMP/current.json"
+        run: python eval/labelled_v3.py --seed 0 --seeds 5 --episodes 1200 --k 5 --whole-log-max-chars 200000 --output "$RUNNER_TEMP/current.json"
       - name: Print paired before and after metrics
         run: |
           python - <<'PY'
