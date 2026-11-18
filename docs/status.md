@@ -1,5 +1,11 @@
 # Status log — AGM prototype
 
+## 2026-11-19 — Draft release notes and local tagging procedure
+**Did:** added `CHANGELOG.md` and `docs/release-procedure.md` for the v0.7.0 local prototype. The procedure requires exact-head eight-job CI, test/hygiene/package checks, accepted retrieval benchmarks and a clean main tree before tagging. It explicitly does not authorize PyPI publication or remote deployment.
+**Tests:** documentation-only changes; not run locally. The release tag is NOT created because Batch 1 is not yet accepted.
+**Next:** complete PR #64's exact-head CI and benchmark evidence, then finish release checks before tagging.
+
+
 ## 2026-11-19 — Batch 1 validation and CI #641 diagnosis
 **Did:** inspected the historical failed Windows Python 3.13 job from CI run #641. The failure was the 0.5-second duration-mode REST benchmark test recording zero successful requests; the other five matrix jobs passed and run #642 later passed. Increased that test's duration to 2.0 seconds while keeping the slow RSS-probe regression. Removed the opt-in label condition from the paired before/after retrieval benchmark so the job runs on pull requests.
 **Tests:** no local test run. The 2.0-second change is pending exact-head CI. Current PR CI has not yet completed; no benchmark result is claimed.
