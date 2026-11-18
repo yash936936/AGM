@@ -514,7 +514,7 @@ def graph_retrieve(
         if row["entity_id"] is not None and str(row["entity_id"]) in target_entity_ids
     ]
     anchored_candidates.sort(key=lambda node_id: (-flat_scores.get(node_id, 0.0), node_id))
-    expansion_seeds = (anchored_candidates or ordered_seed_candidates)[:seed_limit]
+    expansion_seeds = anchored_candidates[:SEED_LIMIT] if anchored_candidates else ordered_seed_candidates[:seed_limit]
     selected_seed_ids = set(expansion_seeds)
     seed_pool_ids = set(scope_by_id) if widened else set(flat_scores)
     if anchored_candidates:
