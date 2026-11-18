@@ -48,23 +48,22 @@ jobs:
         with:
           python-version: "3.14"
           cache: pip
-      - name: Install benchmark dependencies
-        run: python -m pip install -e ".[dev]"
       - name: Check out the pre-Batch-1 baseline
         env:
           BASE_SHA: 88044a1f30c02012334da70a63ef6a168031a746
         run: |
           git fetch origin "$BASE_SHA"
           git worktree add "$RUNNER_TEMP/agm-baseline" "$BASE_SHA"
-      - name: Install and run the baseline revision
+      - name: Create isolated baseline environment and run baseline
         run: |
-          python -m pip install --no-deps -e "$RUNNER_TEMP/agm-baseline"
-          cd "$RUNNER_TEMP/agm-baseline"
-          python eval/labelled_v3.py --seed 0 --seeds 5 --episodes 1200 --k 5 --output "$RUNNER_TEMP/baseline.json"
-      - name: Install and run the current revision
+          python -m venv "$RUNNER_TEMP/agm-baseline-venv"
+          "$RUNNER_TEMP/agm-baseline-venv/bin/python" -m pip install -e "$RUNNER_TEMP/agm-baseline[dev]"
+          "$RUNNER_TEMP/agm-baseline-venv/bin/python" "$RUNNER_TEMP/agm-baseline/eval/labelled_v3.py" --seed 0 --seeds 5 --episodes 1200 --k 5 --output "$RUNNER_TEMP/baseline.json"
+      - name: Create isolated current environment and run updated benchmark
         run: |
-          python -m pip install --no-deps -e "$GITHUB_WORKSPACE"
-          python eval/labelled_v3.py --seed 0 --seeds 5 --episodes 1200 --k 5 --whole-log-max-chars 200000 --output "$RUNNER_TEMP/current.json"
+          python -m venv "$RUNNER_TEMP/agm-current-venv"
+          "$RUNNER_TEMP/agm-current-venv/bin/python" -m pip install -e "$GITHUB_WORKSPACE[dev]"
+          "$RUNNER_TEMP/agm-current-venv/bin/python" "$GITHUB_WORKSPACE/eval/labelled_v3.py" --seed 0 --seeds 5 --episodes 1200 --k 5 --whole-log-max-chars 200000 --output "$RUNNER_TEMP/current.json"
       - name: Print paired before and after metrics
         run: |
           python - <<'PY'
