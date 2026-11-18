@@ -4,6 +4,11 @@
 > Append-only. Newest entry at top. One entry per work session or review; current state lives in `STATE.md`, defects in `debug.md`, decisions in `decisions.md`.
 
 
+## 2026-11-19 — Batch 1 retrieval implementation started
+**Did:** implemented exact hyphen-aware entity scoping in flat and graph retrieval; expanded owner and on-call answer-slot phrases; added direct and relation-target answer-slot evidence checks; removed the two strict xfail parameter marks; added regression tests for five owner phrasings, sibling entities, missing attributes, and vector/whole-log baseline behavior. Added an optional `eval-sentence-transformer` extra and paired base/head benchmark workflow with BM25, vector-only and whole-log modes.
+**Tests:** NOT RUN locally. CI and paired benchmark are pending on the exact Batch 1 head. No before/after result is claimed yet.
+**Next:** validate syntax and all tests on Ubuntu/Windows Python 3.11–3.14; inspect benchmark artifacts and repair any regressions before merging.
+
 ## 2026-11-19 — Phase 0 reconciliation started
 **Did:** confirmed PR #62 merged at `6d6732b`; main CI run #667 passed all six Ubuntu/Windows Python 3.11–3.13 jobs. Reviewed `chore/repo-tidy`: D-049, the build plan and prompts are already represented on main; ported the remaining local-artifact ignore rules and prepared benchmark-history cleanup. Added Python 3.14 to the CI matrix. Identified DBG-008's two xfails as the two hint variants of one strict R2.6c test in `tests/test_relation_wording.py`. Confirmed `test_retrieve.py` and `test_privacy_edge_acceptance.py` are tracked in main; retiring the old local working-folder copy remains an owner-side check.
 **Tests:** NOT RUN locally; no repository checkout is available in this execution environment. Existing main CI #667: 6/6 pass on Python 3.11–3.13. Expanded matrix CI pending.
