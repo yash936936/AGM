@@ -33,6 +33,28 @@ _NUMERIC_ENTITY_ID_RE = re.compile(r"(?<![\w])([a-z][a-z0-9]*[-_]\d+[a-z0-9_-]*)
 _NUMERIC_ENTITY_PREFIX_RE = re.compile(r"^([a-z][a-z0-9]*[-_])\d+", re.IGNORECASE)
 
 
+
+def _flat_attribute_intent(query: str) -> str | None:
+    text = query.casefold()
+    patterns = (
+        ("owner", r"\b(owner|owns|owned|ownership|responsible|responsibility|accountable|maintains?|handles?)\b|\b(in charge of|looks after|takes care of)\b"),
+        ("runtime", r"\b(runtime|runs|running|execute|executes|language|stack|implemented)\b"),
+        ("region", r"\b(region|location|located|where|hosted|datacenter|data center)\b"),
+        ("environment", r"\b(environment|deployment|configured)\b"),
+    )
+    for attribute, pattern in patterns:
+        if re.search(pattern, text):
+            return attribute
+    return None
+
+
+def _flat_relation_intent(query: str) -> bool:
+    return bool(re.search(
+        r"\b(depend(?:s|ed|ency|encies)?|rely|relies|relied|call|calls|called|built on|based on|uses?|downstream|upstream|connected to)\b",
+        query.casefold(),
+    ))
+
+
 def canonical_entity(entity: str) -> str:
     return " ".join(entity.strip().lower().split())
 
@@ -1032,6 +1054,48 @@ class MemoryStore:
                     (r["valid_to"] is None or _iso_key(r["valid_to"]) > at)]
         if high_stakes:
             rows = [row for row in rows if not is_probationary(self.conn, row)]
+
+        # Exact entity mentions scope the flat candidate pool. Hyphens are part
+        # of structured entity names, so svc-12 must not match svc-12-staging.
+        labels_by_entity: dict[str, set[str]] = {}
+        for row in rows:
+            if row["entity_id"] is not None and row["canonical_entity"]:
+                labels_by_entity.setdefault(str(row["entity_id"]), set()).add(str(row["canonical_entity"]))
+        for alias in self.conn.execute(
+            """SELECT ea.entity_id, ea.alias FROM entity_aliases ea
+               JOIN entities e ON e.id = ea.entity_id WHERE e.tenant = ?""",
+            (ctx.tenant_id,),
+        ).fetchall():
+            entity_id = str(alias["entity_id"])
+            if entity_id in labels_by_entity:
+                labels_by_entity[entity_id].add(str(alias["alias"]))
+        mentioned_entity_ids = {
+            entity_id
+            for entity_id, labels in labels_by_entity.items()
+            if any(
+                re.search(r"(?<![\\w-])" + re.escape(label.casefold()) + r"(?![\\w-])", query.casefold())
+                for label in labels
+            )
+        }
+        if mentioned_entity_ids:
+            rows = [row for row in rows if str(row["entity_id"]) in mentioned_entity_ids]
+            answer_slot = _flat_attribute_intent(query)
+            if answer_slot and _flat_relation_intent(query):
+                return RetrieveResult(
+                    items=[],
+                    route=RetrieveRoute(seed_n=0, expanded_n=0, widened=False, expand_used=False),
+                    abstain=True,
+                    abstain_reason="Flat retrieval cannot establish an answer slot on a related entity.",
+                    notice=_UNTRUSTED_NOTICE,
+                )
+            if answer_slot and not any(row["attribute"] == answer_slot for row in rows):
+                return RetrieveResult(
+                    items=[],
+                    route=RetrieveRoute(seed_n=0, expanded_n=0, widened=False, expand_used=False),
+                    abstain=True,
+                    abstain_reason=f"No eligible '{answer_slot}' answer slot exists for the requested entity scope.",
+                    notice=_UNTRUSTED_NOTICE,
+                )
         eligible_ids = {str(row["id"]) for row in rows}
         if not rows:
             return RetrieveResult(
