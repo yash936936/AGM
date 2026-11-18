@@ -609,6 +609,7 @@ def graph_retrieve(
     relation_answer_slot_evidence = bool(
         attribute_intent and any(
             row_by_id[node_id]["attribute"] == attribute_intent
+            and (hop_intent is None or expansion_depth.get(node_id) == hop_intent)
             for node_id in outgoing_ids
         )
     )
