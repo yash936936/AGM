@@ -3,6 +3,12 @@
 > Append-only. Newest entries at top. Log every defect found or fixed, with what was tested. Add a new entry to correct an old one; never edit past entries. IDs run DBG-001 onward. Decisions made while fixing go in `decisions.md`.
 > Entries DBG-001 to DBG-008 were reconstructed on 2026-11-17 from `status.md`, `ROADMAP.md`, `decisions.md` and the benchmark reports. Earlier history is in git tag `archive/pre-cleanup-main`.
 
+## DBG-010 — Retrieval answer-slot and entity-scope fixes pending validation — 2026-11-19
+**Task:** Batch 1 R2.6f, R2.6c and R2.6d.
+**Tested:** Source review only. Regression tests were added for owner paraphrases, hyphenated sibling entities, missing attributes and the two former R2.6c xfail variants. Local test execution NOT RUN.
+**Found:** Answer-slot recognition covered only a narrow set of owner words; exact entity matching treated hyphens as token separators; graph abstention used lexical similarity even when a named relation target had a matching answer slot. Flat retrieval also allowed a named sibling to enter through global lexical candidates and did not abstain when the named entity lacked the requested attribute.
+**Fixed (implementation, not yet verified):** Added owner/on-call paraphrases, hyphen-aware exact entity boundaries, entity-scoped candidate pools in flat and graph retrieval, and answer-slot evidence checks for direct and relation-target questions. Added a paired base-vs-head synthetic benchmark job and BM25/vector/whole-log comparators. CI and benchmark results are pending; do not mark R2.6f/c/d accepted yet.
+
 ## DBG-009 — Identify the two xfail instances — 2026-11-19
 **Task:** Investigate DBG-008 before Batch 1.
 **Tested:** Source inspection of `tests/test_relation_wording.py`; tests were not executed in this session.
