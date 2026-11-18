@@ -1,3 +1,13 @@
+## D-053 — Use a longer duration window for the Windows REST benchmark smoke test — 2026-11-19
+
+**Decision:** Increase the duration-mode REST benchmark test window from 0.5 seconds to 2.0 seconds. Keep the separate test that simulates an RSS probe slower than the original window and asserts that request workers still progress.
+
+**Why:** CI run #641 failed only on Windows Python 3.13 because the 0.5-second window completed with zero successful requests. The other five jobs passed and run #642 later passed. This is a test stability issue, not a measured service regression.
+
+**Limits:** The change is not accepted until the exact Batch 1 CI head passes on Windows Python 3.13 and the complete matrix. The benchmark remains synthetic and loopback-only.
+
+**Affects:** `tests/test_rest_concurrent_benchmark.py`, `docs/debug.md`, and CI status records.
+
 ## D-052 — Require exact entity and answer-slot evidence for scoped retrieval — 2026-11-19
 
 **Decision:** When a query names an entity, flat and graph candidate pools are scoped to exact canonical names/aliases using hyphen-aware boundaries. For explicit attribute questions about a named entity, retrieval abstains if that entity has no eligible fact for the requested attribute. For relation questions, graph retrieval may pass the answer-slot evidence gate only when an eligible reached entity has the requested attribute, respecting an explicitly requested hop depth. Expand the answer-slot phrase map to common owner and on-call paraphrases.
