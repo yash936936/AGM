@@ -1,0 +1,746 @@
+{
+ "hash-256-v1": {
+  "embedder": "hash-256-v1",
+  "k": 5,
+  "manifests": [
+   "714cfe00c63c2d4bc664e239962742cf98cd468f28ae73a98534e49a240abb0d",
+   "605e74dde6a50be5079e68e64e080be5f649fbd7aa0804fb25d6eb6ce4895506",
+   "55ac4aaaaa7ff03bc2c495b8c8514e3a0f12b6e9a0d3acdb14dad6e467bb9178",
+   "7c875f61663744e1c5248c50a01056b24fec576c26fceb5487fd73968eb48cf5",
+   "f8b9b2b5e215e987e556667f572c1687dc07fa858f590472629227b4eaaee046"
+  ],
+  "regimes": {
+   "hint": {
+    "_pooled": {
+     "bm25": 0.23785310409598837,
+     "flat": 0.8378069116209534,
+     "flat_iterative": 0.9393649972207847,
+     "graph": 0.9199787246276809
+    },
+    "_unflagged_leak": {
+     "bm25": 0.20113066145324207,
+     "flat": 0.0,
+     "flat_iterative": 0.0,
+     "graph": 0.0
+    },
+    "_verdict": {
+     "best_other": "flat_iterative",
+     "calls": {
+      "bm25": 1.0,
+      "flat": 1.0,
+      "flat_iterative": 2.6657777777777776,
+      "graph": 1.0
+     },
+     "ci95": [
+      -0.030058459356372125,
+      -0.00759856630824376
+     ],
+     "delta": -0.01938627259310377,
+     "p50_ms": {
+      "bm25": 1.398485999999366,
+      "flat": 4.043070999998122,
+      "flat_iterative": 11.838683999997102,
+      "graph": 22.39363800001115
+     },
+     "verdict": "GRAPH_EFFICIENCY_ONLY"
+    },
+    "hard_neg": {
+     "bm25": {
+      "leak": 0.26709401709401714,
+      "pass": 0.23867521367521366
+     },
+     "flat": {
+      "leak": 0.0,
+      "pass": 1.0
+     },
+     "flat_iterative": {
+      "leak": 0.0,
+      "pass": 0.9455128205128205
+     },
+     "graph": {
+      "leak": 0.0,
+      "pass": 1.0
+     }
+    },
+    "injection": {
+     "bm25": {
+      "leak": 0.0,
+      "pass": 1.0
+     },
+     "flat": {
+      "leak": 0.0,
+      "pass": 1.0
+     },
+     "flat_iterative": {
+      "leak": 0.0,
+      "pass": 1.0
+     },
+     "graph": {
+      "leak": 0.0,
+      "pass": 1.0
+     }
+    },
+    "multi_hop": {
+     "bm25": {
+      "leak": 0.0,
+      "pass": 0.02
+     },
+     "flat": {
+      "leak": 0.0,
+      "pass": 0.0
+     },
+     "flat_iterative": {
+      "leak": 0.0,
+      "pass": 0.8466666666666667
+     },
+     "graph": {
+      "leak": 0.0,
+      "pass": 0.5066666666666666
+     }
+    },
+    "poison": {
+     "bm25": {
+      "leak": 0.23200000000000004,
+      "pass": 0.16
+     },
+     "flat": {
+      "leak": 0.0,
+      "pass": 1.0
+     },
+     "flat_iterative": {
+      "leak": 0.0,
+      "pass": 0.944
+     },
+     "graph": {
+      "leak": 0.0,
+      "pass": 1.0
+     }
+    },
+    "single": {
+     "bm25": {
+      "leak": 0.0,
+      "pass": 0.43
+     },
+     "flat": {
+      "leak": 0.0,
+      "pass": 1.0
+     },
+     "flat_iterative": {
+      "leak": 0.0,
+      "pass": 0.96
+     },
+     "graph": {
+      "leak": 0.0,
+      "pass": 1.0
+     }
+    },
+    "stale": {
+     "bm25": {
+      "leak": 0.6087179487179487,
+      "pass": 0.1594871794871795
+     },
+     "flat": {
+      "leak": 0.0,
+      "pass": 1.0
+     },
+     "flat_iterative": {
+      "leak": 0.0,
+      "pass": 0.9523076923076923
+     },
+     "graph": {
+      "leak": 0.0,
+      "pass": 1.0
+     }
+    },
+    "temporal": {
+     "bm25": {
+      "leak": 0.4533333333333333,
+      "pass": 0.18666666666666668
+     },
+     "flat": {
+      "leak": 0.0,
+      "pass": 1.0
+     },
+     "flat_iterative": {
+      "leak": 0.0,
+      "pass": 1.0
+     },
+     "graph": {
+      "leak": 0.0,
+      "pass": 1.0
+     }
+    },
+    "unanswerable": {
+     "bm25": {
+      "leak": 0.0,
+      "pass": 0.0
+     },
+     "flat": {
+      "leak": 0.0,
+      "pass": 0.5
+     },
+     "flat_iterative": {
+      "leak": 0.0,
+      "pass": 0.5
+     },
+     "graph": {
+      "leak": 0.0,
+      "pass": 0.5
+     }
+    }
+   },
+   "no-hint": {
+    "_pooled": {
+     "bm25": 0.23785310409598837,
+     "flat": 0.5945013704406494,
+     "flat_iterative": 0.6973727790236329,
+     "graph": 0.6865643148755103
+    },
+    "_unflagged_leak": {
+     "bm25": 0.20113066145324207,
+     "flat": 0.07577904279991567,
+     "flat_iterative": 0.09947214076246334,
+     "graph": 0.0735625706783202
+    },
+    "_verdict": {
+     "best_other": "flat_iterative",
+     "calls": {
+      "bm25": 1.0,
+      "flat": 1.0,
+      "flat_iterative": 7.086222222222222,
+      "graph": 1.0
+     },
+     "ci95": [
+      -0.037638433672589254,
+      0.01935483870967747
+     ],
+     "delta": -0.010808464148122577,
+     "p50_ms": {
+      "bm25": 1.391767999990634,
+      "flat": 10.287501999982851,
+      "flat_iterative": 35.903373000024885,
+      "graph": 33.373558000008074
+     },
+     "verdict": "GRAPH_EFFICIENCY_ONLY"
+    },
+    "hard_neg": {
+     "bm25": {
+      "leak": 0.26709401709401714,
+      "pass": 0.23867521367521366
+     },
+     "flat": {
+      "leak": 0.5455840455840455,
+      "pass": 0.30783475783475783
+     },
+     "flat_iterative": {
+      "leak": 0.7143874643874644,
+      "pass": 0.23881766381766384
+     },
+     "graph": {
+      "leak": 0.5292022792022791,
+      "pass": 0.3472222222222222
+     }
+    },
+    "injection": {
+     "bm25": {
+      "leak": 0.0,
+      "pass": 1.0
+     },
+     "flat": {
+      "leak": 0.0,
+      "pass": 1.0
+     },
+     "flat_iterative": {
+      "leak": 0.0,
+      "pass": 1.0
+     },
+     "graph": {
+      "leak": 0.0,
+      "pass": 1.0
+     }
+    },
+    "multi_hop": {
+     "bm25": {
+      "leak": 0.0,
+      "pass": 0.02
+     },
+     "flat": {
+      "leak": 0.0,
+      "pass": 0.013333333333333332
+     },
+     "flat_iterative": {
+      "leak": 0.0,
+      "pass": 0.3666666666666667
+     },
+     "graph": {
+      "leak": 0.0,
+      "pass": 0.5066666666666666
+     }
+    },
+    "poison": {
+     "bm25": {
+      "leak": 0.23200000000000004,
+      "pass": 0.16
+     },
+     "flat": {
+      "leak": 0.0,
+      "pass": 0.768
+     },
+     "flat_iterative": {
+      "leak": 0.0,
+      "pass": 0.8879999999999999
+     },
+     "graph": {
+      "leak": 0.0,
+      "pass": 0.808
+     }
+    },
+    "single": {
+     "bm25": {
+      "leak": 0.0,
+      "pass": 0.43
+     },
+     "flat": {
+      "leak": 0.0,
+      "pass": 0.8233333333333335
+     },
+     "flat_iterative": {
+      "leak": 0.0,
+      "pass": 0.9133333333333333
+     },
+     "graph": {
+      "leak": 0.0,
+      "pass": 0.8266666666666668
+     }
+    },
+    "stale": {
+     "bm25": {
+      "leak": 0.6087179487179487,
+      "pass": 0.1594871794871795
+     },
+     "flat": {
+      "leak": 0.0,
+      "pass": 0.6153846153846153
+     },
+     "flat_iterative": {
+      "leak": 0.0,
+      "pass": 0.6794871794871795
+     },
+     "graph": {
+      "leak": 0.0,
+      "pass": 0.6164102564102564
+     }
+    },
+    "temporal": {
+     "bm25": {
+      "leak": 0.4533333333333333,
+      "pass": 0.18666666666666668
+     },
+     "flat": {
+      "leak": 0.0,
+      "pass": 1.0
+     },
+     "flat_iterative": {
+      "leak": 0.0,
+      "pass": 1.0
+     },
+     "graph": {
+      "leak": 0.0,
+      "pass": 1.0
+     }
+    },
+    "unanswerable": {
+     "bm25": {
+      "leak": 0.0,
+      "pass": 0.0
+     },
+     "flat": {
+      "leak": 0.0,
+      "pass": 0.0
+     },
+     "flat_iterative": {
+      "leak": 0.0,
+      "pass": 0.0
+     },
+     "graph": {
+      "leak": 0.0,
+      "pass": 0.006666666666666666
+     }
+    }
+   }
+  },
+  "seeds": 5
+ },
+ "spacy-en_core_web_md-meanvec": {
+  "embedder": "spacy-en_core_web_md-meanvec",
+  "k": 5,
+  "manifests": [
+   "714cfe00c63c2d4bc664e239962742cf98cd468f28ae73a98534e49a240abb0d",
+   "605e74dde6a50be5079e68e64e080be5f649fbd7aa0804fb25d6eb6ce4895506",
+   "55ac4aaaaa7ff03bc2c495b8c8514e3a0f12b6e9a0d3acdb14dad6e467bb9178",
+   "7c875f61663744e1c5248c50a01056b24fec576c26fceb5487fd73968eb48cf5",
+   "f8b9b2b5e215e987e556667f572c1687dc07fa858f590472629227b4eaaee046"
+  ],
+  "regimes": {
+   "hint": {
+    "_pooled": {
+     "bm25": 0.23785310409598837,
+     "flat": 0.8378069116209534,
+     "flat_iterative": 0.954597972131179,
+     "graph": 0.9254625955954229
+    },
+    "_unflagged_leak": {
+     "bm25": 0.20113066145324207,
+     "flat": 0.0,
+     "flat_iterative": 0.0,
+     "graph": 0.0
+    },
+    "_verdict": {
+     "best_other": "flat_iterative",
+     "calls": {
+      "bm25": 1.0,
+      "flat": 1.0,
+      "flat_iterative": 2.6657777777777776,
+      "graph": 1.0
+     },
+     "ci95": [
+      -0.03647863837617164,
+      -0.021608494815326007
+     ],
+     "delta": -0.029135376535756107,
+     "p50_ms": {
+      "bm25": 1.412747000017589,
+      "flat": 4.506987000013396,
+      "flat_iterative": 13.292915999954857,
+      "graph": 23.597108000046774
+     },
+     "verdict": "GRAPH_NOT_JUSTIFIED"
+    },
+    "hard_neg": {
+     "bm25": {
+      "leak": 0.26709401709401714,
+      "pass": 0.23867521367521366
+     },
+     "flat": {
+      "leak": 0.0,
+      "pass": 1.0
+     },
+     "flat_iterative": {
+      "leak": 0.0,
+      "pass": 0.9618233618233619
+     },
+     "graph": {
+      "leak": 0.0,
+      "pass": 1.0
+     }
+    },
+    "injection": {
+     "bm25": {
+      "leak": 0.0,
+      "pass": 1.0
+     },
+     "flat": {
+      "leak": 0.0,
+      "pass": 1.0
+     },
+     "flat_iterative": {
+      "leak": 0.0,
+      "pass": 1.0
+     },
+     "graph": {
+      "leak": 0.0,
+      "pass": 1.0
+     }
+    },
+    "multi_hop": {
+     "bm25": {
+      "leak": 0.0,
+      "pass": 0.02
+     },
+     "flat": {
+      "leak": 0.0,
+      "pass": 0.0
+     },
+     "flat_iterative": {
+      "leak": 0.0,
+      "pass": 0.9199999999999999
+     },
+     "graph": {
+      "leak": 0.0,
+      "pass": 0.54
+     }
+    },
+    "poison": {
+     "bm25": {
+      "leak": 0.23200000000000004,
+      "pass": 0.16
+     },
+     "flat": {
+      "leak": 0.0,
+      "pass": 1.0
+     },
+     "flat_iterative": {
+      "leak": 0.0,
+      "pass": 1.0
+     },
+     "graph": {
+      "leak": 0.0,
+      "pass": 1.0
+     }
+    },
+    "single": {
+     "bm25": {
+      "leak": 0.0,
+      "pass": 0.43
+     },
+     "flat": {
+      "leak": 0.0,
+      "pass": 1.0
+     },
+     "flat_iterative": {
+      "leak": 0.0,
+      "pass": 0.9233333333333335
+     },
+     "graph": {
+      "leak": 0.0,
+      "pass": 1.0
+     }
+    },
+    "stale": {
+     "bm25": {
+      "leak": 0.6087179487179487,
+      "pass": 0.1594871794871795
+     },
+     "flat": {
+      "leak": 0.0,
+      "pass": 1.0
+     },
+     "flat_iterative": {
+      "leak": 0.0,
+      "pass": 0.9866666666666667
+     },
+     "graph": {
+      "leak": 0.0,
+      "pass": 1.0
+     }
+    },
+    "temporal": {
+     "bm25": {
+      "leak": 0.4533333333333333,
+      "pass": 0.18666666666666668
+     },
+     "flat": {
+      "leak": 0.0,
+      "pass": 1.0
+     },
+     "flat_iterative": {
+      "leak": 0.0,
+      "pass": 1.0
+     },
+     "graph": {
+      "leak": 0.0,
+      "pass": 1.0
+     }
+    },
+    "unanswerable": {
+     "bm25": {
+      "leak": 0.0,
+      "pass": 0.0
+     },
+     "flat": {
+      "leak": 0.0,
+      "pass": 0.5
+     },
+     "flat_iterative": {
+      "leak": 0.0,
+      "pass": 0.5
+     },
+     "graph": {
+      "leak": 0.0,
+      "pass": 0.5
+     }
+    }
+   },
+   "no-hint": {
+    "_pooled": {
+     "bm25": 0.23785310409598837,
+     "flat": 0.3525839035516455,
+     "flat_iterative": 0.5892024610430683,
+     "graph": 0.5286320510608935
+    },
+    "_unflagged_leak": {
+     "bm25": 0.20113066145324207,
+     "flat": 0.061740363789699645,
+     "flat_iterative": 0.10054740957966764,
+     "graph": 0.043298832729572766
+    },
+    "_verdict": {
+     "best_other": "flat_iterative",
+     "calls": {
+      "bm25": 1.0,
+      "flat": 1.0,
+      "flat_iterative": 7.997333333333334,
+      "graph": 1.0
+     },
+     "ci95": [
+      -0.09118279569892473,
+      -0.021430625035938133
+     ],
+     "delta": -0.06057040998217469,
+     "p50_ms": {
+      "bm25": 1.3986660000000484,
+      "flat": 11.006134000012935,
+      "flat_iterative": 44.0928099999951,
+      "graph": 34.60647800000061
+     },
+     "verdict": "GRAPH_NOT_JUSTIFIED"
+    },
+    "hard_neg": {
+     "bm25": {
+      "leak": 0.26709401709401714,
+      "pass": 0.23867521367521366
+     },
+     "flat": {
+      "leak": 0.4448717948717949,
+      "pass": 0.11517094017094018
+     },
+     "flat_iterative": {
+      "leak": 0.7220797720797721,
+      "pass": 0.1700854700854701
+     },
+     "graph": {
+      "leak": 0.31175213675213675,
+      "pass": 0.3173076923076923
+     }
+    },
+    "injection": {
+     "bm25": {
+      "leak": 0.0,
+      "pass": 1.0
+     },
+     "flat": {
+      "leak": 0.0,
+      "pass": 1.0
+     },
+     "flat_iterative": {
+      "leak": 0.0,
+      "pass": 1.0
+     },
+     "graph": {
+      "leak": 0.0,
+      "pass": 1.0
+     }
+    },
+    "multi_hop": {
+     "bm25": {
+      "leak": 0.0,
+      "pass": 0.02
+     },
+     "flat": {
+      "leak": 0.0,
+      "pass": 0.03333333333333333
+     },
+     "flat_iterative": {
+      "leak": 0.0,
+      "pass": 0.21333333333333332
+     },
+     "graph": {
+      "leak": 0.0,
+      "pass": 0.5066666666666666
+     }
+    },
+    "poison": {
+     "bm25": {
+      "leak": 0.23200000000000004,
+      "pass": 0.16
+     },
+     "flat": {
+      "leak": 0.0,
+      "pass": 0.496
+     },
+     "flat_iterative": {
+      "leak": 0.0,
+      "pass": 0.8879999999999999
+     },
+     "graph": {
+      "leak": 0.0,
+      "pass": 0.43200000000000005
+     }
+    },
+    "single": {
+     "bm25": {
+      "leak": 0.0,
+      "pass": 0.43
+     },
+     "flat": {
+      "leak": 0.0,
+      "pass": 0.4333333333333333
+     },
+     "flat_iterative": {
+      "leak": 0.0,
+      "pass": 0.73
+     },
+     "graph": {
+      "leak": 0.0,
+      "pass": 0.5066666666666666
+     }
+    },
+    "stale": {
+     "bm25": {
+      "leak": 0.6087179487179487,
+      "pass": 0.1594871794871795
+     },
+     "flat": {
+      "leak": 0.0,
+      "pass": 0.2682051282051282
+     },
+     "flat_iterative": {
+      "leak": 0.0,
+      "pass": 0.5887179487179488
+     },
+     "graph": {
+      "leak": 0.0,
+      "pass": 0.6230769230769231
+     }
+    },
+    "temporal": {
+     "bm25": {
+      "leak": 0.4533333333333333,
+      "pass": 0.18666666666666668
+     },
+     "flat": {
+      "leak": 0.0,
+      "pass": 1.0
+     },
+     "flat_iterative": {
+      "leak": 0.0,
+      "pass": 1.0
+     },
+     "graph": {
+      "leak": 0.0,
+      "pass": 1.0
+     }
+    },
+    "unanswerable": {
+     "bm25": {
+      "leak": 0.0,
+      "pass": 0.0
+     },
+     "flat": {
+      "leak": 0.0,
+      "pass": 0.0
+     },
+     "flat_iterative": {
+      "leak": 0.0,
+      "pass": 0.0
+     },
+     "graph": {
+      "leak": 0.0,
+      "pass": 0.0
+     }
+    }
+   }
+  },
+  "seeds": 5
+ }
+}
