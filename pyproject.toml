@@ -19,6 +19,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest", "httpx>=0.27,<1"]
+eval-sentence-transformer = ["sentence-transformers>=3,<6"]
 
 [project.scripts]
 agm = "agm.cli:main"

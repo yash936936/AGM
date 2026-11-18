@@ -256,18 +256,28 @@ def _batch_independent_corroborations(
 
 
 def _query_attribute_intent(query: str) -> str | None:
-    """Map explicit natural-language wording to a known fact attribute."""
+    """Map common answer-slot paraphrases to a known fact attribute."""
     text = query.casefold()
     patterns = (
-        ("owner", r"\b(owner|owns|owned|ownership)\b"),
-        ("runtime", r"\b(runtime|runs|running|execute|executes)\b"),
-        ("region", r"\b(region|location|located|where)\b"),
+        ("owner", r"\b(owner|owns|owned|ownership|responsible|responsibility|accountable|maintains?|handles?)\b|\b(in charge of|looks after|takes care of)\b"),
+        ("runtime", r"\b(runtime|runs|running|execute|executes|language|stack|implemented)\b"),
+        ("region", r"\b(region|location|located|where|hosted|datacenter|data center)\b"),
+        ("oncall", r"\b(on[- ]call|paged|pager|escalate|escalation|incident contact)\b"),
         ("environment", r"\b(environment|deployment|configured)\b"),
     )
     for attribute, pattern in patterns:
         if re.search(pattern, text):
             return attribute
     return None
+
+
+def _query_relation_intent(query: str) -> bool:
+    """Identify questions asking for an answer about a related entity."""
+    return bool(re.search(
+        r"\b(what|which service|the service|dependency|dependent|downstream)\b.{0,120}"
+        r"\b(depend(?:s|ed|ency|encies)?|rely|relies|relied|call|calls|called|built on|based on|downstream)\b",
+        query.casefold(),
+    ))
 
 
 def _query_hop_intent(query: str) -> int | None:
@@ -303,7 +313,7 @@ def _mentioned_entity_ids(
     mentioned: set[str] = set()
     for entity_id, labels in names.items():
         for label in labels:
-            pattern = r"(?<!\w)" + re.escape(label.casefold()) + r"(?!\w)"
+            pattern = r"(?<![\w-])" + re.escape(label.casefold()) + r"(?![\w-])"
             if re.search(pattern, lowered):
                 mentioned.add(entity_id)
                 break
@@ -488,9 +498,7 @@ def graph_retrieve(
         best_relevance = max((relevance.get(node_id, 0.0) for node_id in ordered_seed_candidates), default=0.0)
 
     seed_limit = min(10, max(1, k // 8))
-    directed_relation_query = bool(
-        re.search(r"\b(dependent|dependency|dependencies|downstream|reachable)\b", query.casefold())
-    )
+    directed_relation_query = _query_relation_intent(query)
     mentioned_ids = _mentioned_entity_ids(store.conn, ctx, query, rows)
     target_entity_ids = set(mentioned_ids)
     if entity is not None:
@@ -505,16 +513,17 @@ def graph_retrieve(
     # the single-seed budget (for example, svc-14's dependency = svc-15).
     anchored_candidates = [
         node_id for node_id, row in scope_by_id.items()
-        if row["entity_id"] is not None and str(row["entity_id"]) in mentioned_ids
+        if row["entity_id"] is not None and str(row["entity_id"]) in target_entity_ids
     ]
     anchored_candidates.sort(key=lambda node_id: (-flat_scores.get(node_id, 0.0), node_id))
-    expansion_seeds = (anchored_candidates or ordered_seed_candidates)[:seed_limit]
+    expansion_seeds = anchored_candidates[:SEED_LIMIT] if anchored_candidates else ordered_seed_candidates[:seed_limit]
     selected_seed_ids = set(expansion_seeds)
     seed_pool_ids = set(scope_by_id) if widened else set(flat_scores)
-    if directed_relation_query and mentioned_ids:
-        # A directed downstream question is anchored to its named entity. Do not
-        # reintroduce unrelated global lexical hits (including stale former targets)
-        # into the graph candidate pool after expansion.
+    if anchored_candidates:
+        # A query that names one or more entities is scoped to those entities'
+        # direct facts plus eligible graph neighbours. This prevents a near-name
+        # sibling (for example svc-12-staging) from entering through global lexical
+        # hits when the user asked about svc-12.
         seed_pool_ids = set(anchored_candidates)
     eligible_entity_ids = {str(row["entity_id"]) for row in row_by_id.values() if row["entity_id"]}
     expansion_ids: set[str] = set()
@@ -590,7 +599,43 @@ def graph_retrieve(
             for row in rows
         )
     )
-    if candidate_best_relevance < ABSTAIN_THRESHOLD and not (exact_entity_summary_evidence or exact_temporal_evidence):
+    direct_answer_slot_evidence = bool(
+        attribute_intent and target_entity_ids and any(
+            row["entity_id"] is not None
+            and str(row["entity_id"]) in target_entity_ids
+            and row["attribute"] == attribute_intent
+            for row in rows
+        )
+    )
+    relation_answer_slot_evidence = bool(
+        attribute_intent and any(
+            row_by_id[node_id]["attribute"] == attribute_intent
+            and (hop_intent is None or expansion_depth.get(node_id) == hop_intent)
+            for node_id in outgoing_ids
+        )
+    )
+    # A named entity plus an explicit answer slot is a stronger signal than
+    # lexical similarity. For relational questions, only the reached entity's
+    # matching answer slot satisfies the request; the anchor's own value must not
+    # mask a missing downstream answer.
+    answer_slot_evidence = (
+        relation_answer_slot_evidence if directed_relation_query
+        else direct_answer_slot_evidence
+    )
+    if attribute_intent and target_entity_ids and not answer_slot_evidence:
+        return RetrieveResult(
+            items=[],
+            route=RetrieveRoute(
+                seed_n=len(expansion_seeds), expanded_n=len(expansion_ids),
+                widened=widened, expand_used=True,
+            ),
+            abstain=True,
+            abstain_reason=f"No eligible '{attribute_intent}' answer slot exists for the requested entity scope.",
+            notice=_UNTRUSTED_NOTICE,
+        )
+    if candidate_best_relevance < ABSTAIN_THRESHOLD and not (
+        exact_entity_summary_evidence or exact_temporal_evidence or answer_slot_evidence
+    ):
         return RetrieveResult(
             items=[],
             route=RetrieveRoute(

@@ -39,7 +39,7 @@ The target is a tool agents can use today through the Python library, REST, the 
 | Retrieval, trust and lifecycle rules in prose | `docs/code_logic.md`, `docs/trd.md` |
 | Active-memory contract | `docs/active_memory.md` |
 | Benchmarks and how to add one | `docs/core_benchmarking.md`, `docs/benchmarks/` |
-| Release and review protocols | `docs/acceptance/` |
+| Release and review protocols | `docs/release-procedure.md`, `docs/acceptance/` |
 | Remote deployment plan | `docs/cloud-deployment.md` |
 | Dev loop (supervisor and builder) | `docs/workflow.md` |
 | Old phase lists (historical) | `docs/phases.md`, git tag `archive/pre-cleanup-main` |
