@@ -23,7 +23,7 @@ Local report dated 2026-11-17: 308 passed, 2 xfailed on Windows, Python 3.14; hy
 Graph retrieval is NOT JUSTIFIED under the pre-registered v3 rule (hash and spaCy embedders). It wins only multi-hop, and a post-hoc iterative flat baseline erases even that. See `benchmarks/r2_labelled_v3.md` and `benchmarks/r2_post_hoc_iterative_baseline.md`. Unproven until real data (G1).
 
 ## Open defects
-DBG-002 (unread CI #641 failure), DBG-007 (answer-slot wording, abstention, sibling-entity leaks), DBG-008 (2 xfails).
+DBG-002 (Windows duration-test timing failure diagnosed; 2.0-second test stabilization pending CI), DBG-007 (retrieval fixes implemented in PR #64; pending tests and benchmark), DBG-008 (two strict xfail marks removed in PR #64; pending exact-head CI).
 
 ## Open external gates
 Held-out real-history evaluation NOT RUN. Independent security and privacy review NOT PERFORMED. Real third-party host integration NOT VERIFIED. Independent acceptance sign-off OPEN. Not production-ready; loopback only.
