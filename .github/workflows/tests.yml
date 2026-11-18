@@ -63,9 +63,11 @@ jobs:
         run: |
           python - <<'PY'
           import json
+          import os
           from pathlib import Path
-          before = json.loads(Path(r"$RUNNER_TEMP/baseline.json").read_text(encoding="utf-8"))
-          after = json.loads(Path(r"$RUNNER_TEMP/current.json").read_text(encoding="utf-8"))
+          temp = Path(os.environ["RUNNER_TEMP"])
+          before = json.loads((temp / "baseline.json").read_text(encoding="utf-8"))
+          after = json.loads((temp / "current.json").read_text(encoding="utf-8"))
           for regime in ("no-hint", "hint"):
               print(f"REGIME {regime}")
               for family in ("single", "hard_neg", "multi_hop", "poison", "unanswerable"):
