@@ -3,6 +3,12 @@
 > Append-only. Newest entries at top. Log every defect found or fixed, with what was tested. Add a new entry to correct an old one; never edit past entries. IDs run DBG-001 onward. Decisions made while fixing go in `decisions.md`.
 > Entries DBG-001 to DBG-008 were reconstructed on 2026-11-17 from `status.md`, `ROADMAP.md`, `decisions.md` and the benchmark reports. Earlier history is in git tag `archive/pre-cleanup-main`.
 
+## DBG-009 — Identify the two xfail instances — 2026-11-19
+**Task:** Investigate DBG-008 before Batch 1.
+**Tested:** Source inspection of `tests/test_relation_wording.py`; tests were not executed in this session.
+**Found:** The two reported xfails are not two independent defects. They are the two `hint` parameter variants (`None` and `"alpha"`) of `test_two_hop_reaches_the_second_dependency_owner`, both marked `xfail(strict=True)` with reason R2.6c because low lexical similarity triggers abstention before relation expansion.
+**Fixed:** Not yet. Batch 1 must make both variants pass and remove the strict xfail marker; run the test on Windows and Linux.
+
 ## DBG-008 — Two tests report xfail — 2026-11-17
 **Task:** Local full run after the D-048 patch and the docs tidy.
 **Tested:** `python -m pytest -q` on Windows, Python 3.14: 308 passed, 2 xfailed.
