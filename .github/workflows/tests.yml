@@ -34,3 +34,54 @@ jobs:
         run: python examples/rest_smoke_client.py
       - name: Build wheel and inspect package contents
         run: python scripts/check_package.py
+
+  retrieval-benchmark:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+      - name: Install benchmark dependencies
+        run: python -m pip install -e ".[dev]"
+      - name: Run baseline on pull request base
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git fetch origin "$BASE_SHA"
+          git worktree add "$RUNNER_TEMP/agm-baseline" "$BASE_SHA"
+          cd "$RUNNER_TEMP/agm-baseline"
+          python eval/labelled_v3.py --seed 0 --seeds 1 --episodes 120 --k 5 --output "$RUNNER_TEMP/baseline.json"
+      - name: Run updated retrieval benchmark
+        run: python eval/labelled_v3.py --seed 0 --seeds 1 --episodes 120 --k 5 --whole-log-max-chars 50000 --output "$RUNNER_TEMP/current.json"
+      - name: Print paired before and after metrics
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          temp = Path(os.environ["RUNNER_TEMP"])
+          before = json.loads((temp / "baseline.json").read_text(encoding="utf-8"))
+          after = json.loads((temp / "current.json").read_text(encoding="utf-8"))
+          for regime in ("no-hint", "hint"):
+              print(f"REGIME {regime}")
+              for family in ("single", "hard_neg", "multi_hop", "poison", "unanswerable"):
+                  old = before["regimes"][regime][family]["graph"]
+                  new = after["regimes"][regime][family]["graph"]
+                  print(f"{family}: graph pass {old['pass']:.3f} -> {new['pass']:.3f}; leak {old['leak']:.3f} -> {new['leak']:.3f}")
+              print("pooled strict:", before["regimes"][regime]["_pooled"]["graph"], "->", after["regimes"][regime]["_pooled"]["graph"])
+              print("new baselines:", {name: after["regimes"][regime]["_pooled"].get(name) for name in ("bm25", "vector", "flat", "flat_iterative", "whole_log")})
+              print("whole-log context tokens:", after["regimes"][regime]["_context_tokens_estimate"]["whole_log"])
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: retrieval-before-after
+          path: |
+            ${{ runner.temp }}/baseline.json
+            ${{ runner.temp }}/current.json
+          retention-days: 14

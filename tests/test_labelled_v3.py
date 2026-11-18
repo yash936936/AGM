@@ -22,3 +22,33 @@ def test_small_run_has_every_mode_regime_and_family():
     families = {r["family"] for r in out[("graph", False)]}
     assert set(ANSWERABLE) <= families and {"injection", "unanswerable"} <= families
     assert all(r["pass"] for r in out[("graph", False)] if r["family"] == "injection")
+
+
+
+def test_vector_baseline_is_independent_cosine_search():
+    import numpy as np
+
+    from eval.labelled_v3 import VectorBaseline
+
+    class TinyEmbedder:
+        model_id = "tiny-test-v1"
+
+        def embed(self, text):
+            return np.asarray([1.0, 0.0] if "alpha" in text else [0.0, 1.0], dtype=np.float32)
+
+    docs = [
+        {"text": "alpha owner team-a", "entity": "alpha", "attr": "owner", "value": "team-a"},
+        {"text": "beta owner team-b", "entity": "beta", "attr": "owner", "value": "team-b"},
+    ]
+    rows, score = VectorBaseline(docs, TinyEmbedder()).search("alpha", 1)
+    assert rows == [docs[0]]
+    assert score == 1.0
+
+
+def test_whole_log_baseline_reports_context_size_and_respects_budget():
+    out = run_seed(0, episodes=5, k=5, embedder=make_embedder("hash"), whole_log_max_chars=1)
+    rows = out[("whole_log", False)]
+    assert rows
+    assert all(row["context_chars"] > 1 for row in rows)
+    assert all(row["context_tokens_estimate"] > 0 for row in rows)
+    assert all(row["abstain"] is True and row["n"] == 0 for row in rows)
