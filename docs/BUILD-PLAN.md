@@ -53,15 +53,15 @@ Update the **Status** line when a batch closes (after review), together with `ST
 ### Phase 0 — Cleanup and docs
 **Goal:** one working copy, tidy repo, docs that match the code.
 **Files touched:** `docs/benchmarks/history/*`, `.gitignore`, `docs/workflow.md`, `context.md`, `docs/BUILD-PLAN.md`, `docs/PROMPTS.md`, `docs/phases.md` (historical stub), `docs/debug.md`, `docs/appflow.md`, `docs/STATE.md`, `docs/status.md`, `docs/readme.md`, `docs/components/`
-**Done when:** branch `chore/repo-tidy` merged to `main`, CI green on all six jobs, old working folder retired (R0.5).
-**Status:** In progress. D-050 merged in PR #62 (`6d6732b`); exact-head main CI run #667 passed all six Ubuntu/Windows Python 3.11–3.13 jobs. The separate `chore/repo-tidy` branch was reviewed: its D-049/build-plan/prompt content is already on main, while its remaining `.gitignore` and benchmark-history changes are being ported on `chore/phase0-reconciled`. The two xfails are identified as two parameter variants of the strict R2.6c xfail in `test_relation_wording.py`; Batch 1 must fix both. The two formerly uncommitted test files are tracked on main and included in CI, but retirement of the old local working-folder copy is not remotely verifiable. Phase 0 stays open until the port is merged, the expanded CI matrix is green, and the old local folder is retired.
+**Done when:** tidy changes from `chore/repo-tidy` are represented on `main`, CI green on all eight Ubuntu/Windows Python 3.11–3.14 jobs, old working folder retired (R0.5).
+**Status:** In progress. D-050 merged in PR #62 (`6d6732b`). The remaining tidy changes were ported in PR #63 (`88044a1`); exact-head run #685 passed all eight Ubuntu/Windows Python 3.11–3.14 jobs. The old `chore/repo-tidy` branch was not merged directly because it had diverged; its D-049/build-plan/prompt work was already on main. Both formerly uncommitted test files are tracked on main and covered by CI. R0.5 remains open only because retirement of the old local working-folder copy cannot be verified remotely.
 
 ### Phase 1 — Retrieval correctness (batch 1)
 **Goal:** fix the three remaining core defects found by the v3 benchmark and widen the baselines.
 **Items:** R2.6f, R2.6c, R2.6d, R2.1, R2.3, R0.3, R0.4, X1 (explain the 2 xfails).
 **Files touched:** `src/agm/retrieve.py`, `src/agm/embed.py`, `eval/labelled_v3.py`, `eval/relation_heldout.py` (or a new held-out file), `eval/benchmark_runner.py`, `tests/test_retrieve.py`, `tests/test_labelled_v3.py`, `.github/workflows/tests.yml`, `pyproject.toml`, `CHANGELOG.md`, `docs/benchmarks/`, `docs/decisions.md`
 **Done when:** each item meets its "done when" in `ROADMAP.md`; abstention raises unanswerable correctness to ≥ 0.8 with single-fact recall down by ≤ 0.02; no forbidden-value leaks; every xfail is fixed or has a decision entry; v0.7.x tagged.
-**Status:** Not started
+**Status:** In progress. Implementation and regression tests are on `batch-1/retrieval-correctness`; local execution is NOT RUN. Exact-head CI and the paired before/after benchmark are required before acceptance.
 
 ### Phase 2 — Real-data evidence and gate G1 (batch 2)
 **Goal:** find out whether graph retrieval beats the best flat baseline on real usage, and decide.
