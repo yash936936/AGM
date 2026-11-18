@@ -2,7 +2,7 @@
 
 What is true today, by evidence level. The public overview and quick start are in the root `README.md`; this file says how far each claim has been checked. Update it when a gate closes, not before.
 
-Levels: **Implemented** (code exists) · **Tests** (automated tests, CI on Ubuntu and Windows, Python 3.11–3.13) · **Real evidence** (run on real usage data) · **Accepted** (owner or independent sign-off).
+Levels: **Implemented** (code exists) · **Tests** (automated tests, CI on Ubuntu and Windows, Python 3.11–3.14) · **Real evidence** (run on real usage data) · **Accepted** (owner or independent sign-off).
 
 | Capability | Implemented | Tests | Real evidence | Accepted |
 |---|---|---|---|---|
@@ -17,7 +17,7 @@ Levels: **Implemented** (code exists) · **Tests** (automated tests, CI on Ubunt
 | REST API, hashed keys, hot reload, body limit (D-045) | yes | yes (CI smoke client) | n/a | no |
 | Python client and CLI (`mem`, `handoff`, `active`, `connect`) | yes | yes | one manual end-to-end CLI run on 2026-11-04 | no |
 | Read-only active-memory routes (D-044) | yes | yes | NOT RUN | no |
-| Windows | yes | Main CI run #667 green on merge commit `6d6732b` for Python 3.11–3.13; Python 3.14 matrix expansion pending. | n/a | no |
+| Windows | yes | Main CI run #685 green on PR #63 merge commit `88044a1` for Python 3.11–3.14 (Ubuntu and Windows). | n/a | no |
 
 ## Not verified or not supported
 - Real-history evaluation: NOT RUN (needs your frozen cases, R2.2).
@@ -26,7 +26,7 @@ Levels: **Implemented** (code exists) · **Tests** (automated tests, CI on Ubunt
 - Remote access: not supported. The server refuses non-loopback hosts.
 - Scale: not measured. Vector search scans every embedding for a tenant and project (R5.1).
 - Paraphrase handling with the default hash embedder is weak (R2.1, R5.2).
-- Abstention for unknown entities or missing attributes rarely fires (R2.6c).
+- Abstention for unknown entities or missing attributes remains under evaluation (R2.6c); candidate fix and regression tests are in PR #64, not yet accepted.
 
 ---
 **Next:** Return to [`context.md`](../context.md) before starting a new task —

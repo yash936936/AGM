@@ -1,0 +1,42 @@
+# Batch 1 retrieval correctness benchmark
+
+**Status:** implementation and test cases added; benchmark execution NOT RUN locally. The pull-request workflow runs the same seeded v3 corpus against the PR base commit and the PR head, then uploads both JSON reports as `retrieval-before-after`.
+
+## Compared systems
+
+- `bm25`: standalone BM25 over the complete write log, without lifecycle or trust filtering.
+- `vector`: cosine-only retrieval over the complete write log using the selected embedder.
+- `flat`: AGM's FTS5/vector blend without graph expansion.
+- `flat_iterative`: post-hoc agent-style repeated flat retrieval.
+- `whole_log`: all written text supplied as context when it fits the configured character budget; otherwise it reports that the log does not fit. This is a context-size/coverage comparator, not an LLM answer-quality measurement.
+- `graph`: AGM retrieval with bounded graph expansion.
+
+The base-commit run uses the pre-change v3 runner, so only common modes are compared before/after. The updated run additionally reports vector-only and whole-log results. The workflow uses seeds 0–4, 1,200 distractor episodes per seed and k=5 for both the base and updated revisions. It installs each revision separately before running its benchmark so the base runner cannot accidentally import the PR's editable AGM package. This is still a synthetic benchmark, not evidence for H1–H7 or real-user performance (D-007).
+
+## Targeted regression coverage
+
+- R2.6f: owner answer-slot phrases including “in charge of”, “responsible for”, “accountable for”, “maintains” and “looks after”.
+- R2.6c: a named entity with no requested attribute must abstain; relation questions may pass the evidence gate only when a reached entity has the requested answer slot. The two strict xfail parameter variants are now ordinary tests.
+- R2.6d: exact hyphen-aware entity boundaries and no sibling-value leakage for names such as `svc-12` and `svc-12-staging`, with and without graph expansion.
+
+## Reported metrics
+
+For the common modes, CI prints before/after graph pass rate and leak rate for single, hard-negative, multi-hop, poison and unanswerable families, plus pooled strict pass. The updated report includes BM25-only, vector-only cosine, whole-log-in-context, flat, iterative-flat and graph scores; unanswerable correctness; single-fact recall; retrieve calls per query; p50/p95/p99 latency; and estimated whole-log context tokens. The full JSON reports are uploaded as a CI artifact.
+
+## Reproduction
+
+```bash
+python eval/labelled_v3.py --seed 0 --seeds 1 --episodes 120 --k 5 --output before-after.json
+python eval/labelled_v3.py --seed 0 --seeds 5 --episodes 1200 --k 5 --embedder st --embedder-revision <immutable-model-commit> --whole-log-max-chars 200000 --output labelled-v3-st.json
+```
+
+Install the optional sentence embedder with:
+
+```bash
+python -m pip install -e ".[eval-sentence-transformer]"
+```
+
+Do not compare the one-seed CI smoke output with the historical five-seed numbers as if they were the same experiment. The benchmark output must be reviewed alongside the exact source revision and its generated manifest.
+
+
+The sentence-transformer adapter loads lazily. Supply an immutable Hugging Face model revision with `--embedder-revision` for a reproducible run; without it, the report records `@default` and the model revision is not pinned. No sentence-transformer result is claimed by this PR until such a revision is selected and the run is recorded.

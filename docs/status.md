@@ -1,8 +1,31 @@
 # Status log — AGM prototype
 
+## 2026-11-19 — Strengthen Batch 1 benchmark comparability
+**Did:** expanded the paired synthetic v3 comparison to five seeds and 1,200 distractor episodes per seed; isolated the base and PR editable installs so each run uses its own AGM source; added BM25-only, normalized cosine-vector-only and whole-log context baselines; added p50/p95/p99 latency, retrieval-call and unanswerable/single-fact metrics. Set a 200,000-character whole-log budget and added an explicit fit/overflow test. Added an optional sentence-transformer revision argument and report identity; an immutable model revision is required before treating ST results as reproducible. Added the changelog and local prototype release procedure; the v0.7.0 tag remains deferred.
+**Tests:** no local execution. PR #64 exact-head CI and full paired benchmark are queued; no performance or correctness result is claimed.
+**Next:** inspect the exact-head CI matrix and benchmark artifact, then repair any failures before merging.
+
+
+## 2026-11-19 — Draft release notes and local tagging procedure
+**Did:** added `CHANGELOG.md` and `docs/release-procedure.md` for the v0.7.0 local prototype. The procedure requires exact-head eight-job CI, test/hygiene/package checks, accepted retrieval benchmarks and a clean main tree before tagging. It explicitly does not authorize PyPI publication or remote deployment.
+**Tests:** documentation-only changes; not run locally. The release tag is NOT created because Batch 1 is not yet accepted.
+**Next:** complete PR #64's exact-head CI and benchmark evidence, then finish release checks before tagging.
+
+
+## 2026-11-19 — Batch 1 validation and CI #641 diagnosis
+**Did:** inspected the historical failed Windows Python 3.13 job from CI run #641. The failure was the 0.5-second duration-mode REST benchmark test recording zero successful requests; the other five matrix jobs passed and run #642 later passed. Increased that test's duration to 2.0 seconds while keeping the slow RSS-probe regression. Removed the opt-in label condition from the paired before/after retrieval benchmark so the job runs on pull requests.
+**Tests:** no local test run. The 2.0-second change is pending exact-head CI. Current PR CI has not yet completed; no benchmark result is claimed.
+**Next:** review all eight matrix jobs and the paired benchmark artifact, fix any regressions, then update acceptance docs and merge only after the exact head is green.
+
+
 
 > Append-only. Newest entry at top. One entry per work session or review; current state lives in `STATE.md`, defects in `debug.md`, decisions in `decisions.md`.
 
+
+## 2026-11-19 — Batch 1 retrieval implementation started
+**Did:** implemented exact hyphen-aware entity scoping in flat and graph retrieval; expanded owner and on-call answer-slot phrases; added direct and relation-target answer-slot evidence checks; removed the two strict xfail parameter marks; added regression tests for five owner phrasings, sibling entities, missing attributes, and vector/whole-log baseline behavior. Added an optional `eval-sentence-transformer` extra and paired base/head benchmark workflow with BM25, vector-only and whole-log modes.
+**Tests:** NOT RUN locally. CI and paired benchmark are pending on the exact Batch 1 head. No before/after result is claimed yet.
+**Next:** validate syntax and all tests on Ubuntu/Windows Python 3.11–3.14; inspect benchmark artifacts and repair any regressions before merging.
 
 ## 2026-11-19 — Phase 0 reconciliation started
 **Did:** confirmed PR #62 merged at `6d6732b`; main CI run #667 passed all six Ubuntu/Windows Python 3.11–3.13 jobs. Reviewed `chore/repo-tidy`: D-049, the build plan and prompts are already represented on main; ported the remaining local-artifact ignore rules and prepared benchmark-history cleanup. Added Python 3.14 to the CI matrix. Identified DBG-008's two xfails as the two hint variants of one strict R2.6c test in `tests/test_relation_wording.py`. Confirmed `test_retrieve.py` and `test_privacy_edge_acceptance.py` are tracked in main; retiring the old local working-folder copy remains an owner-side check.

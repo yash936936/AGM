@@ -4,8 +4,7 @@
 Written BEFORE any v3 result was seen. Differences from synthetic_v2: stored facts and queries use different
 wordings; scoring is entity-aware (entity, attribute, value); near-duplicate entities (-staging/-legacy siblings); stale values; low-trust "poisoned" facts;
 injection-style text; distractor notes that share attribute words but state no value; unanswerable questions
-(unknown entity, or known entity with the attribute never recorded). Every query is evaluated with and without an
-entity hint, against: bm25 (lifecycle- and trust-blind keyword log), flat, flat_iterative (agent-style), graph.
+(unknown entity, or known entity with the attribute never recorded). Every query is evaluated with and without an entity hint, against: bm25 (lifecycle- and trust-blind keyword log), vector-only cosine, whole-log-in-context, flat, flat_iterative (agent-style), and graph.
 
 PRE-REGISTERED DECISION RULE (fixed before the first run):
   Primary metric: strict pass rate = answer value present AND no forbidden value returned, pooled over the
@@ -29,6 +28,8 @@ import sys
 import tempfile
 import time
 from collections import Counter
+
+import numpy as np
 from dataclasses import dataclass, field
 from pathlib import Path
 from types import SimpleNamespace
@@ -63,7 +64,7 @@ ASKED = {  # different wordings used when QUERIES are asked
 DEP_STORED = ["{e} calls {v} on every request.", "{e} is built on top of {v}.", "{e} relies on {v} to serve users."]
 FAMILIES = ("single", "stale", "temporal", "multi_hop", "hard_neg", "poison", "injection", "unanswerable")
 ANSWERABLE = ("single", "stale", "temporal", "multi_hop", "hard_neg", "poison")
-MODES = ("bm25", "flat", "flat_iterative", "graph")
+MODES = ("bm25", "vector", "flat", "flat_iterative", "whole_log", "graph")
 THRESH_MARGIN, THRESH_NEAR = 0.05, 0.02
 
 
@@ -201,6 +202,34 @@ class BM25:
         return [self.docs[i] for _, i in top], (top[0][0] if top else 0.0)
 
 
+class VectorBaseline:
+    """Standalone cosine-only baseline over the complete written log."""
+
+    def __init__(self, docs: list[dict[str, Any]], embedder: Any):
+        self.docs = docs
+        self.embedder = embedder
+        self.vectors = [self._unit(embedder.embed(str(doc.get("text") or ""))) for doc in docs]
+        self.query_cache: dict[str, np.ndarray] = {}
+
+    @staticmethod
+    def _unit(values: Any) -> np.ndarray:
+        vector = np.asarray(values, dtype=np.float32)
+        norm = float(np.linalg.norm(vector))
+        return vector / norm if norm > 0 else vector
+
+    def search(self, query: str, k: int):
+        vector = self.query_cache.get(query)
+        if vector is None:
+            vector = self._unit(self.embedder.embed(query))
+            self.query_cache[query] = vector
+        scores = [
+            (float(np.dot(vector, candidate)) if vector.size == candidate.size else 0.0, index)
+            for index, candidate in enumerate(self.vectors)
+        ]
+        top = sorted(scores, key=lambda pair: (-pair[0], pair[1]))[:k]
+        return [self.docs[index] for _, index in top], (top[0][0] if top else 0.0)
+
+
 def _vals(items) -> set[tuple[str, str, str]]:
     """(entity, attribute, value) of every returned fact; entity-aware so values shared by other entities do not count."""
     out = set()
@@ -211,12 +240,23 @@ def _vals(items) -> set[tuple[str, str, str]]:
     return out
 
 
-def run_query(store, world, bm25, names_re, q: Q, mode: str, hint: bool, k: int):
+def run_query(store, world, bm25, vector, names_re, q: Q, mode: str, hint: bool, k: int,
+              whole_log_max_chars: int):
     ent = q.entity if hint else None
     t0 = time.perf_counter(); calls = 1
+    context_chars = 0
     if mode == "bm25":
         docs, top = bm25.search(q.query + (f" {q.entity}" if hint else ""), k)
         items, abstain = docs, top < 1.0
+    elif mode == "vector":
+        docs, top = vector.search(q.query + (f" {q.entity}" if hint else ""), k)
+        items, abstain = docs, top <= 0.0
+    elif mode == "whole_log":
+        context_chars = sum(len(str(doc.get("text") or "")) for doc in world.docs)
+        fits = context_chars <= whole_log_max_chars
+        items = list(world.docs) if fits else []
+        # A budget overflow is "not comparable", not a correct abstention.
+        abstain = not items if fits else False
     elif mode in ("flat", "graph"):
         r = store.retrieve(world.ctx, q.query, entity=ent, as_of=q.as_of, k=k, expand=mode == "graph", graph_hops=2 if mode == "graph" else None)
         items, abstain = r.items, bool(r.abstain)
@@ -241,11 +281,12 @@ def run_query(store, world, bm25, names_re, q: Q, mode: str, hint: bool, k: int)
     got = _vals(items)
     gold, bad = set(q.gold), set(q.forbidden)
     bad_items = [i for i in items if _vals([i]) & bad]
-    # Secondary metric (added after the poison/contested behaviour was understood; primary rule unchanged):
-    # a forbidden item returned WITH a contested_with flag is a surfaced conflict, not a silent leak.
+    # Secondary metric: a contested_with flag surfaces a conflict rather than silently leaking it.
     unflagged = any(isinstance(i, dict) or not getattr(i, "contested_with", None) for i in bad_items)
     return {"family": q.family, "hit": bool(got & gold) if gold else None, "leak": bool(got & bad), "leak_unflagged": unflagged,
-            "abstain": abstain, "calls": calls, "ms": ms, "n": len(items)}
+            "abstain": abstain, "calls": calls, "ms": ms, "n": len(items),
+            "context_chars": context_chars, "context_tokens_estimate": math.ceil(context_chars / 4),
+            "context_fits": (context_chars > 0 and len(items) > 0) if mode == "whole_log" else None}
 
 
 def finalize(row: dict[str, Any], q: Q) -> dict[str, Any]:
@@ -258,7 +299,7 @@ def finalize(row: dict[str, Any], q: Q) -> dict[str, Any]:
     return row
 
 
-def run_seed(seed: int, episodes: int, k: int, embedder: Any) -> dict[str, Any]:
+def run_seed(seed: int, episodes: int, k: int, embedder: Any, whole_log_max_chars: int = 200000) -> dict[str, Any]:
     out: dict[str, Any] = {}
     with tempfile.TemporaryDirectory(prefix=f"agm-v3-{seed}-") as tmp, deterministic_node_ids(seed):
         with MemoryStore(str(Path(tmp) / "m.db"), embedder=embedder) as store:
@@ -266,10 +307,11 @@ def run_seed(seed: int, episodes: int, k: int, embedder: Any) -> dict[str, Any]:
             names = sorted(world.entities, key=len, reverse=True)
             names_re = re.compile(r"(?<![\w-])(" + "|".join(re.escape(n) for n in names) + r")(?![\w-])")
             bm25 = BM25(world.docs)
+            vector = VectorBaseline(world.docs, embedder)
             manifest = hashlib.sha256(json.dumps([[q.id, q.query, q.gold, q.forbidden, q.as_of] for q in qs], sort_keys=True).encode()).hexdigest()
             for hint in (False, True):
                 for mode in MODES:
-                    out[(mode, hint)] = [finalize(run_query(store, world, bm25, names_re, q, mode, hint, k), q) for q in qs]
+                    out[(mode, hint)] = [finalize(run_query(store, world, bm25, vector, names_re, q, mode, hint, k, whole_log_max_chars), q) for q in qs]
             out["manifest"] = manifest; out["questions"] = len(qs)
     return out
 
@@ -283,20 +325,27 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--seed", type=int, default=0); ap.add_argument("--seeds", type=int, default=5)
     ap.add_argument("--episodes", type=int, default=1200); ap.add_argument("--k", type=int, default=5)
-    ap.add_argument("--embedder", choices=("hash", "spacy"), default="hash"); ap.add_argument("--output", type=Path)
+    ap.add_argument("--embedder", choices=("hash", "spacy", "st"), default="hash"); ap.add_argument("--embedder-revision", help="immutable model repository revision for --embedder st"); ap.add_argument("--whole-log-max-chars", type=int, default=200000, help="character budget for whole-log-in-context"); ap.add_argument("--output", type=Path)
     a = ap.parse_args()
+    if a.embedder_revision and a.embedder != "st":
+        ap.error("--embedder-revision is valid only with --embedder st")
     if a.embedder == "hash":
         from agm.embed import HashEmbedder
         emb = HashEmbedder()
-    else:
+    elif a.embedder == "spacy":
         from eval.spacy_embedder import SpacyEmbedder
         emb = SpacyEmbedder()
+    else:
+        from eval.synthetic_v2 import make_embedder
+        emb = make_embedder("st", revision=a.embedder_revision)
+    if a.whole_log_max_chars < 1:
+        ap.error("--whole-log-max-chars must be positive")
     runs = []
     for s in range(a.seed, a.seed + a.seeds):
-        print(f"seed {s} ...", flush=True); runs.append(run_seed(s, a.episodes, a.k, emb))
+        print(f"seed {s} ...", flush=True); runs.append(run_seed(s, a.episodes, a.k, emb, a.whole_log_max_chars))
     print(f"\nlabelled_v3 | seeds={a.seeds} queries/seed={runs[0]['questions']} episodes={a.episodes} k={a.k} embedder={emb.model_id} "
           f"manifest[0]={runs[0]['manifest'][:12]}\n")
-    report: dict[str, Any] = {"embedder": emb.model_id, "k": a.k, "seeds": a.seeds, "manifests": [r["manifest"] for r in runs], "regimes": {}}
+    report: dict[str, Any] = {"embedder": emb.model_id, "embedder_revision": getattr(emb, "model_revision", None), "k": a.k, "seeds": a.seeds, "whole_log_max_chars": a.whole_log_max_chars, "manifests": [r["manifest"] for r in runs], "regimes": {}}
     for hint in (False, True):
         tag = "hint" if hint else "no-hint"
         print(f"=== {tag} regime ===")
@@ -312,10 +361,20 @@ def main() -> int:
             print(f"{fam:13}" + "".join(f"{c:>16}" for c in cells))
         pooled = {m: [_rate(r[(m, hint)], "strict", ANSWERABLE) for r in runs] for m in MODES}
         calls = {m: statistics.fmean(x["calls"] for r in runs for x in r[(m, hint)]) for m in MODES}
-        p50 = {m: statistics.median(x["ms"] for r in runs for x in r[(m, hint)]) for m in MODES}
+        latency_ms = {
+            m: {
+                "p50": statistics.median(x["ms"] for r in runs for x in r[(m, hint)]),
+                "p95": float(np.percentile([x["ms"] for r in runs for x in r[(m, hint)]], 95)),
+                "p99": float(np.percentile([x["ms"] for r in runs for x in r[(m, hint)]], 99)),
+            }
+            for m in MODES
+        }
+        p50 = {m: latency_ms[m]["p50"] for m in MODES}
         ul = {m: statistics.fmean(_rate(r[(m, hint)], "leak_unflagged", ANSWERABLE) for r in runs) for m in MODES}
+        context_tokens = {m: statistics.fmean(x.get("context_tokens_estimate", 0) for r in runs for x in r[(m, hint)]) for m in MODES}
         print(f"{'unflagged leak':13}" + "".join(f"{ul[m] * 100:15.1f}%" for m in MODES) + "   (secondary: leaks without contested_with)")
         reg["_unflagged_leak"] = ul
+        reg["_context_tokens_estimate"] = context_tokens
         print(f"{'POOLED':13}" + "".join(f"{statistics.fmean(pooled[m]):16.3f}" for m in MODES))
         print(f"{'calls/query':13}" + "".join(f"{calls[m]:16.2f}" for m in MODES))
         print(f"{'p50 ms':13}" + "".join(f"{p50[m]:16.1f}" for m in MODES))
@@ -331,7 +390,7 @@ def main() -> int:
             verdict = "GRAPH_NOT_JUSTIFIED"
         print(f"graph - best other ({best}) = {d:+.3f}  95% CI {ci}  ->  {verdict}\n")
         reg["_pooled"] = {m: statistics.fmean(pooled[m]) for m in MODES}
-        reg["_verdict"] = {"best_other": best, "delta": d, "ci95": ci, "verdict": verdict, "calls": calls, "p50_ms": p50}
+        reg["_verdict"] = {"best_other": best, "delta": d, "ci95": ci, "verdict": verdict, "calls": calls, "p50_ms": p50, "latency_ms": latency_ms}
         report["regimes"][tag] = reg
     ab = {m: statistics.fmean(_rate(r[(m, False)], "pass", ("unanswerable",)) for r in runs) for m in MODES}
     print("abstention correctness on unanswerable (no-hint):", {m: round(v, 3) for m, v in ab.items()})

@@ -1,3 +1,23 @@
+## D-053 — Use a longer duration window for the Windows REST benchmark smoke test — 2026-11-19
+
+**Decision:** Increase the duration-mode REST benchmark test window from 0.5 seconds to 2.0 seconds. Keep the separate test that simulates an RSS probe slower than the original window and asserts that request workers still progress.
+
+**Why:** CI run #641 failed only on Windows Python 3.13 because the 0.5-second window completed with zero successful requests. The other five jobs passed and run #642 later passed. This is a test stability issue, not a measured service regression.
+
+**Limits:** The change is not accepted until the exact Batch 1 CI head passes on Windows Python 3.13 and the complete matrix. The benchmark remains synthetic and loopback-only.
+
+**Affects:** `tests/test_rest_concurrent_benchmark.py`, `docs/debug.md`, and CI status records.
+
+## D-052 — Require exact entity and answer-slot evidence for scoped retrieval — 2026-11-19
+
+**Decision:** When a query names an entity, flat and graph candidate pools are scoped to exact canonical names/aliases using hyphen-aware boundaries. For explicit attribute questions about a named entity, retrieval abstains if that entity has no eligible fact for the requested attribute. For relation questions, graph retrieval may pass the answer-slot evidence gate only when an eligible reached entity has the requested attribute, respecting an explicitly requested hop depth. Expand the answer-slot phrase map to common owner and on-call paraphrases.
+
+**Why:** The v3 benchmark exposed sibling-entity leakage, missed owner paraphrases and an abstention gate that rejected low-lexical-similarity relation answers before graph expansion could provide structured evidence. A named entity and matching structured answer slot are stronger evidence than generic token overlap; a sibling or an unrelated anchor attribute is not.
+
+**Limits:** This decision does not add general-purpose NER. Unknown arbitrary names without a known structured identifier still depend on the retrieval evidence threshold. All changes require the Batch 1 before/after benchmark, no-leak tests and exact-head CI before acceptance.
+
+**Affects:** `src/agm/retrieve.py`, `src/agm/store.py`, retrieval tests and the v3 evaluation runner. No public API or schema change.
+
 ## D-051 — Archive superseded synthetic benchmark snapshots and test Python 3.14 in CI — 2026-11-19
 
 **Decision:** Move the initial v3 synthetic benchmark JSON snapshots and their post-D-046/D-047 snapshots into `docs/benchmarks/history/`; keep the current benchmark interpretation in `docs/benchmarks/r2_labelled_v3.md`. Extend the repository CI Python matrix to 3.14 on both Ubuntu and Windows. Add local-only patch, diff, backup, report and real-history paths to `.gitignore`.
