@@ -1,6 +1,6 @@
 # AGM build plan: batches and review gates
 
-Basis: `docs/ROADMAP.md` (v0.7 → v1.0). Current state: v0.7.x, 308 passed / 2 xfailed, local-only prototype.
+Basis: `docs/ROADMAP.md` (v0.7 → v1.0). Current state: v0.7.0, local-only prototype; latest recorded local run: 308 passed / 2 xfailed (Windows, Python 3.14).
 Rule that shapes the order: **evidence before features.** The graph has not beaten a flat baseline on any data yet, so no batch builds graph-specific features before gate G1.
 
 ## Overview
@@ -54,7 +54,7 @@ Update the **Status** line when a batch closes (after review), together with `ST
 **Goal:** one working copy, tidy repo, docs that match the code.
 **Files touched:** `docs/benchmarks/history/*`, `.gitignore`, `docs/workflow.md`, `context.md`, `docs/BUILD-PLAN.md`, `docs/PROMPTS.md`, `docs/phases.md` (historical stub), `docs/debug.md`, `docs/appflow.md`, `docs/STATE.md`, `docs/status.md`, `docs/readme.md`, `docs/components/`
 **Done when:** branch `chore/repo-tidy` merged to `main`, CI green on all six jobs, old working folder retired (R0.5).
-**Status:** In progress. The D-050 documentation convention is proposed in PR #62. The separate `chore/repo-tidy` branch (D-049 and benchmark-folder tidy) exists but has no verified merged PR; keep Phase 0 open until that branch is reviewed and merged, the old working folder is retired (R0.5), and CI is green on the resulting main head.
+**Status:** In progress. D-050 merged in PR #62 (`6d6732b`); exact-head main CI run #667 passed all six Ubuntu/Windows Python 3.11–3.13 jobs. The separate `chore/repo-tidy` branch was reviewed: its D-049/build-plan/prompt content is already on main, while its remaining `.gitignore` and benchmark-history changes are being ported on `chore/phase0-reconciled`. The two xfails are identified as two parameter variants of the strict R2.6c xfail in `test_relation_wording.py`; Batch 1 must fix both. The two formerly uncommitted test files are tracked on main and included in CI, but retirement of the old local working-folder copy is not remotely verifiable. Phase 0 stays open until the port is merged, the expanded CI matrix is green, and the old local folder is retired.
 
 ### Phase 1 — Retrieval correctness (batch 1)
 **Goal:** fix the three remaining core defects found by the v3 benchmark and widen the baselines.
