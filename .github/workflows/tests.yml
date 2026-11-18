@@ -56,8 +56,14 @@ jobs:
         run: |
           git fetch origin "$BASE_SHA"
           git worktree add "$RUNNER_TEMP/agm-baseline" "$BASE_SHA"
+      - name: Install baseline revision for isolated measurement
+        run: python -m pip install --no-deps -e "$RUNNER_TEMP/agm-baseline"
+      - name: Run baseline benchmark
+        run: |
           cd "$RUNNER_TEMP/agm-baseline"
           python eval/labelled_v3.py --seed 0 --seeds 1 --episodes 120 --k 5 --output "$RUNNER_TEMP/baseline.json"
+      - name: Restore pull request revision for updated measurement
+        run: python -m pip install --no-deps -e "$GITHUB_WORKSPACE"
       - name: Run updated retrieval benchmark
         run: python eval/labelled_v3.py --seed 0 --seeds 1 --episodes 120 --k 5 --whole-log-max-chars 50000 --output "$RUNNER_TEMP/current.json"
       - name: Print paired before and after metrics
