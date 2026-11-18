@@ -325,7 +325,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--seed", type=int, default=0); ap.add_argument("--seeds", type=int, default=5)
     ap.add_argument("--episodes", type=int, default=1200); ap.add_argument("--k", type=int, default=5)
-    ap.add_argument("--embedder", choices=("hash", "spacy", "st"), default="hash"); ap.add_argument("--whole-log-max-chars", type=int, default=200000, help="character budget for whole-log-in-context"); ap.add_argument("--output", type=Path)
+    ap.add_argument("--embedder", choices=("hash", "spacy", "st"), default="hash"); ap.add_argument("--embedder-revision", help="immutable model repository revision for --embedder st"); ap.add_argument("--whole-log-max-chars", type=int, default=200000, help="character budget for whole-log-in-context"); ap.add_argument("--output", type=Path)
     a = ap.parse_args()
     if a.embedder == "hash":
         from agm.embed import HashEmbedder
@@ -335,7 +335,7 @@ def main() -> int:
         emb = SpacyEmbedder()
     else:
         from eval.synthetic_v2 import make_embedder
-        emb = make_embedder("st")
+        emb = make_embedder("st", revision=a.embedder_revision)
     if a.whole_log_max_chars < 1:
         ap.error("--whole-log-max-chars must be positive")
     runs = []
@@ -343,7 +343,7 @@ def main() -> int:
         print(f"seed {s} ...", flush=True); runs.append(run_seed(s, a.episodes, a.k, emb, a.whole_log_max_chars))
     print(f"\nlabelled_v3 | seeds={a.seeds} queries/seed={runs[0]['questions']} episodes={a.episodes} k={a.k} embedder={emb.model_id} "
           f"manifest[0]={runs[0]['manifest'][:12]}\n")
-    report: dict[str, Any] = {"embedder": emb.model_id, "k": a.k, "seeds": a.seeds, "whole_log_max_chars": a.whole_log_max_chars, "manifests": [r["manifest"] for r in runs], "regimes": {}}
+    report: dict[str, Any] = {"embedder": emb.model_id, "embedder_revision": getattr(emb, "model_revision", None), "k": a.k, "seeds": a.seeds, "whole_log_max_chars": a.whole_log_max_chars, "manifests": [r["manifest"] for r in runs], "regimes": {}}
     for hint in (False, True):
         tag = "hint" if hint else "no-hint"
         print(f"=== {tag} regime ===")
