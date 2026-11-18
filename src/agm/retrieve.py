@@ -311,7 +311,7 @@ def _mentioned_entity_ids(
     mentioned: set[str] = set()
     for entity_id, labels in names.items():
         for label in labels:
-            pattern = r"(?<!\w)" + re.escape(label.casefold()) + r"(?!\w)"
+            pattern = r"(?<![\w-])" + re.escape(label.casefold()) + r"(?![\w-])"
             if re.search(pattern, lowered):
                 mentioned.add(entity_id)
                 break
