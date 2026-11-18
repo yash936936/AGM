@@ -4,6 +4,12 @@
 > Append-only. Newest entry at top. One entry per work session or review; current state lives in `STATE.md`, defects in `debug.md`, decisions in `decisions.md`.
 
 
+## 2026-11-19 — Phase 0 reconciliation started
+**Did:** confirmed PR #62 merged at `6d6732b`; main CI run #667 passed all six Ubuntu/Windows Python 3.11–3.13 jobs. Reviewed `chore/repo-tidy`: D-049, the build plan and prompts are already represented on main; ported the remaining local-artifact ignore rules and prepared benchmark-history cleanup. Added Python 3.14 to the CI matrix. Identified DBG-008's two xfails as the two hint variants of one strict R2.6c test in `tests/test_relation_wording.py`. Confirmed `test_retrieve.py` and `test_privacy_edge_acceptance.py` are tracked in main; retiring the old local working-folder copy remains an owner-side check.
+**Tests:** NOT RUN locally; no repository checkout is available in this execution environment. Existing main CI #667: 6/6 pass on Python 3.11–3.13. Expanded matrix CI pending.
+**Next:** complete the reconciled Phase 0 port and verify CI; then fix R2.6f/c/d and add the Batch 1 baselines and optional sentence embedder.
+
+
 ## 2026-11-17 — PR #62 consistency review
 **Did:** reconciled the contributor reading order with `context.md` as the repository entry point; clarified that `chore/repo-tidy` is separate from merged PR #61; aligned the roadmap's current status with D-047/D-048 and the current state report; labelled CI #642 as historical evidence.
 **Tests:** documentation-only edits. Code tests and hygiene scan NOT RUN in this review. PR #62 CI must pass on its final head before merge.

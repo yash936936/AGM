@@ -1,12 +1,12 @@
 # AGM roadmap: v0.7 → v1.0
 
-Updated 2026-11-17 (status reconciliation; roadmap scope and acceptance criteria retained). Supersedes earlier roadmaps (old M0–M4 and phase lists live in git tag `archive/pre-cleanup-main`).
+Updated 2026-11-19 (Phase 0 progress; roadmap scope and acceptance criteria retained). Supersedes earlier roadmaps (old M0–M4 and phase lists live in git tag `archive/pre-cleanup-main`).
 
 **Effort:** S ≤ 1 day, M 2–4 days, L 1–2 weeks of focused work. **Calendar** (rough, depends on your hours): at ~10 focused hours a week, double the day counts; full-time, they hold. These are estimates, not commitments.
 
 ## 1. Where we are
 
-- **Code:** v0.7.0 local-only prototype. Event-sourced SQLite store, flat and graph retrieval, trust tiers, contested handling (D-046), handoff, lifecycle (delete/expiry/revocation), guard in core, REST API, stdlib client, CLI (`mem`, `handoff`, `active`, `connect`, `hash-keys`), and read-only active-memory routes. The 2026-11-17 local Windows/Python 3.14 report records 308 passed and 2 xfailed; the xfails remain unexplained (DBG-008). CI run #642 is historical and passed on an earlier commit; check the active PR's final-head matrix before treating its documentation changes as validated.
+- **Code:** v0.7.0 local-only prototype. Event-sourced SQLite store, flat and graph retrieval, trust tiers, contested handling (D-046), handoff, lifecycle (delete/expiry/revocation), guard in core, REST API, stdlib client, CLI (`mem`, `handoff`, `active`, `connect`, `hash-keys`), and read-only active-memory routes. The 2026-11-17 local Windows/Python 3.14 report records 308 passed and 2 xfailed. Both xfails are parameter variants (`hint=None` and `hint="alpha"`) of the strict R2.6c expected failure in `tests/test_relation_wording.py`; this identifies the cause but the fix remains open. Main CI run #667 passed all six Ubuntu/Windows Python 3.11–3.13 jobs on PR #62's merge head. Python 3.14 is being added to CI.
 - **Decided and done:** MCP removed (D-042); client/CLI (D-043); read-only active routes (D-044); hashed keys, hot reload, 404 on missing delete, body limit (D-045); contested candidates withheld by default (D-046); entity hints scope graph seeds without blocking expansion (D-047); relation-following is independent of query wording (D-048).
 - **Evidence so far (synthetic only):** the v3 labelled benchmark and post-hoc iterative-flat comparison remain synthetic diagnostics, not real-use evidence. The graph hypothesis is not established; see the benchmark reports and D-007. D-046 to D-048 address contested handling, entity-hint expansion and wording-independent relation-following. Answer-slot wording, abstention and sibling-entity separation remain open (DBG-007).
 - **Not done:** real-history evidence (R2.2–R2.4); answer-slot wording, abstention and near-duplicate entity handling (R2.6f/c/d); independent security review; remote access; real third-party host validation; scalable vector search; release packaging.
@@ -36,9 +36,9 @@ Total to v1.0 about **12–16 weeks at ~10 h/week** (6–8 full-time). The large
 |---|---|---|---|
 | R0.1 | Windows flaky tests. **Found and fixed one cause:** the REST benchmark sampled memory by spawning PowerShell inside the event loop, freezing the load workers (0 requests in a 0.5 s window) and distorting its own latencies; fixed with a regression test. Not confirmed to be the same failure as CI #641 (its log was never read), so keep watching: if a Windows job goes red again, capture the `FAILED` lines | S | 10 consecutive green Windows runs after this fix |
 | R0.2 | ~~Add a LICENSE~~ DONE: Apache-2.0 (`LICENSE`, `NOTICE`, SPDX `license` in `pyproject.toml`). Confirm the copyright holder name in `NOTICE` | S | |
-| R0.3 | Turn on branch protection for `main` (require CI) once you want it, and add 3.14 to the CI matrix (your machine already runs 3.14) | S | matrix includes 3.14 |
+| R0.3 | Turn on branch protection for `main` (require CI) once you want it, and add 3.14 to the CI matrix (your machine already runs 3.14) | S | matrix includes 3.14 and all jobs pass |
 | R0.4 | `CHANGELOG.md` and a release procedure (tag, build, `check_package.py`) | S | v0.7.0 tagged with notes |
-| R0.5 | Decide what to do with the old working folder and its two uncommitted test files (`test_retrieve.py`, `test_privacy_edge_acceptance.py`): merge anything still useful, then retire it | S | one working copy only |
+| R0.5 | Decide what to do with the old working folder and its two uncommitted test files (`test_retrieve.py`, `test_privacy_edge_acceptance.py`): merge anything still useful, then retire it | S | test files tracked and passing in CI; old local folder retired |
 
 ## R2: Retrieval correctness and evidence
 

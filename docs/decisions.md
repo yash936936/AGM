@@ -1,3 +1,13 @@
+## D-051 — Archive superseded synthetic benchmark snapshots and test Python 3.14 in CI — 2026-11-19
+
+**Decision:** Move the initial v3 synthetic benchmark JSON snapshots and their post-D-046/D-047 snapshots into `docs/benchmarks/history/`; keep the current benchmark interpretation in `docs/benchmarks/r2_labelled_v3.md`. Extend the repository CI Python matrix to 3.14 on both Ubuntu and Windows. Add local-only patch, diff, backup, report and real-history paths to `.gitignore`.
+
+**Why:** The root benchmark folder should contain current benchmark protocols and reports, while superseded raw snapshots remain available for audit. Python 3.14 is already used in the recorded local report and needs the same automated coverage as supported CI versions.
+
+**Limits:** The 3.14 matrix change is implemented but not verified until all eight matrix jobs pass on the exact PR head. The real-history directory remains ignored because user histories must stay local.
+
+**Affects:** `.gitignore`, `.github/workflows/tests.yml`, `docs/benchmarks/`, and repository status documentation.
+
 ## D-050 — Documentation convention: source-of-truth table, STATE.md, components/ — 2026-11-17
 
 **Decision:** `context.md` is a short router with a source-of-truth table and reading order. Current state lives in `docs/STATE.md` (rewritten in place); `docs/status.md` becomes an append-only dated log. Component guides live in `docs/components/`. `docs/readme.md` states verified capabilities by evidence level (implemented, tests, real evidence, accepted). `docs/phases.md` is historical; the current plan is `ROADMAP.md` plus `BUILD-PLAN.md` (renamed from `BUILD_PLAN.md`, which D-049 mentions). Debug findings go to `docs/debug.md` (`DBG-0NN`).
