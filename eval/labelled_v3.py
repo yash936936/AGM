@@ -253,7 +253,8 @@ def run_query(store, world, bm25, vector, names_re, q: Q, mode: str, hint: bool,
         context_chars = sum(len(str(doc.get("text") or "")) for doc in world.docs)
         fits = context_chars <= whole_log_max_chars
         items = list(world.docs) if fits else []
-        abstain = not fits or not items
+        # A budget overflow is "not comparable", not a correct abstention.
+        abstain = not items if fits else False
     elif mode in ("flat", "graph"):
         r = store.retrieve(world.ctx, q.query, entity=ent, as_of=q.as_of, k=k, expand=mode == "graph", graph_hops=2 if mode == "graph" else None)
         items, abstain = r.items, bool(r.abstain)
@@ -282,7 +283,8 @@ def run_query(store, world, bm25, vector, names_re, q: Q, mode: str, hint: bool,
     unflagged = any(isinstance(i, dict) or not getattr(i, "contested_with", None) for i in bad_items)
     return {"family": q.family, "hit": bool(got & gold) if gold else None, "leak": bool(got & bad), "leak_unflagged": unflagged,
             "abstain": abstain, "calls": calls, "ms": ms, "n": len(items),
-            "context_chars": context_chars, "context_tokens_estimate": math.ceil(context_chars / 4)}
+            "context_chars": context_chars, "context_tokens_estimate": math.ceil(context_chars / 4),
+            "context_fits": (context_chars > 0 and len(items) > 0) if mode == "whole_log" else None}
 
 
 def finalize(row: dict[str, Any], q: Q) -> dict[str, Any]:
