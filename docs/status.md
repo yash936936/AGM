@@ -1,5 +1,11 @@
 # Status log — AGM prototype
 
+## 2026-11-19 — Batch 1 validation and CI #641 diagnosis
+**Did:** inspected the historical failed Windows Python 3.13 job from CI run #641. The failure was the 0.5-second duration-mode REST benchmark test recording zero successful requests; the other five matrix jobs passed and run #642 later passed. Increased that test's duration to 2.0 seconds while keeping the slow RSS-probe regression. Removed the opt-in label condition from the paired before/after retrieval benchmark so the job runs on pull requests.
+**Tests:** no local test run. The 2.0-second change is pending exact-head CI. Current PR CI has not yet completed; no benchmark result is claimed.
+**Next:** review all eight matrix jobs and the paired benchmark artifact, fix any regressions, then update acceptance docs and merge only after the exact head is green.
+
+
 
 > Append-only. Newest entry at top. One entry per work session or review; current state lives in `STATE.md`, defects in `debug.md`, decisions in `decisions.md`.
 
