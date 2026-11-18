@@ -27,7 +27,7 @@ For the common modes, CI prints before/after graph pass rate and leak rate for s
 
 ```bash
 python eval/labelled_v3.py --seed 0 --seeds 1 --episodes 120 --k 5 --output before-after.json
-python eval/labelled_v3.py --seed 0 --seeds 5 --episodes 1200 --k 5 --embedder st --whole-log-max-chars 50000 --output labelled-v3-st.json
+python eval/labelled_v3.py --seed 0 --seeds 5 --episodes 1200 --k 5 --embedder st --whole-log-max-chars 200000 --output labelled-v3-st.json
 ```
 
 Install the optional sentence embedder with:
