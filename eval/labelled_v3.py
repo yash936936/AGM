@@ -299,7 +299,7 @@ def finalize(row: dict[str, Any], q: Q) -> dict[str, Any]:
     return row
 
 
-def run_seed(seed: int, episodes: int, k: int, embedder: Any, whole_log_max_chars: int = 20000) -> dict[str, Any]:
+def run_seed(seed: int, episodes: int, k: int, embedder: Any, whole_log_max_chars: int = 200000) -> dict[str, Any]:
     out: dict[str, Any] = {}
     with tempfile.TemporaryDirectory(prefix=f"agm-v3-{seed}-") as tmp, deterministic_node_ids(seed):
         with MemoryStore(str(Path(tmp) / "m.db"), embedder=embedder) as store:
@@ -325,7 +325,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--seed", type=int, default=0); ap.add_argument("--seeds", type=int, default=5)
     ap.add_argument("--episodes", type=int, default=1200); ap.add_argument("--k", type=int, default=5)
-    ap.add_argument("--embedder", choices=("hash", "spacy", "st"), default="hash"); ap.add_argument("--whole-log-max-chars", type=int, default=20000, help="character budget for whole-log-in-context"); ap.add_argument("--output", type=Path)
+    ap.add_argument("--embedder", choices=("hash", "spacy", "st"), default="hash"); ap.add_argument("--whole-log-max-chars", type=int, default=200000, help="character budget for whole-log-in-context"); ap.add_argument("--output", type=Path)
     a = ap.parse_args()
     if a.embedder == "hash":
         from agm.embed import HashEmbedder
