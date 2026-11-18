@@ -4,8 +4,7 @@
 Written BEFORE any v3 result was seen. Differences from synthetic_v2: stored facts and queries use different
 wordings; scoring is entity-aware (entity, attribute, value); near-duplicate entities (-staging/-legacy siblings); stale values; low-trust "poisoned" facts;
 injection-style text; distractor notes that share attribute words but state no value; unanswerable questions
-(unknown entity, or known entity with the attribute never recorded). Every query is evaluated with and without an
-entity hint, against: bm25 (lifecycle- and trust-blind keyword log), flat, flat_iterative (agent-style), graph.
+(unknown entity, or known entity with the attribute never recorded). Every query is evaluated with and without an entity hint, against: bm25 (lifecycle- and trust-blind keyword log), vector-only cosine, whole-log-in-context, flat, flat_iterative (agent-style), and graph.
 
 PRE-REGISTERED DECISION RULE (fixed before the first run):
   Primary metric: strict pass rate = answer value present AND no forbidden value returned, pooled over the
