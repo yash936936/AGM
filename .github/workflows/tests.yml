@@ -36,7 +36,7 @@ jobs:
         run: python scripts/check_package.py
 
   retrieval-benchmark:
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'retrieval-benchmark')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
