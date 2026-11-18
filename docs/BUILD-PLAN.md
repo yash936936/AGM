@@ -54,7 +54,7 @@ Update the **Status** line when a batch closes (after review), together with `ST
 **Goal:** one working copy, tidy repo, docs that match the code.
 **Files touched:** `docs/benchmarks/history/*`, `.gitignore`, `docs/workflow.md`, `context.md`, `docs/BUILD-PLAN.md`, `docs/PROMPTS.md`, `docs/phases.md` (historical stub), `docs/debug.md`, `docs/appflow.md`, `docs/STATE.md`, `docs/status.md`, `docs/readme.md`, `docs/components/`
 **Done when:** tidy changes from `chore/repo-tidy` are represented on `main`, CI green on all eight Ubuntu/Windows Python 3.11–3.14 jobs, old working folder retired (R0.5).
-**Status:** In progress. D-050 merged in PR #62 (`6d6732b`). Remaining tidy changes were ported in PR #63 (`88044a1`); exact-head run #685 passed all eight Ubuntu/Windows Python 3.11–3.14 jobs. The stale `chore/repo-tidy` branch was not merged directly. Both formerly uncommitted test files are tracked on main and covered by CI. R0.5 remains open until the owner retires the old local working-folder copy.
+**Status:** In progress. D-050 merged in PR #62 (`6d6732b`). Remaining tidy changes were ported in PR #63 (`88044a1`); exact-head run #685 passed all eight Ubuntu/Windows Python 3.11–3.14 jobs. The stale `chore/repo-tidy` branch was not merged directly. Both formerly uncommitted test files are tracked on main and covered by CI. R0.4 changelog and local release procedure are drafted in PR #64; the v0.7.0 tag is deferred until Batch 1 acceptance and package checks. R0.5 remains open until the owner retires the old local working-folder copy.
 
 ### Phase 1 — Retrieval correctness (batch 1)
 **Goal:** fix the three remaining core defects found by the v3 benchmark and widen the baselines.
