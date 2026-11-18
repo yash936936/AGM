@@ -1,5 +1,11 @@
 # Status log — AGM prototype
 
+## 2026-11-19 — Strengthen Batch 1 benchmark comparability
+**Did:** expanded the paired synthetic v3 comparison to five seeds and 1,200 distractor episodes per seed; isolated the base and PR editable installs so each run uses its own AGM source; added BM25-only, normalized cosine-vector-only and whole-log context baselines; added p50/p95/p99 latency, retrieval-call and unanswerable/single-fact metrics. Set a 200,000-character whole-log budget and added an explicit fit/overflow test. Added an optional sentence-transformer revision argument and report identity; an immutable model revision is required before treating ST results as reproducible. Added the changelog and local prototype release procedure; the v0.7.0 tag remains deferred.
+**Tests:** no local execution. PR #64 exact-head CI and full paired benchmark are queued; no performance or correctness result is claimed.
+**Next:** inspect the exact-head CI matrix and benchmark artifact, then repair any failures before merging.
+
+
 ## 2026-11-19 — Draft release notes and local tagging procedure
 **Did:** added `CHANGELOG.md` and `docs/release-procedure.md` for the v0.7.0 local prototype. The procedure requires exact-head eight-job CI, test/hygiene/package checks, accepted retrieval benchmarks and a clean main tree before tagging. It explicitly does not authorize PyPI publication or remote deployment.
 **Tests:** documentation-only changes; not run locally. The release tag is NOT created because Batch 1 is not yet accepted.
