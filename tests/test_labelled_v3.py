@@ -51,4 +51,4 @@ def test_whole_log_baseline_reports_context_size_and_respects_budget():
     assert rows
     assert all(row["context_chars"] > 1 for row in rows)
     assert all(row["context_tokens_estimate"] > 0 for row in rows)
-    assert all(row["abstain"] is True and row["n"] == 0 for row in rows)
+    assert all(row["abstain"] is False and row["context_fits"] is False and row["n"] == 0 for row in rows)
