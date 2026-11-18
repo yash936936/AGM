@@ -1,15 +1,15 @@
 # State — AGM prototype
 
-Rewritten in place; the dated history is in `status.md`. Last updated 2026-11-17.
+Rewritten in place; the dated history is in `status.md`. Last updated 2026-11-19.
 
 ## Where we are
-Version 0.7.0, local-only prototype. At the time this PR was opened, `main` was at `51cf26a` (D-048, R2.6e, Apache-2.0). The separate `chore/repo-tidy` branch exists at `89c2f45` and contains the benchmark-folder tidy, build plan, prompts and D-049; it has not been merged and no PR for that branch was found during this review. PR #62 (`docs/convention-update`) contains the D-050 documentation convention update and is based on that `main` commit. Do not treat PR #61 as the merge for `chore/repo-tidy`: PR #61 merged the distinct `cleanup/lean-v0.6` branch.
+Version 0.7.0, local-only prototype. PR #62 merged as `6d6732b` (D-050 documentation convention update). Main CI run #667 passed all six Ubuntu/Windows Python 3.11–3.13 jobs on that exact head. The separate `chore/repo-tidy` branch is two commits ahead of its merge base and twelve commits behind current main; its D-049/build-plan/prompt work is already represented on main through PR #62. The remaining tidy changes are being ported onto `chore/phase0-reconciled` to avoid merging a stale divergent branch. PR #61 is unrelated (`cleanup/lean-v0.6`).
 
 ## Tests
-Local report dated 2026-11-17: 308 passed, 2 xfailed on Windows, Python 3.14; hygiene scan PASS (126 tracked paths). The two xfails remain unexplained (DBG-008). CI run #642 is historical evidence on an earlier commit, not validation of this documentation branch. PR #62's own CI matrix must be checked on its final head before merge.
+Local report dated 2026-11-17: 308 passed, 2 xfailed on Windows, Python 3.14; hygiene scan PASS (126 tracked paths). The two xfails are the two `hint` parameter variants of one strict xfail in `tests/test_relation_wording.py::test_two_hop_reaches_the_second_dependency_owner`; both are marked for R2.6c because low lexical similarity causes abstention before expansion. This is now identified, not fixed. Main CI run #667 passed six jobs on Python 3.11–3.13. Python 3.14 is being added to the matrix; its CI result is pending.
 
 ## Blockers
-- Phase 2 needs your 20–40 real cases written and frozen (R2.2). Nothing in this repo can replace them.
+- R0.5: the two formerly uncommitted test files are present in `main` and run in CI, but the old local working-folder copy cannot be retired or verified from GitHub.
 - Remote use needs an independent reviewer (R3.5) and a deploy account (R3.6).
 - The 2 xfails and the unread CI #641 failure (DBG-002) need an owner.
 
