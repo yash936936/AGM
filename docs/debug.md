@@ -1,5 +1,12 @@
 # Debug log — AGM prototype
 
+## DBG-011 — Historical CI #641 failure was a Windows duration-test timing flake — 2026-11-19
+**Task:** Resolve DBG-002 by reading the failed job log from workflow run #641.
+**Tested:** Retrieved the Windows Python 3.13 job log (job 125237161904). Repository hygiene passed; pytest reported 287 passed and one failure in `tests/test_rest_concurrent_benchmark.py::test_rest_benchmark_supports_duration_mode_and_rss_metadata`. The benchmark process exited normally, but its 0.5-second duration window recorded zero successful requests. The other five matrix jobs passed; run #642 later passed all six jobs.
+**Found:** This was a timing-sensitive test failure on the Windows runner, not a demonstrated retrieval or API correctness failure. It is distinct from the earlier synchronous PowerShell RSS sampling issue in DBG-003; RSS sampling was already moved to a worker thread and each duration-mode worker already attempts at least one request.
+**Fixed (pending CI):** Increased the test's duration window from 0.5 to 2.0 seconds while retaining the separate slow-RSS-probe regression test. The new test must pass on Windows Python 3.13 and the full matrix before DBG-002 is closed.
+
+
 > Append-only. Newest entries at top. Log every defect found or fixed, with what was tested. Add a new entry to correct an old one; never edit past entries. IDs run DBG-001 onward. Decisions made while fixing go in `decisions.md`.
 > Entries DBG-001 to DBG-008 were reconstructed on 2026-11-17 from `status.md`, `ROADMAP.md`, `decisions.md` and the benchmark reports. Earlier history is in git tag `archive/pre-cleanup-main`.
 
