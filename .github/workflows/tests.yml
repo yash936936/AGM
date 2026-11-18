@@ -61,11 +61,11 @@ jobs:
       - name: Run baseline benchmark
         run: |
           cd "$RUNNER_TEMP/agm-baseline"
-          python eval/labelled_v3.py --seed 0 --seeds 1 --episodes 120 --k 5 --output "$RUNNER_TEMP/baseline.json"
+          python eval/labelled_v3.py --seed 0 --seeds 5 --episodes 1200 --k 5 --output "$RUNNER_TEMP/baseline.json"
       - name: Restore pull request revision for updated measurement
         run: python -m pip install --no-deps -e "$GITHUB_WORKSPACE"
       - name: Run updated retrieval benchmark
-        run: python eval/labelled_v3.py --seed 0 --seeds 1 --episodes 120 --k 5 --whole-log-max-chars 50000 --output "$RUNNER_TEMP/current.json"
+        run: python eval/labelled_v3.py --seed 0 --seeds 5 --episodes 1200 --k 5 --whole-log-max-chars 50000 --output "$RUNNER_TEMP/current.json"
       - name: Print paired before and after metrics
         run: |
           python - <<'PY'
@@ -82,7 +82,11 @@ jobs:
                   new = after["regimes"][regime][family]["graph"]
                   print(f"{family}: graph pass {old['pass']:.3f} -> {new['pass']:.3f}; leak {old['leak']:.3f} -> {new['leak']:.3f}")
               print("pooled strict:", before["regimes"][regime]["_pooled"]["graph"], "->", after["regimes"][regime]["_pooled"]["graph"])
-              print("new baselines:", {name: after["regimes"][regime]["_pooled"].get(name) for name in ("bm25", "vector", "flat", "flat_iterative", "whole_log")})
+              print("current baseline pooled strict:", {name: after["regimes"][regime]["_pooled"].get(name) for name in ("bm25", "vector", "flat", "flat_iterative", "whole_log")})
+              print("current graph latency p50/p95/p99 ms:", {name: after["regimes"][regime]["_verdict"]["p50_ms"].get(name) for name in ("bm25", "vector", "flat", "flat_iterative", "graph")})
+              print("current graph calls/query:", after["regimes"][regime]["_verdict"]["calls"]["graph"])
+              print("single-fact recall:", after["regimes"][regime]["single"]["graph"]["pass"])
+              print("unanswerable correctness:", after["regimes"][regime]["unanswerable"]["graph"]["pass"])
               print("whole-log context tokens:", after["regimes"][regime]["_context_tokens_estimate"]["whole_log"])
           PY
       - uses: actions/upload-artifact@v4
