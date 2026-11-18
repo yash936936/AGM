@@ -327,6 +327,8 @@ def main() -> int:
     ap.add_argument("--episodes", type=int, default=1200); ap.add_argument("--k", type=int, default=5)
     ap.add_argument("--embedder", choices=("hash", "spacy", "st"), default="hash"); ap.add_argument("--embedder-revision", help="immutable model repository revision for --embedder st"); ap.add_argument("--whole-log-max-chars", type=int, default=200000, help="character budget for whole-log-in-context"); ap.add_argument("--output", type=Path)
     a = ap.parse_args()
+    if a.embedder_revision and a.embedder != "st":
+        ap.error("--embedder-revision is valid only with --embedder st")
     if a.embedder == "hash":
         from agm.embed import HashEmbedder
         emb = HashEmbedder()
