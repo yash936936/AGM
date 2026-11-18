@@ -209,16 +209,19 @@ class VectorBaseline:
     def __init__(self, docs: list[dict[str, Any]], embedder: Any):
         self.docs = docs
         self.embedder = embedder
-        self.vectors = [
-            np.asarray(embedder.embed(str(doc.get("text") or "")), dtype=np.float32)
-            for doc in docs
-        ]
+        self.vectors = [self._unit(embedder.embed(str(doc.get("text") or ""))) for doc in docs]
         self.query_cache: dict[str, np.ndarray] = {}
+
+    @staticmethod
+    def _unit(values: Any) -> np.ndarray:
+        vector = np.asarray(values, dtype=np.float32)
+        norm = float(np.linalg.norm(vector))
+        return vector / norm if norm > 0 else vector
 
     def search(self, query: str, k: int):
         vector = self.query_cache.get(query)
         if vector is None:
-            vector = np.asarray(self.embedder.embed(query), dtype=np.float32)
+            vector = self._unit(self.embedder.embed(query))
             self.query_cache[query] = vector
         scores = [
             (float(np.dot(vector, candidate)) if vector.size == candidate.size else 0.0, index)
