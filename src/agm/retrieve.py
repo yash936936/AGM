@@ -262,6 +262,7 @@ def _query_attribute_intent(query: str) -> str | None:
         ("owner", r"\b(owner|owns|owned|ownership|responsible|responsibility|accountable|maintains?|handles?)\b|\b(in charge of|looks after|takes care of)\b"),
         ("runtime", r"\b(runtime|runs|running|execute|executes|language|stack|implemented)\b"),
         ("region", r"\b(region|location|located|where|hosted|datacenter|data center)\b"),
+        ("oncall", r"\b(on[- ]call|paged|pager|escalate|escalation|incident contact)\b"),
         ("environment", r"\b(environment|deployment|configured)\b"),
     )
     for attribute, pattern in patterns:
