@@ -359,7 +359,15 @@ def main() -> int:
             print(f"{fam:13}" + "".join(f"{c:>16}" for c in cells))
         pooled = {m: [_rate(r[(m, hint)], "strict", ANSWERABLE) for r in runs] for m in MODES}
         calls = {m: statistics.fmean(x["calls"] for r in runs for x in r[(m, hint)]) for m in MODES}
-        p50 = {m: statistics.median(x["ms"] for r in runs for x in r[(m, hint)]) for m in MODES}
+        latency_ms = {
+            m: {
+                "p50": statistics.median(x["ms"] for r in runs for x in r[(m, hint)]),
+                "p95": float(np.percentile([x["ms"] for r in runs for x in r[(m, hint)]], 95)),
+                "p99": float(np.percentile([x["ms"] for r in runs for x in r[(m, hint)]], 99)),
+            }
+            for m in MODES
+        }
+        p50 = {m: latency_ms[m]["p50"] for m in MODES}
         ul = {m: statistics.fmean(_rate(r[(m, hint)], "leak_unflagged", ANSWERABLE) for r in runs) for m in MODES}
         context_tokens = {m: statistics.fmean(x.get("context_tokens_estimate", 0) for r in runs for x in r[(m, hint)]) for m in MODES}
         print(f"{'unflagged leak':13}" + "".join(f"{ul[m] * 100:15.1f}%" for m in MODES) + "   (secondary: leaks without contested_with)")
@@ -380,7 +388,7 @@ def main() -> int:
             verdict = "GRAPH_NOT_JUSTIFIED"
         print(f"graph - best other ({best}) = {d:+.3f}  95% CI {ci}  ->  {verdict}\n")
         reg["_pooled"] = {m: statistics.fmean(pooled[m]) for m in MODES}
-        reg["_verdict"] = {"best_other": best, "delta": d, "ci95": ci, "verdict": verdict, "calls": calls, "p50_ms": p50}
+        reg["_verdict"] = {"best_other": best, "delta": d, "ci95": ci, "verdict": verdict, "calls": calls, "p50_ms": p50, "latency_ms": latency_ms}
         report["regimes"][tag] = reg
     ab = {m: statistics.fmean(_rate(r[(m, False)], "pass", ("unanswerable",)) for r in runs) for m in MODES}
     print("abstention correctness on unanswerable (no-hint):", {m: round(v, 3) for m, v in ab.items()})
