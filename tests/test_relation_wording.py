@@ -14,10 +14,7 @@ PLAIN_1HOP = [
 ]
 PLAIN_2HOP = [
     "Which team owns the service that the service alpha depends on depends on?",
-    pytest.param(
-        "Who owns what the service alpha relies on relies on?",
-        marks=pytest.mark.xfail(strict=True, reason="R2.6c: abstains on low lexical similarity before expansion runs"),
-    ),
+    "Who owns what the service alpha relies on relies on?",
 ]
 
 
