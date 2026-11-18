@@ -34,7 +34,7 @@ def test_vector_baseline_is_independent_cosine_search():
         model_id = "tiny-test-v1"
 
         def embed(self, text):
-            return np.asarray([1.0, 0.0] if "alpha" in text else [0.0, 1.0], dtype=np.float32)
+            return np.asarray([2.0, 0.0] if "alpha" in text else [0.0, 3.0], dtype=np.float32)
 
     docs = [
         {"text": "alpha owner team-a", "entity": "alpha", "attr": "owner", "value": "team-a"},
