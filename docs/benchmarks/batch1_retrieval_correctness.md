@@ -11,7 +11,7 @@
 - `whole_log`: all written text supplied as context when it fits the configured character budget; otherwise it reports that the log does not fit. This is a context-size/coverage comparator, not an LLM answer-quality measurement.
 - `graph`: AGM retrieval with bounded graph expansion.
 
-The base-commit run uses the pre-change v3 runner, so only common modes are compared before/after. The updated run additionally reports vector-only and whole-log results. The workflow uses seed 0, one seed, 120 distractor episodes and k=5 to keep CI bounded. This is a diagnostic smoke comparison, not the pre-registered multi-seed result and not evidence for H1–H7 (D-007).
+The base-commit run uses the pre-change v3 runner, so only common modes are compared before/after. The updated run additionally reports vector-only and whole-log results. The workflow uses seeds 0–4, 1,200 distractor episodes per seed and k=5 for both the base and updated revisions. It installs each revision separately before running its benchmark so the base runner cannot accidentally import the PR's editable AGM package. This is still a synthetic benchmark, not evidence for H1–H7 or real-user performance (D-007).
 
 ## Targeted regression coverage
 
@@ -21,7 +21,7 @@ The base-commit run uses the pre-change v3 runner, so only common modes are comp
 
 ## Reported metrics
 
-For the common modes, CI prints before/after graph pass rate and leak rate for single, hard-negative, multi-hop, poison and unanswerable families, plus pooled strict pass. The updated report includes the new baseline scores and estimated whole-log context tokens. Latency is diagnostic at this one-seed scale.
+For the common modes, CI prints before/after graph pass rate and leak rate for single, hard-negative, multi-hop, poison and unanswerable families, plus pooled strict pass. The updated report includes BM25-only, vector-only cosine, whole-log-in-context, flat, iterative-flat and graph scores; unanswerable correctness; single-fact recall; retrieve calls per query; p50/p95/p99 latency; and estimated whole-log context tokens. The full JSON reports are uploaded as a CI artifact.
 
 ## Reproduction
 
