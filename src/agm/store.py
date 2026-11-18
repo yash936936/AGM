@@ -51,7 +51,8 @@ def _flat_attribute_intent(query: str) -> str | None:
 
 def _flat_relation_intent(query: str) -> bool:
     return bool(re.search(
-        r"\b(depend(?:s|ed|ency|encies)?|rely|relies|relied|call|calls|called|built on|based on|uses?|downstream|upstream|connected to)\b",
+        r"\b(what|which service|the service|dependency|dependent|downstream)\b.{0,120}"
+        r"\b(depend(?:s|ed|ency|encies)?|rely|relies|relied|call|calls|called|built on|based on|downstream)\b",
         query.casefold(),
     ))
 
