@@ -311,3 +311,44 @@ def test_batch_corroboration_counts_match_single_row_helper(store, ctx):
         str(row["id"]): independent_corroborations(store.conn, row)
         for row in rows
     }
+
+
+
+@pytest.mark.parametrize(
+    "wording",
+    (
+        "Who is in charge of",
+        "Who is responsible for",
+        "Who is accountable for",
+        "Who maintains",
+        "Who looks after",
+    ),
+)
+def test_owner_answer_slot_paraphrases_do_not_leak_to_hyphenated_sibling(store, ctx, wording):
+    store.write(ctx, WriteItem(
+        kind="fact", entity="svc-12", attribute="owner", value="team-exact",
+        text="svc-12 is maintained by team-exact.",
+    ))
+    store.write(ctx, WriteItem(
+        kind="fact", entity="svc-12-staging", attribute="owner", value="team-staging",
+        text="svc-12-staging is maintained by team-staging.",
+    ))
+
+    result = store.retrieve(ctx, f"{wording} svc-12?", k=8, expand=False)
+
+    assert result.abstain is False
+    assert any(item.value == "team-exact" and item.entity == "svc-12" for item in result.items)
+    assert not any(item.value == "team-staging" for item in result.items)
+
+
+def test_known_entity_missing_requested_attribute_abstains(store, ctx):
+    store.write(ctx, WriteItem(
+        kind="fact", entity="svc-12", attribute="runtime", value="python-3.12",
+        text="svc-12 runs on python-3.12.",
+    ))
+
+    result = store.retrieve(ctx, "Who is accountable for svc-12?", k=8, expand=False)
+
+    assert result.abstain is True
+    assert result.items == []
+    assert "owner" in (result.abstain_reason or "")
