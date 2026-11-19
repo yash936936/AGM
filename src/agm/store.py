@@ -39,7 +39,8 @@ def _flat_attribute_intent(query: str) -> str | None:
     patterns = (
         ("owner", r"\b(owner|owns|owned|ownership|responsible|responsibility|accountable|maintains?|handles?)\b|\b(in charge of|looks after|takes care of)\b"),
         ("runtime", r"\b(runtime|runs|running|execute|executes|language|stack|implemented)\b"),
-        ("region", r"\b(region|location|located|where|hosted|datacenter|data center)\b"),
+        ("location", r"\b(location|located|where)\b"),
+        ("region", r"\b(region|hosted|datacenter|data center)\b"),
         ("oncall", r"\b(on[- ]call|paged|pager|escalate|escalation|incident contact)\b"),
         ("environment", r"\b(environment|deployment|configured)\b"),
     )
@@ -1082,14 +1083,9 @@ class MemoryStore:
         if mentioned_entity_ids:
             rows = [row for row in rows if str(row["entity_id"]) in mentioned_entity_ids]
             answer_slot = _flat_attribute_intent(query)
-            if answer_slot and _flat_relation_intent(query):
-                return RetrieveResult(
-                    items=[],
-                    route=RetrieveRoute(seed_n=0, expanded_n=0, widened=False, expand_used=False),
-                    abstain=True,
-                    abstain_reason="Flat retrieval cannot establish an answer slot on a related entity.",
-                    notice=_UNTRUSTED_NOTICE,
-                )
+            # Flat retrieval returns only the anchored entity's own facts. A relational
+            # question does not authorize following edges; the direct answer remains
+            # useful and the hard entity filter prevents linked entities from leaking in.
             if answer_slot and not any(row["attribute"] == answer_slot for row in rows):
                 return RetrieveResult(
                     items=[],
