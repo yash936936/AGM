@@ -1,5 +1,12 @@
 # Status log — AGM prototype
 
+## 2026-11-20 — Fix historical location answer-slot CI failures
+**Did:** inspected CI run #780. All eight OS/Python jobs failed the same two temporal-location tests (322 passed per job). The graph answer-slot detector still mapped the word `location` to `region`; this disagreed with stored `location` facts and caused historical queries to abstain. Commit `d7816d9` split the graph mapping to match the flat mapping.
+**Tests:** exact-head run #781 on `d7816d9` passed all eight Ubuntu/Windows Python 3.11–3.14 jobs. The pytest job also completed repository hygiene, REST smoke and package inspection. The paired benchmark job was skipped because the event was a push, not a labelled pull request. No final-head paired benchmark artifact exists yet.
+**Batch status:** Batch 1 remains NOT ACCEPTED. The last available synthetic paired result was from `c6e9eb7`, not final main, and unanswerable correctness was 50.7%, below the ≥0.80 Batch 1 criterion. Synthetic evidence is not real-history evidence.
+**Batch 2:** NOT STARTED; blocked until the owner freezes 20–40 de-identified, consented cases locally under `eval/real/`. Existing local authoring script, evaluator, keyword baseline and runbook are present. Raw cases must stay local; aggregate reports only may be shared.
+**Next:** generate and inspect the final-head paired benchmark; address the unanswerable gap while protecting single-fact recall. Start Batch 2 harness work only after the local cases are frozen.
+
 ## 2026-11-19 — Strengthen Batch 1 benchmark comparability
 **Did:** expanded the paired synthetic v3 comparison to five seeds and 1,200 distractor episodes per seed; isolated the base and PR editable installs so each run uses its own AGM source; added BM25-only, normalized cosine-vector-only and whole-log context baselines; added p50/p95/p99 latency, retrieval-call and unanswerable/single-fact metrics. Set a 200,000-character whole-log budget and added an explicit fit/overflow test. Added an optional sentence-transformer revision argument and report identity; an immutable model revision is required before treating ST results as reproducible. Added the changelog and local prototype release procedure; the v0.7.0 tag remains deferred.
 **Tests:** no local execution. PR #64 exact-head CI and full paired benchmark are queued; no performance or correctness result is claimed.
