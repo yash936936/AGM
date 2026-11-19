@@ -1075,7 +1075,7 @@ class MemoryStore:
             entity_id
             for entity_id, labels in labels_by_entity.items()
             if any(
-                re.search(r"(?<![\\w-])" + re.escape(label.casefold()) + r"(?![\\w-])", query.casefold())
+                re.search(r"(?<![\w-])" + re.escape(label.casefold()) + r"(?![\w-])", query.casefold())
                 for label in labels
             )
         }
