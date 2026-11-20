@@ -1,34 +1,39 @@
 # State — AGM prototype
 
-Rewritten in place; the dated history is in `status.md`. Last updated 2026-11-19.
+Last updated 2026-11-20. Entry point: [`context.md`](../context.md).
 
 ## Where we are
-Version 0.7.0, local-only prototype. PR #62 merged as `6d6732b` (D-050 documentation convention update). Main CI run #667 passed all six Ubuntu/Windows Python 3.11–3.13 jobs on that exact head. The separate `chore/repo-tidy` branch is two commits ahead of its merge base and twelve commits behind current main; its D-049/build-plan/prompt work is already represented on main through PR #62. The remaining tidy changes were ported through PR #63 and merged as `88044a1`; its exact-head run #685 passed all eight Ubuntu/Windows Python 3.11–3.14 jobs. The old `chore/repo-tidy` branch remains stale and was not merged directly. PR #61 is unrelated (`cleanup/lean-v0.6`).
 
-## Tests
-Local report dated 2026-11-17: 308 passed, 2 xfailed on Windows, Python 3.14; hygiene scan PASS (126 tracked paths). The historical 2026-11-17 report's two xfails were the two `hint` variants of one strict xfail in `tests/test_relation_wording.py::test_two_hop_reaches_the_second_dependency_owner`. Batch 1 removes the marker and adds targeted regression coverage; exact-head test validation is pending. PR #63 added Python 3.14 and exact-head CI run #685 passed all eight Ubuntu/Windows Python 3.11–3.14 jobs. CI #641's failed Windows 3.13 job was inspected: 287 passed, one duration-mode benchmark test failed because a 0.5-second window recorded zero successful requests. The test window is now 2.0 seconds; validation is pending.
+AGM is a v0.7.x local-only prototype. PR #66 merged as `9622a53`, adding isolated before/after synthetic benchmark environments. Follow-up retrieval fixes are on `main`:
+- `b5b6e73`: correct exact-entity boundary matching.
+- `77ec098`: separate the flat `location` answer slot from `region` and preserve direct entity facts for relationally worded queries.
+- `d7816d9`: apply the same `location`/`region` answer-slot distinction in graph retrieval.
 
-## Blockers
-- R0.5: the two formerly uncommitted test files are present in `main` and run in CI, but the old local working-folder copy cannot be retired or verified from GitHub.
-- R0.4: `CHANGELOG.md` and `docs/release-procedure.md` are drafted in PR #64; the v0.7.0 tag remains gated on accepted Batch 1 and final release checks.
-- R0.5 remains open until the old local working-folder copy is retired by its owner.
-- DBG-002 is diagnosed; its timing-test stabilization is pending CI. DBG-007 and the two former xfail variants remain pending exact-head test and benchmark evidence.
-- Remote use needs an independent reviewer (R3.5) and a deploy account (R3.6).
+Exact-head GitHub Actions run [#781](https://github.com/yash936936/AGM/actions/runs/44638717065), commit `d7816d9`, passed all eight Ubuntu/Windows Python 3.11–3.14 jobs. Those jobs include pytest, repository hygiene, REST smoke client and package inspection. Run #780 on `77ec098` failed two historical-location tests; #781 passed after the graph slot-mapping fix.
+
+## Batch 1 acceptance
+
+**NOT ACCEPTED.** The paired benchmark job was skipped on push runs #780 and #781. The last available paired synthetic result was on `c6e9eb7`, not the final merged head. It showed 50.7% unanswerable correctness, below the roadmap requirement of at least 80%; synthetic results are diagnostic only. A final-head paired artifact and resolution of the unanswerable threshold are still required. No real-history evidence exists.
 
 ## Next work
-1. Retire the old local working folder to close R0.5; GitHub cannot verify the user's local disk.
-2. Complete Batch 1 PR #64: pass all eight CI jobs, run and inspect the paired before/after benchmark artifact, fix any regressions, then update the benchmark report and acceptance docs. Do not merge on source review alone.
-3. Resolve R0.4 by adding the release/changelog procedure after retrieval behavior is accepted. Prepare Batch 2 only after the user supplies and freezes 20–40 consented real-history cases.
 
-## Evidence so far (synthetic only)
-Graph retrieval is NOT JUSTIFIED under the pre-registered v3 rule (hash and spaCy embedders). It wins only multi-hop, and a post-hoc iterative flat baseline erases even that. See `benchmarks/r2_labelled_v3.md` and `benchmarks/r2_post_hoc_iterative_baseline.md`. Unproven until real data (G1).
+1. Run the paired base/head synthetic benchmark against the final retrieval code and inspect its artifact. Do not treat it as real-history evidence.
+2. Address the Batch 1 unanswerable-correctness gap without reducing single-fact recall by more than 0.02; rerun tests and benchmark.
+3. Batch 2 is **BLOCKED** on the owner freezing 20–40 de-identified, consented cases locally under the private `eval/real/` path. The repository already has the local authoring script, evaluator, keyword baseline, protocol and runbook. Do not create/run the real-history harness or evaluation before the cases are frozen. Raw cases must not be committed or uploaded; share aggregate reports only.
+4. After the cases are frozen, build the aggregate-only multi-baseline runner and agent A/B harness described in `docs/BUILD-PLAN.md`.
 
-## Open defects
-DBG-002 (Windows duration-test timing failure diagnosed; 2.0-second test stabilization pending CI), DBG-007 (retrieval fixes implemented in PR #64; pending tests and benchmark), DBG-008 (two strict xfail marks removed in PR #64; pending exact-head CI).
+## Evidence and external gates
 
-## Open external gates
-Held-out real-history evaluation NOT RUN. Independent security and privacy review NOT PERFORMED. Real third-party host integration NOT VERIFIED. Independent acceptance sign-off OPEN. Not production-ready; loopback only.
+Synthetic benchmark evidence is diagnostic only. G1 (whether graph retrieval should remain on by default) is OPEN. Held-out real-history evaluation is NOT RUN. Independent security/privacy review is NOT PERFORMED. Third-party host validation is NOT VERIFIED. Remote access remains loopback-only; the project is not production-ready.
+
+## Open defects and blockers
+
+- DBG-007 / DBG-010: Batch 1 answer-slot, abstention and sibling-entity behavior is implemented, but acceptance is pending final benchmark evidence and the ≥0.80 unanswerable target.
+- R0.5: old local working-folder retirement cannot be verified from GitHub.
+- R0.4: changelog and local release procedure exist; v0.7.0 tagging remains gated on Batch 1 acceptance and package checks.
+- R2.2–R2.4 / G1: blocked on the frozen private 20–40-case real-history set.
+- R3.5: independent security reviewer not yet supplied.
+- R3.6: deploy account and tested controlled deployment remain outstanding.
 
 ---
-**Next:** Return to [`context.md`](../context.md) before starting a new task —
-it routes you to the right file for what you are about to do.
+**Next:** Return to [`context.md`](../context.md) before starting a new task.

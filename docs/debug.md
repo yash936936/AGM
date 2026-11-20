@@ -1,5 +1,10 @@
 # Debug log — AGM prototype
 
+## DBG-012 — Graph location answer-slot mapping diverged from flat retrieval — 2026-11-20
+**Task:** Resolve the two historical-location failures in CI run #780.
+**Tested:** Run #780 on `77ec098`: all eight Ubuntu/Windows Python 3.11–3.14 jobs failed the same two tests, `test_as_of_filter_applies_to_graph_expansion` and `test_as_of_before_correction_returns_old_value`; each job reported 322 passed and 2 failed. The query's `location` intent was mapped to `region` in graph retrieval, so no matching answer-slot evidence was found. Changed `src/agm/retrieve.py` in `d7816d9` to separate `location` from `region`, matching flat retrieval. Exact-head run #781 passed all eight jobs. The paired benchmark was skipped on the push event and remains outstanding.
+**Fixed:** graph/flat answer-slot mapping parity; CI #781 verified the two regression tests and full matrix. Batch 1 remains unaccepted pending final paired benchmark evidence and the unanswerable correctness target.
+
 ## DBG-011 — Historical CI #641 failure was a Windows duration-test timing flake — 2026-11-19
 **Task:** Resolve DBG-002 by reading the failed job log from workflow run #641.
 **Tested:** Retrieved the Windows Python 3.13 job log (job 125237161904). Repository hygiene passed; pytest reported 287 passed and one failure in `tests/test_rest_concurrent_benchmark.py::test_rest_benchmark_supports_duration_mode_and_rss_metadata`. The benchmark process exited normally, but its 0.5-second duration window recorded zero successful requests. The other five matrix jobs passed; run #642 later passed all six jobs.
